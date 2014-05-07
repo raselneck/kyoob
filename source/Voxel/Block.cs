@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Kyoob.Effects;
 
 /**
  * I separated the Block and Cube classes in case I ever
@@ -9,7 +10,7 @@ using Microsoft.Xna.Framework.Graphics;
  * Later, blocks will have their own types.
  */
 
-namespace Kyoob
+namespace Kyoob.Voxel
 {
     /// <summary>
     /// A class containing block data.
@@ -66,7 +67,7 @@ namespace Kyoob
         /// </summary>
         /// <param name="device">The device to draw to.</param>
         /// <param name="effect">The effect to use to draw.</param>
-        public void Draw( GraphicsDevice device, Effect effect )
+        public void Draw( GraphicsDevice device, BaseEffect effect )
         {
             _cube.Draw( device, effect );
         }

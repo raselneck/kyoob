@@ -11,6 +11,11 @@ namespace Kyoob
     /// </summary>
     public sealed class Camera
     {
+        /// <summary>
+        /// The matrix used to fix the bounding frustum so that it doesn't over-cull.
+        /// </summary>
+        private static readonly Matrix FrustumFix = Matrix.CreateScale( 0.125f, 0.45f, 1.0f );
+
         private GraphicsDevice _device;
         private Matrix _view;
         private Matrix _projection;
@@ -201,7 +206,7 @@ namespace Kyoob
 
             // update view matrix and bounding frustum
             _view = Matrix.CreateLookAt( _position, target, up );
-            _frustum = new BoundingFrustum( _view * _projection );
+            _frustum = new BoundingFrustum( _view * _projection * FrustumFix );
         }
     }
 }

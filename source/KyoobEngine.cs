@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.GamerServices;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Media;
+using Kyoob.Voxel;
+using Kyoob.Effects;
 
 namespace Kyoob
 {
@@ -21,8 +20,9 @@ namespace Kyoob
         private SpriteBatch _spriteBatch;
 
         private Camera _camera;
-        private BasicEffect _effect;
-        private Texture2D _texture;
+        private TextureEffect _effect;
+        private Texture2D _texStone;
+        private Texture2D _texDirt;
         private Chunk _chunk;
 
         /// <summary>
@@ -55,17 +55,14 @@ namespace Kyoob
         protected override void LoadContent()
         {
             _device = GraphicsDevice;
-            _device.SamplerStates[ 0 ] = SamplerState.PointClamp;
             _spriteBatch = new SpriteBatch( _device );
 
             _camera = new Camera( _device, Vector3.Zero, 0.0f, 0.0f );
 
-            _effect = new BasicEffect( _device );
-            _effect.TextureEnabled = true;
-            _effect.PreferPerPixelLighting = true;
-            _effect.EnableDefaultLighting();
+            _effect = new TextureEffect( Content.Load<Effect>( "fx/texture" ) );
 
-            _texture = Content.Load<Texture2D>( "stone" );
+            _texStone = Content.Load<Texture2D>( "tex/stone" );
+            _texDirt = Content.Load<Texture2D>( "tex/dirt" );
 
             _chunk = new Chunk( _device, Vector3.Zero );
         }
@@ -97,17 +94,19 @@ namespace Kyoob
         /// <param name="gameTime">Frame time information.</param>
         protected override void Draw( GameTime gameTime )
         {
+            Stopwatch watch = new Stopwatch();
             _device.Clear( Color.CornflowerBlue );
 
             _effect.Projection = _camera.Projection;
             _effect.View = _camera.View;
-            _effect.Texture = _texture;
+            _effect.Texture = _texDirt;
 
-            Stopwatch watch = new Stopwatch();
+            
             watch.Start();
             _chunk.Draw( _device, _effect, _camera );
             watch.Stop();
-            // Console.WriteLine( "Chunk draw time: {0:0.00}ms", watch.Elapsed.TotalMilliseconds );
+            Console.WriteLine( "Chunk draw time: {0:0.00}ms", watch.Elapsed.TotalMilliseconds );
+
 
             base.Draw( gameTime );
         }

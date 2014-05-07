@@ -1,8 +1,9 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Kyoob.Effects;
 
-namespace Kyoob
+namespace Kyoob.Voxel
 {
     /// <summary>
     /// A data structure containing a chunk of blocks.
@@ -44,7 +45,7 @@ namespace Kyoob
         /// <param name="device">The device to draw to.</param>
         /// <param name="effect">The effect to use to draw.</param>
         /// <param name="camera">The camera to use for culling.</param>
-        public void Draw( GraphicsDevice device, Effect effect, Camera camera )
+        public void Draw( GraphicsDevice device, BaseEffect effect, Camera camera )
         {
             for ( int x = 0; x < 16; ++x )
             {

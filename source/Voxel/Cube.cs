@@ -1,15 +1,17 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Kyoob.Effects;
 
-#warning See comment in Cube.cs
 /**
- * The cube assumes one texture per cube. As this would be very costly,
- * create a SpriteSheet class to use with getting the texture coordinates
- * associated with a given block type.
+ * The cube assumes one texture per cube. I know in another commit I said
+ * that switching textures would be costly, but that was only because I
+ * read it somewhere. I'm calling "bull shit" because I just ran a test
+ * on my laptop and it only takes an average of 2.1 nanoseconds to set
+ * an effect's texture.
  */
 
-namespace Kyoob
+namespace Kyoob.Voxel
 {
     /// <summary>
     /// A simple cube.
@@ -22,13 +24,17 @@ namespace Kyoob
         private const int CubeTriangleCount = 12;
 
         /// <summary>
-        /// The "universal" mesh data for cubes.
+        /// The "universal" vertex data for cubes.
         /// </summary>
-        private static VertexPositionNormalTexture[] CubeMeshData;
+        private static VertexPositionNormalTexture[] CubeVertexData;
+
+        /// <summary>
+        /// The "universal" vertex buffer for cubes.
+        /// </summary>
+        private static VertexBuffer CubeVertices;
 
         private Vector3 _position;
         private BoundingBox _bounds;
-        private VertexBuffer _vertices;
 
         /// <summary>
         /// Gets or sets the cube's position. Will also be the center of the bounding box.
@@ -76,7 +82,8 @@ namespace Kyoob
         /// </summary>
         static Cube()
         {
-            CubeMeshData = null;
+            CubeVertexData = null;
+            CubeVertices = null;
         }
 
         /// <summary>
@@ -108,21 +115,21 @@ namespace Kyoob
         public Cube( GraphicsDevice device, Vector3 position )
         {
             Position = position; // use property to also set bounding box
-            CreateVertexBuffer( device, out _vertices );
+            CheckVertexBuffer( device );
         }
 
         /// <summary>
         /// Generates the cube mesh data if necessary and populates a vertex buffer.
         /// </summary>
         /// <param name="device">The graphics device to create the cube on.</param>
-        private static void CreateVertexBuffer( GraphicsDevice device, out VertexBuffer buffer )
+        private static void CheckVertexBuffer( GraphicsDevice device )
         {
             // data from http://tech.pro/tutorial/750/creating-a-textured-box-in-xna
 
-            // make sure we have our table
-            if ( CubeMeshData == null )
+            // make sure we have our data set
+            if ( CubeVertexData == null || CubeVertices == null )
             {
-                CubeMeshData = new VertexPositionNormalTexture[ 36 ];
+                CubeVertexData = new VertexPositionNormalTexture[ 36 ];
 
                 // vertex data
                 Vector3 tlf     = new Vector3( -0.5f,  0.5f, -0.5f );
@@ -149,56 +156,57 @@ namespace Kyoob
                 Vector2 br      = new Vector2( 1.0f, 1.0f );
 
                 // front face
-                CubeMeshData[ 0  ] = new VertexPositionNormalTexture( tlf, nFront, tl );
-                CubeMeshData[ 1  ] = new VertexPositionNormalTexture( blf, nFront, bl );
-                CubeMeshData[ 2  ] = new VertexPositionNormalTexture( trf, nFront, tr );
-                CubeMeshData[ 3  ] = new VertexPositionNormalTexture( blf, nFront, bl );
-                CubeMeshData[ 4  ] = new VertexPositionNormalTexture( brf, nFront, br );
-                CubeMeshData[ 5  ] = new VertexPositionNormalTexture( trf, nFront, tr );
+                CubeVertexData[ 0  ] = new VertexPositionNormalTexture( tlf, nFront, tl );
+                CubeVertexData[ 1  ] = new VertexPositionNormalTexture( blf, nFront, bl );
+                CubeVertexData[ 2  ] = new VertexPositionNormalTexture( trf, nFront, tr );
+                CubeVertexData[ 3  ] = new VertexPositionNormalTexture( blf, nFront, bl );
+                CubeVertexData[ 4  ] = new VertexPositionNormalTexture( brf, nFront, br );
+                CubeVertexData[ 5  ] = new VertexPositionNormalTexture( trf, nFront, tr );
 
                 // back face
-                CubeMeshData[ 6  ] = new VertexPositionNormalTexture( tlb, nBack, tr );
-                CubeMeshData[ 7  ] = new VertexPositionNormalTexture( trb, nBack, tl );
-                CubeMeshData[ 8  ] = new VertexPositionNormalTexture( blb, nBack, br );
-                CubeMeshData[ 9  ] = new VertexPositionNormalTexture( blb, nBack, br );
-                CubeMeshData[ 10 ] = new VertexPositionNormalTexture( trb, nBack, tl );
-                CubeMeshData[ 11 ] = new VertexPositionNormalTexture( brb, nBack, bl );
+                CubeVertexData[ 6  ] = new VertexPositionNormalTexture( tlb, nBack, tr );
+                CubeVertexData[ 7  ] = new VertexPositionNormalTexture( trb, nBack, tl );
+                CubeVertexData[ 8  ] = new VertexPositionNormalTexture( blb, nBack, br );
+                CubeVertexData[ 9  ] = new VertexPositionNormalTexture( blb, nBack, br );
+                CubeVertexData[ 10 ] = new VertexPositionNormalTexture( trb, nBack, tl );
+                CubeVertexData[ 11 ] = new VertexPositionNormalTexture( brb, nBack, bl );
 
                 // top face
-                CubeMeshData[ 12 ] = new VertexPositionNormalTexture( tlf, nUp, bl );
-                CubeMeshData[ 13 ] = new VertexPositionNormalTexture( trb, nUp, tr );
-                CubeMeshData[ 14 ] = new VertexPositionNormalTexture( tlb, nUp, tl );
-                CubeMeshData[ 15 ] = new VertexPositionNormalTexture( tlf, nUp, bl );
-                CubeMeshData[ 16 ] = new VertexPositionNormalTexture( trf, nUp, br );
-                CubeMeshData[ 17 ] = new VertexPositionNormalTexture( trb, nUp, tr );
+                CubeVertexData[ 12 ] = new VertexPositionNormalTexture( tlf, nUp, bl );
+                CubeVertexData[ 13 ] = new VertexPositionNormalTexture( trb, nUp, tr );
+                CubeVertexData[ 14 ] = new VertexPositionNormalTexture( tlb, nUp, tl );
+                CubeVertexData[ 15 ] = new VertexPositionNormalTexture( tlf, nUp, bl );
+                CubeVertexData[ 16 ] = new VertexPositionNormalTexture( trf, nUp, br );
+                CubeVertexData[ 17 ] = new VertexPositionNormalTexture( trb, nUp, tr );
 
                 // bottom face
-                CubeMeshData[ 18 ] = new VertexPositionNormalTexture( blf, nDown, tl );
-                CubeMeshData[ 19 ] = new VertexPositionNormalTexture( blb, nDown, bl );
-                CubeMeshData[ 20 ] = new VertexPositionNormalTexture( brb, nDown, br );
-                CubeMeshData[ 21 ] = new VertexPositionNormalTexture( blf, nDown, tl );
-                CubeMeshData[ 22 ] = new VertexPositionNormalTexture( brb, nDown, br );
-                CubeMeshData[ 23 ] = new VertexPositionNormalTexture( brf, nDown, tr );
+                CubeVertexData[ 18 ] = new VertexPositionNormalTexture( blf, nDown, tl );
+                CubeVertexData[ 19 ] = new VertexPositionNormalTexture( blb, nDown, bl );
+                CubeVertexData[ 20 ] = new VertexPositionNormalTexture( brb, nDown, br );
+                CubeVertexData[ 21 ] = new VertexPositionNormalTexture( blf, nDown, tl );
+                CubeVertexData[ 22 ] = new VertexPositionNormalTexture( brb, nDown, br );
+                CubeVertexData[ 23 ] = new VertexPositionNormalTexture( brf, nDown, tr );
 
                 // left face
-                CubeMeshData[ 24 ] = new VertexPositionNormalTexture( tlf, nLeft, tr );
-                CubeMeshData[ 25 ] = new VertexPositionNormalTexture( blb, nLeft, bl );
-                CubeMeshData[ 26 ] = new VertexPositionNormalTexture( blf, nLeft, br );
-                CubeMeshData[ 27 ] = new VertexPositionNormalTexture( tlb, nLeft, tl );
-                CubeMeshData[ 28 ] = new VertexPositionNormalTexture( blb, nLeft, bl );
-                CubeMeshData[ 29 ] = new VertexPositionNormalTexture( tlf, nLeft, tr );
+                CubeVertexData[ 24 ] = new VertexPositionNormalTexture( tlf, nLeft, tr );
+                CubeVertexData[ 25 ] = new VertexPositionNormalTexture( blb, nLeft, bl );
+                CubeVertexData[ 26 ] = new VertexPositionNormalTexture( blf, nLeft, br );
+                CubeVertexData[ 27 ] = new VertexPositionNormalTexture( tlb, nLeft, tl );
+                CubeVertexData[ 28 ] = new VertexPositionNormalTexture( blb, nLeft, bl );
+                CubeVertexData[ 29 ] = new VertexPositionNormalTexture( tlf, nLeft, tr );
 
                 // right face
-                CubeMeshData[ 30 ] = new VertexPositionNormalTexture( trf, nRight, tl );
-                CubeMeshData[ 31 ] = new VertexPositionNormalTexture( brf, nRight, bl );
-                CubeMeshData[ 32 ] = new VertexPositionNormalTexture( brb, nRight, br );
-                CubeMeshData[ 33 ] = new VertexPositionNormalTexture( trb, nRight, tr );
-                CubeMeshData[ 34 ] = new VertexPositionNormalTexture( trf, nRight, tl );
-                CubeMeshData[ 35 ] = new VertexPositionNormalTexture( brb, nRight, br );
-            }
+                CubeVertexData[ 30 ] = new VertexPositionNormalTexture( trf, nRight, tl );
+                CubeVertexData[ 31 ] = new VertexPositionNormalTexture( brf, nRight, bl );
+                CubeVertexData[ 32 ] = new VertexPositionNormalTexture( brb, nRight, br );
+                CubeVertexData[ 33 ] = new VertexPositionNormalTexture( trb, nRight, tr );
+                CubeVertexData[ 34 ] = new VertexPositionNormalTexture( trf, nRight, tl );
+                CubeVertexData[ 35 ] = new VertexPositionNormalTexture( brb, nRight, br );
 
-            buffer = new VertexBuffer( device, VertexPositionNormalTexture.VertexDeclaration, CubeMeshData.Length, BufferUsage.None );
-            buffer.SetData<VertexPositionNormalTexture>( CubeMeshData );
+                // create the vertex buffer
+                CubeVertices = new VertexBuffer( device, VertexPositionNormalTexture.VertexDeclaration, CubeVertexData.Length, BufferUsage.None );
+                CubeVertices.SetData<VertexPositionNormalTexture>( CubeVertexData );
+            }
         }
 
         /// <summary>
@@ -206,17 +214,17 @@ namespace Kyoob
         /// </summary>
         /// <param name="device">The device to draw to.</param>
         /// <param name="effect">The effect to use to draw this cube.</param>
-        public void Draw( GraphicsDevice device, Effect effect )
+        public void Draw( GraphicsDevice device, BaseEffect effect )
         {
-            // operate under assumption effect is a basic effect
-            ( (BasicEffect)effect ).World = World;
+            effect.World = World;
 
-            device.SetVertexBuffer( _vertices );
-            foreach ( EffectPass pass in effect.CurrentTechnique.Passes )
+            device.SetVertexBuffer( CubeVertices );
+            foreach ( EffectPass pass in effect.Effect.CurrentTechnique.Passes )
             {
                 pass.Apply();
                 device.DrawPrimitives( PrimitiveType.TriangleList, 0, CubeTriangleCount );
             }
+            device.SetVertexBuffer( null );
         }
     }
 }
