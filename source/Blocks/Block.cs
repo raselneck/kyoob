@@ -6,8 +6,6 @@ using Kyoob.Effects;
 /**
  * I separated the Block and Cube classes in case I ever
  * needed to use the Cube in some way that wasn't a block.
- * 
- * Later, blocks will have their own types.
  */
 
 namespace Kyoob.Blocks
@@ -50,6 +48,17 @@ namespace Kyoob.Blocks
             get
             {
                 return _cube.World;
+            }
+        }
+
+        /// <summary>
+        /// Gets this block's type.
+        /// </summary>
+        public BlockType Type
+        {
+            get
+            {
+                return _type;
             }
         }
 

@@ -142,8 +142,8 @@ namespace Kyoob.Blocks
                 Vector3 brb     = new Vector3(  0.5f, -0.5f,  0.5f );
 
                 // normal data
-                Vector3 nFront  = Vector3.Backward;
-                Vector3 nBack   = Vector3.Forward;
+                Vector3 nFront  = Vector3.Forward;
+                Vector3 nBack   = Vector3.Backward;
                 Vector3 nUp     = Vector3.Up;
                 Vector3 nDown   = Vector3.Down;
                 Vector3 nLeft   = Vector3.Left;

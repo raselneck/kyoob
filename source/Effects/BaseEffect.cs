@@ -80,6 +80,9 @@ namespace Kyoob.Effects
         public BaseEffect( Effect effect )
         {
             _effect = effect;
+            World = Matrix.Identity;
+            View = Matrix.Identity;
+            Projection = Matrix.Identity;
         }
     }
 }

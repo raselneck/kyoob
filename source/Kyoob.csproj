@@ -81,6 +81,7 @@
     <Compile Include="Blocks\Block.cs" />
     <Compile Include="Blocks\Chunk.cs" />
     <Compile Include="Blocks\Cube.cs" />
+    <Compile Include="Effects\PointLightEffect.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Effects\BaseEffect.cs" />
     <Compile Include="Effects\TextureEffect.cs" />

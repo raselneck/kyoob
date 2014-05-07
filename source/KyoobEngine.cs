@@ -20,7 +20,7 @@ namespace Kyoob
         private SpriteBatch _spriteBatch;
 
         private Camera _camera;
-        private TextureEffect _effect;
+        private PointLightEffect _effect;
         private List<Chunk> _chunks;
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace Kyoob
 
             _camera = new Camera( _device, Vector3.Zero, 0.0f, 0.0f );
 
-            _effect = new TextureEffect( Content.Load<Effect>( "fx/texture" ) );
+            _effect = new PointLightEffect( Content.Load<Effect>( "fx/camlight" ) );
 
             // load the textures
             BlockTextures textures = BlockTextures.GetInstance();
@@ -70,6 +70,9 @@ namespace Kyoob
             _chunks.Add( new Chunk( _device, new Vector3( 0.0f, 0.0f, 8.0f ) ) );
             _chunks.Add( new Chunk( _device, new Vector3( 8.0f, 0.0f, 0.0f ) ) );
             _chunks.Add( new Chunk( _device, new Vector3( 8.0f, 0.0f, 8.0f ) ) );
+            _chunks.Add( new Chunk( _device, new Vector3( 0.0f, 0.0f, -8.0f ) ) );
+            _chunks.Add( new Chunk( _device, new Vector3( -8.0f, 0.0f, 0.0f ) ) );
+            _chunks.Add( new Chunk( _device, new Vector3( -8.0f, 0.0f, -8.0f ) ) );
         }
 
         /// <summary>
@@ -89,6 +92,7 @@ namespace Kyoob
                 this.Exit();
 
             _camera.Update( gameTime );
+            _effect.LightPosition = _camera.Position;
 
             base.Update( gameTime );
         }
@@ -99,11 +103,10 @@ namespace Kyoob
         /// <param name="gameTime">Frame time information.</param>
         protected override void Draw( GameTime gameTime )
         {
-            _device.Clear( Color.CornflowerBlue );
+            _device.Clear( new Color( _effect.AmbientColor ) );
 
             _effect.Projection = _camera.Projection;
             _effect.View = _camera.View;
-
 
             // draw the chunks and time it
             Stopwatch watch = new Stopwatch();

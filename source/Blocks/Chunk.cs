@@ -41,11 +41,11 @@ namespace Kyoob.Blocks
             _blocks = new Block[ 16, 16, 16 ];
             _position = position;
 
-            // set our bounding box
-            _bounds = new BoundingBox(
-                new Vector3( position.X - 8.5f, position.Y - 8.5f, position.Z - 8.5f ),
-                new Vector3( position.X + 8.5f, position.Y + 8.5f, position.Z + 8.5f )
-            );
+            // set our bounding box (for some reason this one doesn't work)
+            //_bounds = new BoundingBox(
+            //    new Vector3( position.X - 8.5f, position.Y - 8.5f, position.Z - 8.5f ),
+            //    new Vector3( position.X + 8.5f, position.Y + 8.5f, position.Z + 8.5f )
+            //);
 
             for ( int x = 0, xx = (int)position.X - 8; x < 16; ++x, ++xx )
             {
@@ -59,6 +59,16 @@ namespace Kyoob.Blocks
                             _position.Y + yy,
                             _position.Z + zz
                         ), GetBlockType( xx, yy, zz ) );
+
+                        // add to our bounding box (or create it)
+                        if ( _bounds == null )
+                        {
+                            _bounds = _blocks[ 0, 0, 0 ].Bounds;
+                        }
+                        else
+                        {
+                            _bounds = BoundingBox.CreateMerged( _bounds, _blocks[ x, y, z ].Bounds );
+                        }
                     }
                 }
             }
