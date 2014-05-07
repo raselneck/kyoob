@@ -77,10 +77,12 @@
   <ItemGroup>
     <Compile Include="Blocks\BlockTextures.cs" />
     <Compile Include="Blocks\BlockType.cs" />
+    <Compile Include="Blocks\World.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="Blocks\Block.cs" />
     <Compile Include="Blocks\Chunk.cs" />
     <Compile Include="Blocks\Cube.cs" />
+    <Compile Include="CameraSettings.cs" />
     <Compile Include="Effects\PointLightEffect.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Effects\BaseEffect.cs" />

@@ -63,9 +63,7 @@ float4 PSFunc( VSOutput input ) : COLOR0
     float  dist     = distance( _lightPosition, input.WorldPos );
     float  att      = 1 - pow( clamp( dist / _lightAttenuation, 0.0, 1.0 ), _lightFalloff );
 
-    float3 light    = _ambientColor;
-    light += diffuse * att * _lightColor;
-
+    float3 light    = _ambientColor + diffuse * att * _lightColor;
     return float4( diffuseColor * light, 1.0 );
 }
 

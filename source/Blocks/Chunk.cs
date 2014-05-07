@@ -15,7 +15,7 @@ namespace Kyoob.Blocks
     {
         private LibNoise.Perlin _noise;
         private Block[ , , ] _blocks;
-        private List<Block> _visibleBlocks;
+        private List<Block> _exposedBlocks;
         private Vector3 _position;
         private BoundingBox _bounds;
 
@@ -27,6 +27,17 @@ namespace Kyoob.Blocks
             get
             {
                 return _bounds;
+            }
+        }
+
+        /// <summary>
+        /// Gets the coordinates of the center of the chunk.
+        /// </summary>
+        public Vector3 Center
+        {
+            get
+            {
+                return _position;
             }
         }
 
@@ -73,15 +84,15 @@ namespace Kyoob.Blocks
                 }
             }
 
-            BuildVisibleBlockList();
+            BuildExposedBlockList();
         }
 
         /// <summary>
-        /// Builds the visible block list.
+        /// Builds the exposed block list.
         /// </summary>
-        private void BuildVisibleBlockList()
+        private void BuildExposedBlockList()
         {
-            _visibleBlocks = new List<Block>();
+            _exposedBlocks = new List<Block>();
             for ( int x = 0; x < 16; ++x )
             {
                 for ( int y = 0; y < 16; ++y )
@@ -108,7 +119,7 @@ namespace Kyoob.Blocks
                             continue;
                         }
 
-                        _visibleBlocks.Add( _blocks[ x, y, z ] );
+                        _exposedBlocks.Add( _blocks[ x, y, z ] );
                     }
                 }
             }
@@ -159,6 +170,15 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Gets the list of exposed blocks.
+        /// </summary>
+        /// <returns></returns>
+        public List<Block> GetExposedBlocks()
+        {
+            return _exposedBlocks;
+        }
+
+        /// <summary>
         /// Draws this chunk.
         /// </summary>
         /// <param name="device">The device to draw to.</param>
@@ -166,29 +186,14 @@ namespace Kyoob.Blocks
         /// <param name="camera">The camera to use for culling.</param>
         public void Draw( GraphicsDevice device, BaseEffect effect, Camera camera )
         {
-            // don't even attempt to draw this if the camera can't see it
+            // don't even attempt to draw this if the camera can't see it (handles view distance)
             if ( !camera.CanSee( _bounds ) )
             {
                 return;
             }
 
-            // now draw each block only if it's visible
-            /*
-            for ( int x = 0; x < 16; ++x )
-            {
-                for ( int y = 0; y < 16; ++y )
-                {
-                    for ( int z = 0; z < 16; ++z )
-                    {
-                        //if ( camera.CanSee( _blocks[ x, y, z ].Bounds ) )
-                        //{
-                        //}
-                        _blocks[ x, y, z ].Draw( device, effect );
-                    }
-                }
-            }
-            */
-            foreach ( Block block in _visibleBlocks )
+            // only draw the visible blocks
+            foreach ( Block block in _exposedBlocks )
             {
                 block.Draw( device, effect );
             }

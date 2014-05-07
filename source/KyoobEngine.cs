@@ -8,6 +8,8 @@ using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
 using Kyoob.Effects;
 
+// http://gamedev.stackexchange.com/questions/22664/how-can-i-improve-rendering-speeds-of-a-voxel-minecraft-type-game
+
 namespace Kyoob
 {
     /// <summary>
@@ -21,7 +23,7 @@ namespace Kyoob
 
         private Camera _camera;
         private PointLightEffect _effect;
-        private List<Chunk> _chunks;
+        private World _world;
 
         /// <summary>
         /// Creates a new Kyoob engine.
@@ -55,24 +57,18 @@ namespace Kyoob
             _device = GraphicsDevice;
             _spriteBatch = new SpriteBatch( _device );
 
-            _camera = new Camera( _device, Vector3.Zero, 0.0f, 0.0f );
+            CameraSettings settings = new CameraSettings( _device );
+            _camera = new Camera( settings );
 
             _effect = new PointLightEffect( Content.Load<Effect>( "fx/camlight" ) );
+            _effect.LightAttenuation = 32.0f;
 
             // load the textures
             BlockTextures textures = BlockTextures.GetInstance();
             textures[ BlockType.Dirt ] = Content.Load<Texture2D>( "tex/dirt" );
             textures[ BlockType.Stone ] = Content.Load<Texture2D>( "tex/stone" );
 
-            // create some chunks
-            _chunks = new List<Chunk>();
-            _chunks.Add( new Chunk( _device, new Vector3( 0.0f, 0.0f, 0.0f ) ) );
-            _chunks.Add( new Chunk( _device, new Vector3( 0.0f, 0.0f, 8.0f ) ) );
-            _chunks.Add( new Chunk( _device, new Vector3( 8.0f, 0.0f, 0.0f ) ) );
-            _chunks.Add( new Chunk( _device, new Vector3( 8.0f, 0.0f, 8.0f ) ) );
-            _chunks.Add( new Chunk( _device, new Vector3( 0.0f, 0.0f, -8.0f ) ) );
-            _chunks.Add( new Chunk( _device, new Vector3( -8.0f, 0.0f, 0.0f ) ) );
-            _chunks.Add( new Chunk( _device, new Vector3( -8.0f, 0.0f, -8.0f ) ) );
+            _world = new World( _device, _effect );
         }
 
         /// <summary>
@@ -107,17 +103,7 @@ namespace Kyoob
 
             _effect.Projection = _camera.Projection;
             _effect.View = _camera.View;
-
-            // draw the chunks and time it
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
-            foreach ( Chunk chunk in _chunks )
-            {
-                chunk.Draw( _device, _effect, _camera );
-            }
-            watch.Stop();
-            Console.WriteLine( "Chunk draw time: {0:0.00}ms", watch.Elapsed.TotalMilliseconds );
-
+            _world.Draw( _camera );
 
             base.Draw( gameTime );
         }

@@ -11,7 +11,7 @@ namespace Kyoob
     /// </summary>
     public sealed class Camera
     {
-        private GraphicsDevice _device;
+        private CameraSettings _settings;
         private Matrix _view;
         private Matrix _projection;
         private BoundingFrustum _frustum;
@@ -55,24 +55,33 @@ namespace Kyoob
         }
 
         /// <summary>
+        /// Gets the camera's rotation.
+        /// </summary>
+        public Matrix Rotation
+        {
+            get
+            {
+                return Matrix.CreateFromYawPitchRoll( _yaw, _pitch, 0.0f );
+            }
+        }
+
+        /// <summary>
         /// Creates a new camera.
         /// </summary>
         /// <param name="device">The device to use.</param>
         /// <param name="position">The camera's initial position.</param>
         /// <param name="yaw">The camera's initial yaw.</param>
         /// <param name="pitch">The camera's initial pitch.</param>
-        public Camera( GraphicsDevice device, Vector3 position, float yaw, float pitch )
+        public Camera( CameraSettings settings )
         {
-            _device = device;
-            PresentationParameters pp = _device.PresentationParameters;
-            float aspect = (float)pp.BackBufferWidth / pp.BackBufferHeight;
+            _settings = settings;
 
-            _projection = Matrix.CreatePerspectiveFieldOfView( MathHelper.PiOver4, aspect, 0.01f, 128.0f );
+            _projection = _settings.GetProjection();
             _view = Matrix.Identity;
             _frustum = new BoundingFrustum( _view * _projection );
-            _position = position;
-            _yaw = yaw;
-            _pitch = pitch;
+            _position = _settings.InitialPosition;
+            _yaw = _settings.InitialYaw;
+            _pitch = _settings.InitialPitch;
 
             _lastMouse = Mouse.GetState();
         }
@@ -187,8 +196,7 @@ namespace Kyoob
             Rotate( dx * 0.0025f, dy * 0.0025f );
 
             // reset mouse
-            PresentationParameters pp = _device.PresentationParameters;
-            Mouse.SetPosition( pp.BackBufferWidth / 2, pp.BackBufferHeight / 2 );
+            Mouse.SetPosition( (int)_settings.WindowSize.X / 2, (int)_settings.WindowSize.Y / 2 );
             _lastMouse = Mouse.GetState();
         }
 
@@ -198,7 +206,7 @@ namespace Kyoob
         private void ApplyTranslations()
         {
             // calculate camera's rotation
-            Matrix rotation = Matrix.CreateFromYawPitchRoll( _yaw, _pitch, 0.0f );
+            Matrix rotation = Rotation;
 
             // translate based on rotation
             _translation = Vector3.Transform( _translation, rotation );
