@@ -4,6 +4,11 @@ Kyoob - XNA Voxel Engine
 For some reason I've always wanted to make a voxel engine, so I decided that
 I was going to finally start writing one. This is the result.
 
+Dependencies
+------------
+
+* [LibNoise for .NET](https://libnoisedotnet.codeplex.com/)
+
 License
 -------
 
