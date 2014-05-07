@@ -11,7 +11,7 @@ using Kyoob.Effects;
  * an effect's texture.
  */
 
-namespace Kyoob.Voxel
+namespace Kyoob.Blocks
 {
     /// <summary>
     /// A simple cube.

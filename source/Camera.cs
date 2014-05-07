@@ -61,7 +61,7 @@ namespace Kyoob
             PresentationParameters pp = _device.PresentationParameters;
             float aspect = (float)pp.BackBufferWidth / pp.BackBufferHeight;
 
-            _projection = Matrix.CreatePerspectiveFieldOfView( MathHelper.PiOver4, aspect, 0.01f, 500.0f );
+            _projection = Matrix.CreatePerspectiveFieldOfView( MathHelper.PiOver4, aspect, 0.01f, 128.0f );
             _view = Matrix.Identity;
             _frustum = new BoundingFrustum( _view * _projection );
             _position = position;
@@ -141,7 +141,7 @@ namespace Kyoob
         {
             MouseState mouse = Mouse.GetState();
             KeyboardState keyboard = Keyboard.GetState();
-            float units = (float)gameTime.ElapsedGameTime.TotalSeconds * 4.0f;
+            float units = (float)gameTime.ElapsedGameTime.TotalSeconds * 6.0f;
 
             // check if "sprinting"
             if ( keyboard.IsKeyDown( Keys.LeftShift ) )
@@ -206,7 +206,7 @@ namespace Kyoob
 
             // update view matrix and bounding frustum
             _view = Matrix.CreateLookAt( _position, target, up );
-            _frustum = new BoundingFrustum( _view * _projection * FrustumFix );
+            _frustum = new BoundingFrustum( _view * _projection );
         }
     }
 }

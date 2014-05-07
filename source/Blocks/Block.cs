@@ -10,7 +10,7 @@ using Kyoob.Effects;
  * Later, blocks will have their own types.
  */
 
-namespace Kyoob.Voxel
+namespace Kyoob.Blocks
 {
     /// <summary>
     /// A class containing block data.
@@ -18,6 +18,7 @@ namespace Kyoob.Voxel
     public sealed class Block
     {
         private Cube _cube;
+        private BlockType _type;
 
         /// <summary>
         /// Gets this block's position.
@@ -53,13 +54,25 @@ namespace Kyoob.Voxel
         }
 
         /// <summary>
+        /// Checks to see if this block is empty.
+        /// </summary>
+        public bool IsEmpty
+        {
+            get
+            {
+                return _type == BlockType.Air;
+            }
+        }
+
+        /// <summary>
         /// Creates a new block.
         /// </summary>
         /// <param name="device">The graphics device this block belongs on.</param>
         /// <param name="position">The block's position.</param>
-        public Block( GraphicsDevice device, Vector3 position )
+        public Block( GraphicsDevice device, Vector3 position, BlockType type )
         {
             _cube = new Cube( device, position );
+            _type = type;
         }
 
         /// <summary>
@@ -69,6 +82,13 @@ namespace Kyoob.Voxel
         /// <param name="effect">The effect to use to draw.</param>
         public void Draw( GraphicsDevice device, BaseEffect effect )
         {
+            // no need to draw if the block is empty
+            if ( IsEmpty )
+            {
+                return;
+            }
+
+            ( (TextureEffect)effect ).Texture = BlockTextures.GetInstance()[ _type ];
             _cube.Draw( device, effect );
         }
     }

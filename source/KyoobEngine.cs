@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Kyoob.Voxel;
+using Kyoob.Blocks;
 using Kyoob.Effects;
 
 namespace Kyoob
@@ -21,9 +21,7 @@ namespace Kyoob
 
         private Camera _camera;
         private TextureEffect _effect;
-        private Texture2D _texStone;
-        private Texture2D _texDirt;
-        private Chunk _chunk;
+        private List<Chunk> _chunks;
 
         /// <summary>
         /// Creates a new Kyoob engine.
@@ -61,10 +59,17 @@ namespace Kyoob
 
             _effect = new TextureEffect( Content.Load<Effect>( "fx/texture" ) );
 
-            _texStone = Content.Load<Texture2D>( "tex/stone" );
-            _texDirt = Content.Load<Texture2D>( "tex/dirt" );
+            // load the textures
+            BlockTextures textures = BlockTextures.GetInstance();
+            textures[ BlockType.Dirt ] = Content.Load<Texture2D>( "tex/dirt" );
+            textures[ BlockType.Stone ] = Content.Load<Texture2D>( "tex/stone" );
 
-            _chunk = new Chunk( _device, Vector3.Zero );
+            // create some chunks
+            _chunks = new List<Chunk>();
+            _chunks.Add( new Chunk( _device, new Vector3( 0.0f, 0.0f, 0.0f ) ) );
+            _chunks.Add( new Chunk( _device, new Vector3( 0.0f, 0.0f, 8.0f ) ) );
+            _chunks.Add( new Chunk( _device, new Vector3( 8.0f, 0.0f, 0.0f ) ) );
+            _chunks.Add( new Chunk( _device, new Vector3( 8.0f, 0.0f, 8.0f ) ) );
         }
 
         /// <summary>
@@ -94,16 +99,19 @@ namespace Kyoob
         /// <param name="gameTime">Frame time information.</param>
         protected override void Draw( GameTime gameTime )
         {
-            Stopwatch watch = new Stopwatch();
             _device.Clear( Color.CornflowerBlue );
 
             _effect.Projection = _camera.Projection;
             _effect.View = _camera.View;
-            _effect.Texture = _texDirt;
 
-            
+
+            // draw the chunks and time it
+            Stopwatch watch = new Stopwatch();
             watch.Start();
-            _chunk.Draw( _device, _effect, _camera );
+            foreach ( Chunk chunk in _chunks )
+            {
+                chunk.Draw( _device, _effect, _camera );
+            }
             watch.Stop();
             Console.WriteLine( "Chunk draw time: {0:0.00}ms", watch.Elapsed.TotalMilliseconds );
 

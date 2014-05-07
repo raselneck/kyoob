@@ -60,6 +60,9 @@
     <XnaCompressContent>true</XnaCompressContent>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="LibNoise">
+      <HintPath>..\references\LibNoise.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Xna.Framework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
     <Reference Include="Microsoft.Xna.Framework.Game, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
     <Reference Include="Microsoft.Xna.Framework.Graphics, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
@@ -72,10 +75,12 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Blocks\BlockTextures.cs" />
+    <Compile Include="Blocks\BlockType.cs" />
     <Compile Include="Camera.cs" />
-    <Compile Include="Voxel\Block.cs" />
-    <Compile Include="Voxel\Chunk.cs" />
-    <Compile Include="Voxel\Cube.cs" />
+    <Compile Include="Blocks\Block.cs" />
+    <Compile Include="Blocks\Chunk.cs" />
+    <Compile Include="Blocks\Cube.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Effects\BaseEffect.cs" />
     <Compile Include="Effects\TextureEffect.cs" />
