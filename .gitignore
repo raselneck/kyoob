@@ -1,0 +1,8 @@
+build/*
+source/obj/*
+content/obj/*
+content/bin/*
+*.user
+*.suo
+*.cache*
+.gitattributes
