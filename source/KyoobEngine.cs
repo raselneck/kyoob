@@ -70,13 +70,15 @@ namespace Kyoob
             CameraSettings settings = new CameraSettings( _device );
             _camera = new Camera( settings );
 
-            // load our effect
-            _effect = new PointLightEffect( Content.Load<Effect>( "fx/camlight" ) );
-            ( (PointLightEffect)_effect ).LightAttenuation = 32.0f;
-
             // load the textures
             _spriteSheet = new SpriteSheet( Content.Load<Texture2D>( "tex/spritesheet" ) );
 
+            // load our effect
+            _effect = new PointLightEffect( Content.Load<Effect>( "fx/camlight" ) );
+            ( (PointLightEffect)_effect ).LightAttenuation = 128.0f;
+            ( (TextureEffect)_effect ).Texture = _spriteSheet.Texture;
+
+            // create the world
             _world = new World( _device, _effect, _spriteSheet );
         }
 

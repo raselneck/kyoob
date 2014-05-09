@@ -79,6 +79,7 @@
   <ItemGroup>
     <Compile Include="Blocks\BlockType.cs" />
     <Compile Include="Blocks\CubeFace.cs" />
+    <Compile Include="Blocks\Index3D.cs" />
     <Compile Include="Blocks\SpriteSheet.cs" />
     <Compile Include="Blocks\World.cs" />
     <Compile Include="Camera.cs" />
