@@ -2,6 +2,8 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+#warning TODO : Create base effect for all types of light (ambient, diffuse, etc.)
+
 namespace Kyoob.Effects
 {
     /// <summary>

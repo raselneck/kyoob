@@ -13,7 +13,7 @@
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <XnaFrameworkVersion>v4.0</XnaFrameworkVersion>
     <XnaPlatform>Windows</XnaPlatform>
-    <XnaProfile>Reach</XnaProfile>
+    <XnaProfile>HiDef</XnaProfile>
     <XnaCrossPlatformGroupID>03473b58-bf55-4c20-a793-fb37ff2a5ffe</XnaCrossPlatformGroupID>
     <XnaOutputType>Game</XnaOutputType>
     <ApplicationIcon>KyoobIcon.ico</ApplicationIcon>
@@ -46,6 +46,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <PlatformTarget>x86</PlatformTarget>
     <XnaCompressContent>false</XnaCompressContent>
+    <DocumentationFile>..\build\debug\kyoob.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -58,6 +59,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <PlatformTarget>x86</PlatformTarget>
     <XnaCompressContent>true</XnaCompressContent>
+    <DocumentationFile>..\build\release\kyoob.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LibNoise">
@@ -75,8 +77,9 @@
     <Reference Include="System.Net" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Blocks\BlockTextures.cs" />
     <Compile Include="Blocks\BlockType.cs" />
+    <Compile Include="Blocks\CubeFace.cs" />
+    <Compile Include="Blocks\SpriteSheet.cs" />
     <Compile Include="Blocks\World.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="Blocks\Block.cs" />

@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
 using Kyoob.Effects;
 
-// http://gamedev.stackexchange.com/questions/22664/how-can-i-improve-rendering-speeds-of-a-voxel-minecraft-type-game
+#warning TODO : Try being able to draw individual octrees
 
 namespace Kyoob
 {
@@ -19,11 +19,18 @@ namespace Kyoob
     {
         private GraphicsDeviceManager _graphics;
         private GraphicsDevice _device;
+        private DepthStencilState _depthState;
         private SpriteBatch _spriteBatch;
+        private SpriteFont _font;
 
+        private SpriteSheet _spriteSheet;
         private Camera _camera;
-        private PointLightEffect _effect;
+        private BaseEffect _effect;
         private World _world;
+
+        private int _frameCount;
+        private int _fps;
+        private double _tickCount;
 
         /// <summary>
         /// Creates a new Kyoob engine.
@@ -55,20 +62,24 @@ namespace Kyoob
         protected override void LoadContent()
         {
             _device = GraphicsDevice;
+            _depthState = _device.DepthStencilState;
             _spriteBatch = new SpriteBatch( _device );
 
+            // load the font
+            _font = Content.Load<SpriteFont>( "font/arial" );
+
+            // create the camera
             CameraSettings settings = new CameraSettings( _device );
             _camera = new Camera( settings );
 
+            // load our effect
             _effect = new PointLightEffect( Content.Load<Effect>( "fx/camlight" ) );
-            _effect.LightAttenuation = 32.0f;
+            ( (PointLightEffect)_effect ).LightAttenuation = 32.0f;
 
             // load the textures
-            BlockTextures textures = BlockTextures.GetInstance();
-            textures[ BlockType.Dirt ] = Content.Load<Texture2D>( "tex/dirt" );
-            textures[ BlockType.Stone ] = Content.Load<Texture2D>( "tex/stone" );
+            _spriteSheet = new SpriteSheet( Content.Load<Texture2D>( "tex/spritesheet" ) );
 
-            _world = new World( _device, _effect );
+            _world = new World( _device, _effect, _spriteSheet );
         }
 
         /// <summary>
@@ -87,8 +98,9 @@ namespace Kyoob
             if ( Keyboard.GetState().IsKeyDown( Keys.Escape ) )
                 this.Exit();
 
+            // update the camera and effect
             _camera.Update( gameTime );
-            _effect.LightPosition = _camera.Position;
+            ( (PointLightEffect)_effect ).LightPosition = _camera.Position;
 
             base.Update( gameTime );
         }
@@ -99,11 +111,29 @@ namespace Kyoob
         /// <param name="gameTime">Frame time information.</param>
         protected override void Draw( GameTime gameTime )
         {
-            _device.Clear( new Color( _effect.AmbientColor ) );
+            // _device.Clear( Color.CornflowerBlue );
+            _device.Clear( new Color( ( (PointLightEffect)_effect ).AmbientColor ) );
 
+            // draw the world
             _effect.Projection = _camera.Projection;
             _effect.View = _camera.View;
             _world.Draw( _camera );
+
+            // draw FPS
+            _spriteBatch.Begin();
+            _spriteBatch.DrawString( _font, _fps + " FPS", Vector2.One * 10.0f, Color.White );
+            _spriteBatch.End();
+            _device.DepthStencilState = _depthState;
+
+            // update FPS data
+            ++_frameCount;
+            _tickCount += gameTime.ElapsedGameTime.TotalSeconds;
+            if ( _tickCount >= 1.0 )
+            {
+                _tickCount -= 1.0;
+                _fps = _frameCount;
+                _frameCount = 0;
+            }
 
             base.Draw( gameTime );
         }

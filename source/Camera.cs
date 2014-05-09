@@ -15,11 +15,14 @@ namespace Kyoob
         private Matrix _view;
         private Matrix _projection;
         private BoundingFrustum _frustum;
+        private BoundingSphere _viewSphere;
         private Vector3 _position;
         private Vector3 _translation;
+        private Vector3 _target;
         private float _yaw;
         private float _pitch;
         private MouseState _lastMouse;
+        private bool _updated;
 
         /// <summary>
         /// Gets the camera's view matrix.
@@ -66,12 +69,42 @@ namespace Kyoob
         }
 
         /// <summary>
+        /// Gets the camera's target direction.
+        /// </summary>
+        public Vector3 Target
+        {
+            get
+            {
+                return _target;
+            }
+        }
+
+        /// <summary>
+        /// Gets the camera's view frustum.
+        /// </summary>
+        public BoundingFrustum Frustum
+        {
+            get
+            {
+                return _frustum;
+            }
+        }
+
+        /// <summary>
+        /// Gets the camera's view sphere.
+        /// </summary>
+        public BoundingSphere ViewSphere
+        {
+            get
+            {
+                return _viewSphere;
+            }
+        }
+
+        /// <summary>
         /// Creates a new camera.
         /// </summary>
-        /// <param name="device">The device to use.</param>
-        /// <param name="position">The camera's initial position.</param>
-        /// <param name="yaw">The camera's initial yaw.</param>
-        /// <param name="pitch">The camera's initial pitch.</param>
+        /// <param name="settings">The camera settings to use.</param>
         public Camera( CameraSettings settings )
         {
             _settings = settings;
@@ -82,6 +115,7 @@ namespace Kyoob
             _position = _settings.InitialPosition;
             _yaw = _settings.InitialYaw;
             _pitch = _settings.InitialPitch;
+            _target = Vector3.Zero;
 
             _lastMouse = Mouse.GetState();
         }
@@ -105,6 +139,8 @@ namespace Kyoob
         /// <param name="dPitch">Delta pitch.</param>
         public void Rotate( float dYaw, float dPitch )
         {
+            _updated = true;
+
             _yaw += dYaw;
             _pitch += dPitch;
 
@@ -135,6 +171,8 @@ namespace Kyoob
         /// <param name="translation">The amount to move the camera by.</param>
         public void Move( Vector3 translation )
         {
+            _updated = true;
+
             _translation += translation;
         }
 
@@ -144,8 +182,12 @@ namespace Kyoob
         /// <param name="gameTime">Frame time information.</param>
         public void Update( GameTime gameTime )
         {
+            _updated = false;
             CheckUserInput( gameTime );
-            ApplyTranslations();
+            if ( _updated )
+            {
+                ApplyTransformations();
+            }
         }
 
         /// <summary>
@@ -201,9 +243,9 @@ namespace Kyoob
         }
 
         /// <summary>
-        /// Applies translations.
+        /// Applies transformations.
         /// </summary>
-        private void ApplyTranslations()
+        private void ApplyTransformations()
         {
             // calculate camera's rotation
             Matrix rotation = Rotation;
@@ -215,12 +257,13 @@ namespace Kyoob
 
             // get new target and up vectors
             Vector3 forward = Vector3.Transform( Vector3.Forward, rotation );
-            Vector3 target = _position + forward;
+            _target = _position + forward;
             Vector3 up = Vector3.Transform( Vector3.Up, rotation );
 
             // update view matrix and bounding frustum
-            _view = Matrix.CreateLookAt( _position, target, up );
+            _view = Matrix.CreateLookAt( _position, _target, up );
             _frustum = new BoundingFrustum( _view * _projection );
+            _viewSphere = new BoundingSphere( _position, _settings.ClipFar );
         }
     }
 }

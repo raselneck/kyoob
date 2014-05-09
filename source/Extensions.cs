@@ -31,6 +31,7 @@ namespace Kyoob
         /// </summary>
         /// <param name="box">The bounding box to draw.</param>
         /// <param name="device">The graphics device to draw to.</param>
+        /// <param name="effect">The effect to draw with.</param>
         public static void Draw( this BoundingBox box, GraphicsDevice device, BaseEffect effect )
         {
             Vector3[] corners = box.GetCorners();

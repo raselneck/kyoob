@@ -12,5 +12,9 @@ Dependencies
 License
 -------
 
-It's the MIT license. If you want the full text, check out [license.md](license.md).
-For a summary, check out [TL;DR legal](https://www.tldrlegal.com/l/mit).
+All code in this repo is licensed under the MIT license. If you want the full
+text, check out [license.md](license.md). For a summary, check out
+[TL;DR legal](https://www.tldrlegal.com/l/mit).
+
+Images are (currently) taken from Minecraft and used for educational purposes
+only. Nothing malicious was intended.

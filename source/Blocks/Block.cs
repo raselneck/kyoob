@@ -1,12 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Effects;
-
-/**
- * I separated the Block and Cube classes in case I ever
- * needed to use the Cube in some way that wasn't a block.
- */
 
 namespace Kyoob.Blocks
 {
@@ -15,8 +11,9 @@ namespace Kyoob.Blocks
     /// </summary>
     public sealed class Block
     {
-        private Cube _cube;
+        private Vector3 _position;
         private BlockType _type;
+        private bool _isActive;
 
         /// <summary>
         /// Gets this block's position.
@@ -25,29 +22,7 @@ namespace Kyoob.Blocks
         {
             get
             {
-                return _cube.Position;
-            }
-        }
-
-        /// <summary>
-        /// Gets this block's bounding box.
-        /// </summary>
-        public BoundingBox Bounds
-        {
-            get
-            {
-                return _cube.Bounds;
-            }
-        }
-
-        /// <summary>
-        /// Gets this cube's world matrix.
-        /// </summary>
-        public Matrix World
-        {
-            get
-            {
-                return _cube.World;
+                return _position;
             }
         }
 
@@ -59,6 +34,21 @@ namespace Kyoob.Blocks
             get
             {
                 return _type;
+            }
+        }
+
+        /// <summary>
+        /// Checks to see if this block is active or not.
+        /// </summary>
+        public bool IsActive
+        {
+            get
+            {
+                return _isActive;
+            }
+            set
+            {
+                _isActive = value;
             }
         }
 
@@ -76,29 +66,13 @@ namespace Kyoob.Blocks
         /// <summary>
         /// Creates a new block.
         /// </summary>
-        /// <param name="device">The graphics device this block belongs on.</param>
         /// <param name="position">The block's position.</param>
-        public Block( GraphicsDevice device, Vector3 position, BlockType type )
+        /// <param name="type">The block's type.</param>
+        public Block( Vector3 position, BlockType type )
         {
-            _cube = new Cube( device, position );
+            _position = position;
             _type = type;
-        }
-
-        /// <summary>
-        /// Draws this block.
-        /// </summary>
-        /// <param name="device">The device to draw to.</param>
-        /// <param name="effect">The effect to use to draw.</param>
-        public void Draw( GraphicsDevice device, BaseEffect effect )
-        {
-            // no need to draw if the block is empty
-            if ( IsEmpty )
-            {
-                return;
-            }
-
-            ( (TextureEffect)effect ).Texture = BlockTextures.GetInstance()[ _type ];
-            _cube.Draw( device, effect );
+            _isActive = !IsEmpty;
         }
     }
 }

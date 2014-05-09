@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Kyoob.Blocks
 {
@@ -10,8 +7,24 @@ namespace Kyoob.Blocks
     /// </summary>
     public enum BlockType
     {
+        /// <summary>
+        /// Air block.
+        /// </summary>
         Air,
+
+        /// <summary>
+        /// Dirt block.
+        /// </summary>
         Dirt,
-        Stone
+
+        /// <summary>
+        /// Stone block.
+        /// </summary>
+        Stone,
+
+        /// <summary>
+        /// Brick block.
+        /// </summary>
+        Brick
     }
 }
