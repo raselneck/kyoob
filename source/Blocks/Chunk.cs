@@ -7,9 +7,6 @@ using Kyoob.Effects;
 
 #pragma warning disable 1587 // I don't care about "invalid XML comment placement"
 
-#warning TODO : Make bounds calculation fixed
-#warning TODO : After bounds calculation is fixed, incorporate octree creation into same loop as block creation
-
 namespace Kyoob.Blocks
 {
     /// <summary>
@@ -20,7 +17,7 @@ namespace Kyoob.Blocks
         /// <summary>
         /// The magic number for chunks. (FourCC = 'CHNK')
         /// </summary>
-        private const int MagicNumber = 0x43484E4B;
+        private const int MagicNumber = 0x4B4E4843;
 
         private World _world;
         private Block[ , , ] _blocks;
@@ -29,6 +26,7 @@ namespace Kyoob.Blocks
         private VertexBuffer _buffer;
         private int _triangleCount;
         private int _vertexCount;
+        private Octree<Block> _octree;
 
         /// <summary>
         /// Gets this chunk's bounds.
@@ -53,17 +51,6 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Creates a chunk that can be loaded from a stream.
-        /// </summary>
-        /// <param name="world"></param>
-        /// <param name="position"></param>
-        /// <param name="blockData"></param>
-        /// <param name="activeData"></param>
-        private Chunk( World world, Vector3 position, BlockType[ , , ] blockData, bool[,,] activeData )
-        {
-        }
-
-        /// <summary>
         /// Creates a new chunk.
         /// </summary>
         /// <param name="world">The world this chunk is in.</param>
@@ -74,7 +61,11 @@ namespace Kyoob.Blocks
             _world = world;
             _blocks = new Block[ 16, 16, 16 ];
             _position = position;
-            _bounds = new BoundingBox( position, position );
+            _bounds = new BoundingBox(
+                new Vector3( _position.X - 8.5f, _position.Y - 8.5f, _position.Z - 8.5f ),
+                new Vector3( _position.X + 7.5f, _position.Y + 7.5f, _position.Z + 7.5f )
+            );
+            _octree = new Octree<Block>( _bounds );
 
             // create blocks
             for ( int x = 0; x < 16; ++x )
@@ -86,19 +77,59 @@ namespace Kyoob.Blocks
                         // create the block
                         Vector3 coords = _world.ChunkToWorld( _position, x, y, z );
                         _blocks[ x, y, z ] = new Block( coords, _world.GetBlockType( coords ) );
-
-                        // re-adjust our bounding box
-                        _bounds.Min.X = Math.Min( _bounds.Min.X, coords.X - 0.5f );
-                        _bounds.Min.Y = Math.Min( _bounds.Min.Y, coords.Y - 0.5f );
-                        _bounds.Min.Z = Math.Min( _bounds.Min.Z, coords.Z - 0.5f );
-                        _bounds.Max.X = Math.Max( _bounds.Max.X, coords.X + 0.5f );
-                        _bounds.Max.Y = Math.Max( _bounds.Max.Y, coords.Y + 0.5f );
-                        _bounds.Max.Z = Math.Max( _bounds.Max.Z, coords.Z + 0.5f );
                     }
                 }
             }
 
-            // build the voxel buffer
+            // build the voxel buffer and octree
+            BuildVoxelBuffer();
+        }
+
+        /// <summary>
+        /// Creates a chunk by loading data from a binary reader.
+        /// </summary>
+        /// <param name="bin">The reader.</param>
+        /// <param name="world">The world this chunk belongs in.</param>
+        private Chunk( BinaryReader bin, World world )
+        {
+            // set world and create blocks
+            _world = world;
+            _blocks = new Block[ 16, 16, 16 ];
+
+            // read position
+            _position = new Vector3(
+                bin.ReadSingle(),
+                bin.ReadSingle(),
+                bin.ReadSingle()
+            );
+
+            // create bounds and octree
+            _bounds = new BoundingBox(
+                new Vector3( _position.X - 8.5f, _position.Y - 8.5f, _position.Z - 8.5f ),
+                new Vector3( _position.X + 7.5f, _position.Y + 7.5f, _position.Z + 7.5f )
+            );
+            _octree = new Octree<Block>( _bounds );
+
+            // load each block
+            for ( int x = 0; x < 16; ++x )
+            {
+                for ( int y = 0; y < 16; ++y )
+                {
+                    for ( int z = 0; z < 16; ++z )
+                    {
+                        // load block data
+                        Vector3 coords = _world.ChunkToWorld( _position, x, y, z );
+                        BlockType type = (BlockType)bin.ReadByte();
+                        bool active = bin.ReadBoolean();
+
+                        // create the block
+                        _blocks[ x, y, z ] = new Block( coords, type );
+                        _blocks[ x, y, z ].IsActive = active;
+                    }
+                }
+            }
+
+            // finally, build our buffer and octree
             BuildVoxelBuffer();
         }
 
@@ -113,10 +144,11 @@ namespace Kyoob.Blocks
              * face's data for constructing our vertex buffer.
              */
 
-            // create our buffer data list and reset our counts
+            // create our buffer data list, reset our counts, and clear our octree
             List<VertexPositionNormalTexture> bufferData = new List<VertexPositionNormalTexture>();
             _triangleCount = 0;
             _vertexCount = 0;
+            _octree.Clear();
 
             // begin block iteration
             for ( int x = 0; x < 16; ++x )
@@ -130,6 +162,9 @@ namespace Kyoob.Blocks
                         {
                             continue;
                         }
+
+                        // add the block to the octree because it's active
+                        _octree.Add( _blocks[ x, y, z ] );
 
                         // check blocks in all directions
                         bool above = !IsEmpty( x, y + 1, z );
@@ -231,6 +266,8 @@ namespace Kyoob.Blocks
                 pass.Apply();
                 _world.GraphicsDevice.DrawPrimitives( PrimitiveType.TriangleList, 0, _triangleCount );
             }
+
+            // _octree.Draw( _world.GraphicsDevice, effect );
         }
 
         /// <summary>
@@ -270,7 +307,28 @@ namespace Kyoob.Blocks
         /// <returns></returns>
         public static Chunk ReadFrom( Stream stream, World world )
         {
+            // create our helper reader and make sure we find the chunk's magic number
+            BinaryReader bin = new BinaryReader( stream );
+            if ( bin.ReadInt32() != MagicNumber )
+            {
+                Console.WriteLine( "Encountered invalid chunk in stream." );
+                return null;
+            }
 
+            // now try to read the chunk
+            try
+            {
+                Chunk chunk = new Chunk( bin, world );
+                return chunk;
+            }
+            catch ( Exception ex )
+            {
+                Console.WriteLine( "Failed to load chunk." );
+                Console.WriteLine( "-- {0}", ex.Message );
+                Console.WriteLine( ex.StackTrace );
+
+                return null;
+            }
         }
     }
 }

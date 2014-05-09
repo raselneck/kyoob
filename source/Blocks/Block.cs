@@ -9,11 +9,12 @@ namespace Kyoob.Blocks
     /// <summary>
     /// A class containing block data.
     /// </summary>
-    public sealed class Block
+    public sealed class Block : IBoundable
     {
         private Vector3 _position;
         private BlockType _type;
         private bool _isActive;
+        private BoundingBox _bounds;
 
         /// <summary>
         /// Gets this block's position.
@@ -64,6 +65,17 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Gets the block's bounds.
+        /// </summary>
+        public BoundingBox Bounds
+        {
+            get
+            {
+                return _bounds;
+            }
+        }
+
+        /// <summary>
         /// Creates a new block.
         /// </summary>
         /// <param name="position">The block's position.</param>
@@ -73,6 +85,11 @@ namespace Kyoob.Blocks
             _position = position;
             _type = type;
             _isActive = !IsEmpty;
+
+            _bounds = new BoundingBox(
+                new Vector3( _position.X - 0.5f, _position.Y - 0.5f, _position.Z - 0.5f ),
+                new Vector3( _position.X + 0.5f, _position.Y + 0.5f, _position.Z + 0.5f )
+            );
         }
     }
 }

@@ -2,53 +2,17 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-#warning TODO : Create base effect for all types of light (ambient, diffuse, etc.; inherit from TextureEffect).
-
 namespace Kyoob.Effects
 {
     /// <summary>
     /// A wrapper for a simple point light effect.
     /// </summary>
-    public class PointLightEffect : TextureEffect
+    public class PointLightEffect : LightedEffect
     {
-        private Vector3 _ambientColor;
-        private Vector3 _diffuseColor;
         private Vector3 _lightColor;
         private Vector3 _lightPosition;
         private float _lightAttenuation;
         private float _lightFalloff;
-
-        /// <summary>
-        /// Gets or sets the world ambient color.
-        /// </summary>
-        public Vector3 AmbientColor
-        {
-            get
-            {
-                return _ambientColor;
-            }
-            set
-            {
-                _ambientColor = value;
-                Effect.Parameters[ "_ambientColor" ].SetValue( _ambientColor );
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the world diffuse color.
-        /// </summary>
-        public Vector3 DiffuseColor
-        {
-            get
-            {
-                return _diffuseColor;
-            }
-            set
-            {
-                _diffuseColor = value;
-                Effect.Parameters[ "_diffuseColor" ].SetValue( _diffuseColor );
-            }
-        }
 
         /// <summary>
         /// Gets or sets the light's color.
@@ -121,8 +85,6 @@ namespace Kyoob.Effects
         public PointLightEffect( Effect effect )
             : base( effect )
         {
-            AmbientColor     = new Vector3( 0.1f, 0.1f, 0.1f );
-            DiffuseColor     = new Vector3( 0.85f, 0.85f, 0.85f );
             LightColor       = new Vector3( 1.0f, 1.0f, 1.0f );
             LightPosition    = new Vector3( 0.0f, 0.0f, 0.0f );
             LightAttenuation = 10.0f;

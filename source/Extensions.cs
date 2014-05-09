@@ -34,6 +34,7 @@ namespace Kyoob
         /// <param name="effect">The effect to draw with.</param>
         public static void Draw( this BoundingBox box, GraphicsDevice device, BaseEffect effect )
         {
+            // get box corners and create primitives array
             Vector3[] corners = box.GetCorners();
             VertexPositionColorTexture[] primitives = new VertexPositionColorTexture[ corners.Length ];
 
@@ -43,7 +44,7 @@ namespace Kyoob
                 primitives[ i ] = new VertexPositionColorTexture( corners[ i ], Color.White, Vector2.Zero );
             }
 
-            // set world matrix and draw lines
+            // set world matrix and draw lines connecting corners
             effect.World = Matrix.Identity;
             foreach ( EffectPass pass in effect.Effect.CurrentTechnique.Passes )
             {

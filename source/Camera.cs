@@ -15,14 +15,12 @@ namespace Kyoob
         private Matrix _view;
         private Matrix _projection;
         private BoundingFrustum _frustum;
-        private BoundingSphere _viewSphere;
         private Vector3 _position;
         private Vector3 _translation;
         private Vector3 _target;
         private float _yaw;
         private float _pitch;
         private MouseState _lastMouse;
-        private bool _updated;
 
         /// <summary>
         /// Gets the camera's view matrix.
@@ -91,17 +89,6 @@ namespace Kyoob
         }
 
         /// <summary>
-        /// Gets the camera's view sphere.
-        /// </summary>
-        public BoundingSphere ViewSphere
-        {
-            get
-            {
-                return _viewSphere;
-            }
-        }
-
-        /// <summary>
         /// Creates a new camera.
         /// </summary>
         /// <param name="settings">The camera settings to use.</param>
@@ -139,8 +126,6 @@ namespace Kyoob
         /// <param name="dPitch">Delta pitch.</param>
         public void Rotate( float dYaw, float dPitch )
         {
-            _updated = true;
-
             _yaw += dYaw;
             _pitch += dPitch;
 
@@ -171,8 +156,6 @@ namespace Kyoob
         /// <param name="translation">The amount to move the camera by.</param>
         public void Move( Vector3 translation )
         {
-            _updated = true;
-
             _translation += translation;
         }
 
@@ -182,12 +165,8 @@ namespace Kyoob
         /// <param name="gameTime">Frame time information.</param>
         public void Update( GameTime gameTime )
         {
-            _updated = false;
             CheckUserInput( gameTime );
-            if ( _updated )
-            {
-                ApplyTransformations();
-            }
+            ApplyTransformations();
         }
 
         /// <summary>
@@ -263,7 +242,6 @@ namespace Kyoob
             // update view matrix and bounding frustum
             _view = Matrix.CreateLookAt( _position, _target, up );
             _frustum = new BoundingFrustum( _view * _projection );
-            _viewSphere = new BoundingSphere( _position, _settings.ClipFar );
         }
     }
 }

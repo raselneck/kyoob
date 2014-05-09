@@ -6,6 +6,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Effects;
 
+#warning TODO : Use something like Octree<BoundingBox> or Octree<Chunk> for querying visible sphere.
+
 namespace Kyoob.Blocks
 {
     /// <summary>
@@ -16,8 +18,8 @@ namespace Kyoob.Blocks
         /// <summary>
         /// The magic number for worlds. (FourCC = 'WRLD')
         /// </summary>
-        private const int MagicNumber = 0x57524C44;
-
+        private const int MagicNumber = 0x444C5257;
+        
         private Stopwatch _watch;
         private GraphicsDevice _device;
         private BaseEffect _effect;
@@ -56,6 +58,7 @@ namespace Kyoob.Blocks
         /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
         public World( GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet )
         {
+            // set variables
             _device = device;
             _effect = effect;
             _spriteSheet = spriteSheet;
@@ -64,14 +67,46 @@ namespace Kyoob.Blocks
             _noiseCache = new Dictionary<Vector3, double>();
 
             // add some arbitrary chunks
-            for ( int x = -5; x <= 5; ++x )
+            for ( int x = -3; x <= 3; ++x )
             {
-                for ( int y = -5; y <= 5; ++y )
+                for ( int y = -3; y <= 3; ++y )
                 {
-                    for ( int z = -5; z <= 5; ++z )
+                    for ( int z = -3; z <= 3; ++z )
                     {
                         CreateChunk( x, y, z );
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates a new world by loading it from a stream.
+        /// </summary>
+        /// <param name="bin">The binary reader to use when reading the world.</param>
+        /// <param name="device">The graphics device.</param>
+        /// <param name="effect">The base effect.</param>
+        /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
+        public World( BinaryReader bin, GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet )
+        {
+            // set variables
+            _device = device;
+            _effect = effect;
+            _spriteSheet = spriteSheet;
+            _chunks = new Dictionary<Index3D, Chunk>();
+            _noise = new LibNoise.Perlin();
+            _noiseCache = new Dictionary<Vector3, double>();
+
+            // load the seed and chunks
+            _noise.Seed = bin.ReadInt32();
+            int count = bin.ReadInt32();
+            for ( int i = 0; i < count; ++i )
+            {
+                // read the index, then the chunk, then record both
+                Index3D index = new Index3D( bin.ReadInt32(), bin.ReadInt32(), bin.ReadInt32() );
+                Chunk chunk = Chunk.ReadFrom( bin.BaseStream, this );
+                if ( chunk != null )
+                {
+                    _chunks.Add( index, chunk );
                 }
             }
         }
@@ -182,7 +217,7 @@ namespace Kyoob.Blocks
 
 
             _watch.Stop();
-            Console.WriteLine( "Draw {0} chunks: {1:0.00}ms", count, _watch.Elapsed.TotalMilliseconds );
+            // Console.WriteLine( "Draw {0} chunks: {1:0.00}ms", count, _watch.Elapsed.TotalMilliseconds );
         }
 
         /// <summary>
@@ -191,7 +226,56 @@ namespace Kyoob.Blocks
         /// <param name="stream">The stream.</param>
         public void SaveTo( Stream stream )
         {
+            // create helper writer and write the magic number
+            BinaryWriter bin = new BinaryWriter( stream );
+            bin.Write( MagicNumber );
 
+            // save the noise seed and number of chunks and then each chunk
+            bin.Write( _noise.Seed );
+            bin.Write( _chunks.Count );
+            foreach ( Index3D key in _chunks.Keys )
+            {
+                // write the index
+                bin.Write( key.X );
+                bin.Write( key.Y );
+                bin.Write( key.Z );
+
+                // write the chunk
+                _chunks[ key ].SaveTo( stream );
+            }
+        }
+
+        /// <summary>
+        /// Reads a world's data from a stream.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="device">The graphics device to create the world on.</param>
+        /// <param name="effect">The effect to use when rendering the world.</param>
+        /// <param name="spriteSheet">The world's sprite sheet.</param>
+        public static World ReadFrom( Stream stream, GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet )
+        {
+            // create our helper reader and make sure we find the world's magic number
+            BinaryReader bin = new BinaryReader( stream );
+            if ( bin.ReadInt32() != MagicNumber )
+            {
+                Console.WriteLine( "Encountered invalid world in stream." );
+                return null;
+            }
+
+            // now try to read the world
+            try
+            {
+                World world = new World( bin, device, effect, spriteSheet );
+                return world;
+            }
+            catch ( Exception ex )
+            {
+                Console.WriteLine( "Failed to load world." );
+                Console.WriteLine( "-- {0}", ex.Message );
+                Console.WriteLine( ex.StackTrace );
+
+                return null;
+            }
         }
     }
 }

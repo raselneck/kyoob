@@ -79,7 +79,9 @@
   <ItemGroup>
     <Compile Include="Blocks\BlockType.cs" />
     <Compile Include="Blocks\CubeFace.cs" />
+    <Compile Include="Blocks\IBoundable.cs" />
     <Compile Include="Blocks\Index3D.cs" />
+    <Compile Include="Blocks\Octree.cs" />
     <Compile Include="Blocks\SpriteSheet.cs" />
     <Compile Include="Blocks\World.cs" />
     <Compile Include="Camera.cs" />
@@ -87,6 +89,7 @@
     <Compile Include="Blocks\Chunk.cs" />
     <Compile Include="Blocks\Cube.cs" />
     <Compile Include="CameraSettings.cs" />
+    <Compile Include="Effects\LightedEffect.cs" />
     <Compile Include="Effects\PointLightEffect.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Effects\BaseEffect.cs" />
@@ -94,6 +97,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="KyoobEngine.cs" />
+    <Compile Include="Terminal.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="KyoobIcon.ico" />

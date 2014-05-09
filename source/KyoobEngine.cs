@@ -1,12 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
 using Kyoob.Effects;
+
+#warning TODO : Clean up code.
+#warning TODO : Finish terminal and convert Console.* to Terminal.*
+#warning TODO : Input manager. (?)
+#warning TODO : Add some more lighting stuff, maybe shadows.
+#warning TODO : Implement effect manager.
+#warning TODO : Create base terrain generator and implementations for worlds.
+#warning TODO : Motion blur. (?)
+#warning TODO : Physics.
 
 namespace Kyoob
 {
@@ -65,6 +75,7 @@ namespace Kyoob
 
             // load the font
             _font = Content.Load<SpriteFont>( "font/arial" );
+            Terminal.Font = _font;
 
             // create the camera
             CameraSettings settings = new CameraSettings( _device );
@@ -74,12 +85,27 @@ namespace Kyoob
             _spriteSheet = new SpriteSheet( Content.Load<Texture2D>( "tex/spritesheet" ) );
 
             // load our effect
-            _effect = new PointLightEffect( Content.Load<Effect>( "fx/camlight" ) );
-            ( (PointLightEffect)_effect ).LightAttenuation = 128.0f;
+            _effect = new TextureEffect( Content.Load<Effect>( "fx/texture" ) );
+            // ( (PointLightEffect)_effect ).LightAttenuation = 128.0f;
             ( (TextureEffect)_effect ).Texture = _spriteSheet.Texture;
 
-            // create the world
-            _world = new World( _device, _effect, _spriteSheet );
+            // create the world if we can't find the file
+            if ( File.Exists( "./worlds/test.dat" ) )
+            {
+                using ( Stream stream = File.OpenRead( "./worlds/test.dat" ) )
+                {
+                    _world = World.ReadFrom( stream, _device, _effect, _spriteSheet );
+                }
+                if ( _world != null )
+                {
+                    Console.WriteLine( "Loaded world from file." );
+                }
+            }
+            if ( _world == null )
+            {
+                _world = new World( _device, _effect, _spriteSheet );
+                Console.WriteLine( "Created new world." );
+            }
         }
 
         /// <summary>
@@ -87,6 +113,21 @@ namespace Kyoob
         /// </summary>
         protected override void UnloadContent()
         {
+            // create world directory
+            if ( !Directory.Exists( "./worlds/" ) )
+            {
+                Directory.CreateDirectory( "./worlds/" );
+            }
+
+            // only save the file if it doesn't exist
+            if ( !File.Exists( "./worlds/test.dat" ) )
+            {
+                // save the world
+                using ( Stream stream = File.Create( "./worlds/test.dat" ) )
+                {
+                    _world.SaveTo( stream );
+                }
+            }
         }
 
         /// <summary>
@@ -98,9 +139,11 @@ namespace Kyoob
             if ( Keyboard.GetState().IsKeyDown( Keys.Escape ) )
                 this.Exit();
 
-            // update the camera and effect
+
+            Terminal.Update( gameTime );
             _camera.Update( gameTime );
             ( (PointLightEffect)_effect ).LightPosition = _camera.Position;
+
 
             base.Update( gameTime );
         }
@@ -112,18 +155,22 @@ namespace Kyoob
         protected override void Draw( GameTime gameTime )
         {
             // _device.Clear( Color.CornflowerBlue );
-            _device.Clear( new Color( ( (PointLightEffect)_effect ).AmbientColor ) );
+            _device.Clear( new Color( ( (LightedEffect)_effect ).AmbientColor ) );
+
 
             // draw the world
             _effect.Projection = _camera.Projection;
             _effect.View = _camera.View;
             _world.Draw( _camera );
 
+
             // draw FPS
             _spriteBatch.Begin();
             _spriteBatch.DrawString( _font, _fps + " FPS", Vector2.One * 10.0f, Color.White );
+            Terminal.Draw( gameTime, _spriteBatch );
             _spriteBatch.End();
             _device.DepthStencilState = _depthState;
+
 
             // update FPS data
             ++_frameCount;
@@ -134,6 +181,7 @@ namespace Kyoob
                 _fps = _frameCount;
                 _frameCount = 0;
             }
+
 
             base.Draw( gameTime );
         }
