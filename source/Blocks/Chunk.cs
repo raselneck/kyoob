@@ -249,7 +249,7 @@ namespace Kyoob.Blocks
             }
             else if ( Math.Abs( value ) >= 0.50 && Math.Abs( value ) < 0.60 )
             {
-                type = BlockType.Brick;
+                type = BlockType.Sand;
             }
 
             return type;

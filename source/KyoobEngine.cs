@@ -8,8 +8,6 @@ using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
 using Kyoob.Effects;
 
-#warning TODO : Try being able to draw individual octrees
-
 namespace Kyoob
 {
     /// <summary>

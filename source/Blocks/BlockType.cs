@@ -23,8 +23,8 @@ namespace Kyoob.Blocks
         Stone,
 
         /// <summary>
-        /// Brick block.
+        /// Sand block.
         /// </summary>
-        Brick
+        Sand
     }
 }

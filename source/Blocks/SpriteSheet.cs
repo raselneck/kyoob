@@ -112,7 +112,7 @@ namespace Kyoob.Blocks
             _coords.Add( BlockType.Air, new Vector2( 0.0f, 0.0f ) );
             _coords.Add( BlockType.Dirt, new Vector2( TexCoordWidth, 0.0f ) );
             _coords.Add( BlockType.Stone, new Vector2( 0.0f, TexCoordHeight ) );
-            _coords.Add( BlockType.Brick, new Vector2( TexCoordWidth, TexCoordHeight ) );
+            _coords.Add( BlockType.Sand, new Vector2( TexCoordWidth, TexCoordHeight ) );
         }
 
         /// <summary>

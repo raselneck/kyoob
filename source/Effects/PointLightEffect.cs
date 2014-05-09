@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-#warning TODO : Create base effect for all types of light (ambient, diffuse, etc.)
+#warning TODO : Create base effect for all types of light (ambient, diffuse, etc.; inherit from TextureEffect).
 
 namespace Kyoob.Effects
 {
