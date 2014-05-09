@@ -51,7 +51,7 @@ namespace Kyoob.Effects
         public LightedEffect( Effect effect )
             : base( effect )
         {
-            AmbientColor = new Vector3( 0.1f, 0.1f, 0.1f );
+            AmbientColor = new Vector3( 0.05f, 0.05f, 0.05f );
             DiffuseColor = new Vector3( 0.85f, 0.85f, 0.85f );
         }
     }

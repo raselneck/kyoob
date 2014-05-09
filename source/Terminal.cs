@@ -10,8 +10,44 @@ namespace Kyoob
     /// </summary>
     public static class Terminal
     {
+        /// <summary>
+        /// Contains terminal message data.
+        /// </summary>
+        private struct TerminalMessage
+        {
+            /// <summary>
+            /// The terminal's message.
+            /// </summary>
+            public string Message;
+
+            /// <summary>
+            /// The remaining time that the terminal message has to be alive.
+            /// </summary>
+            public double RemainingTime;
+
+            /// <summary>
+            /// Creates a new terminal message.
+            /// </summary>
+            /// <param name="message">The message.</param>
+            public TerminalMessage( string message )
+            {
+                Message = message;
+                RemainingTime = 3.0; // default to 3 seconds
+            }
+        }
+
+        private static List<TerminalMessage> _messages;
+        private static GraphicsDevice _device;
+        private static DepthStencilState _depthState;
+        private static SpriteBatch _spriteBatch;
         private static SpriteFont _font;
         private static Color _fontColor;
+        private static float _lineHeight;
+
+        // FPS monitoring is delegated to the terminal
+        private static int _frameCount;
+        private static int _fps;
+        private static double _tickCount;
 
         /// <summary>
         /// Gets or sets the terminal's font.
@@ -25,6 +61,7 @@ namespace Kyoob
             set
             {
                 _font = value;
+                _lineHeight = _font.MeasureString( "F" ).Y;
             }
         }
 
@@ -50,6 +87,21 @@ namespace Kyoob
         {
             _font = null;
             _fontColor = Color.White;
+            _frameCount = 0;
+            _fps = 0;
+            _tickCount = 0;
+            _messages = new List<TerminalMessage>();
+        }
+
+        /// <summary>
+        /// Initializes the terminal to work with a game.
+        /// </summary>
+        /// <param name="game">The game.</param>
+        public static void Initialize( Game game )
+        {
+            _device = game.GraphicsDevice;
+            _depthState = _device.DepthStencilState;
+            _spriteBatch = new SpriteBatch( _device );
         }
 
         /// <summary>
@@ -58,17 +110,57 @@ namespace Kyoob
         /// <param name="gameTime">Frame time information.</param>
         public static void Update( GameTime gameTime )
         {
-
+            // update all messages, and remove them if they're dead
+            TerminalMessage message;
+            for ( int i = 0; i < _messages.Count; ++i )
+            {
+                message = _messages[ i ];
+                message.RemainingTime -= gameTime.ElapsedGameTime.TotalSeconds;
+                if ( _messages[ i ].RemainingTime <= 0.0 )
+                {
+                    _messages.RemoveAt( i );
+                    --i;
+                }
+                else
+                {
+                    _messages[ i ] = message;
+                }
+            }
         }
 
         /// <summary>
         /// Draws the terminal.
         /// </summary>
         /// <param name="gameTime">Frame time information.</param>
-        /// <param name="sb">The sprite batch to use to draw text.</param>
-        public static void Draw( GameTime gameTime, SpriteBatch sb )
+        public static void Draw( GameTime gameTime )
         {
+            // we can only draw if we have a font
+            if ( _font != null )
+            {
+                _spriteBatch.Begin();
+                
+                // draw FPS and then all messages from the top of the screen down
+                Vector2 position = new Vector2( 10.0f, 10.0f );
+                _spriteBatch.DrawString( _font, _fps + " FPS", position, _fontColor );
+                for ( int i = 0; i < _messages.Count; ++i )
+                {
+                    position.Y += _lineHeight;
+                    _spriteBatch.DrawString( _font, _messages[ i ].Message, position, _fontColor );
+                }
 
+                _spriteBatch.End();
+                _device.DepthStencilState = _depthState;
+            }
+
+            // update FPS data
+            ++_frameCount;
+            _tickCount += gameTime.ElapsedGameTime.TotalSeconds;
+            if ( _tickCount >= 1.0 )
+            {
+                _fps = _frameCount;
+                _frameCount = 0;
+                _tickCount -= 1.0;
+            }
         }
 
         /// <summary>
@@ -78,7 +170,26 @@ namespace Kyoob
         /// <param name="options">The formatting options.</param>
         public static void WriteLine( string message, params object[] options )
         {
+            // format the message
+            message = string.Format( message, options );
 
+            // if there are any new lines, then we need to split them up
+            if ( message.Contains( "\n" ) )
+            {
+                string[] parts = message.Split( '\n' );
+                for ( int i = 0; i < parts.Length; ++i )
+                {
+                    if ( !string.IsNullOrEmpty( parts[ i ] ) )
+                    {
+                        _messages.Add( new TerminalMessage( message ) );
+                    }
+                }
+            }
+            // otherwise we just add the message
+            else
+            {
+                _messages.Add( new TerminalMessage( message ) );
+            }
         }
     }
 }

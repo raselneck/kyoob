@@ -311,7 +311,7 @@ namespace Kyoob.Blocks
             BinaryReader bin = new BinaryReader( stream );
             if ( bin.ReadInt32() != MagicNumber )
             {
-                Console.WriteLine( "Encountered invalid chunk in stream." );
+                Terminal.WriteLine( "Encountered invalid chunk in stream." );
                 return null;
             }
 
@@ -323,9 +323,9 @@ namespace Kyoob.Blocks
             }
             catch ( Exception ex )
             {
-                Console.WriteLine( "Failed to load chunk." );
-                Console.WriteLine( "-- {0}", ex.Message );
-                Console.WriteLine( ex.StackTrace );
+                Terminal.WriteLine( "Failed to load chunk." );
+                Terminal.WriteLine( "-- {0}", ex.Message );
+                // Terminal.WriteLine( ex.StackTrace );
 
                 return null;
             }

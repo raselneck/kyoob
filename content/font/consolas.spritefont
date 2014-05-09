@@ -5,7 +5,7 @@
     <!--
     Modify this string to change the font that will be imported.
     -->
-    <FontName>Arial</FontName>
+    <FontName>Consolas</FontName>
 
     <!--
     Size is a float value, measured in points. Modify this value to change

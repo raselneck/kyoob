@@ -9,9 +9,9 @@ using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
 using Kyoob.Effects;
 
-#warning TODO : Clean up code.
-#warning TODO : Finish terminal and convert Console.* to Terminal.*
+#warning TODO : Add wireframe vertex buffer for chunks. (?)
 #warning TODO : Input manager. (?)
+#warning TODO : Add commands to terminal.
 #warning TODO : Add some more lighting stuff, maybe shadows.
 #warning TODO : Implement effect manager.
 #warning TODO : Create base terrain generator and implementations for worlds.
@@ -27,18 +27,11 @@ namespace Kyoob
     {
         private GraphicsDeviceManager _graphics;
         private GraphicsDevice _device;
-        private DepthStencilState _depthState;
-        private SpriteBatch _spriteBatch;
-        private SpriteFont _font;
 
         private SpriteSheet _spriteSheet;
         private Camera _camera;
         private BaseEffect _effect;
         private World _world;
-
-        private int _frameCount;
-        private int _fps;
-        private double _tickCount;
 
         /// <summary>
         /// Creates a new Kyoob engine.
@@ -70,24 +63,27 @@ namespace Kyoob
         protected override void LoadContent()
         {
             _device = GraphicsDevice;
-            _depthState = _device.DepthStencilState;
-            _spriteBatch = new SpriteBatch( _device );
 
-            // load the font
-            _font = Content.Load<SpriteFont>( "font/arial" );
-            Terminal.Font = _font;
+
+            // initialize the terminal
+            Terminal.Initialize( this );
+            Terminal.Font = Content.Load<SpriteFont>( "font/arial" );
+
 
             // create the camera
             CameraSettings settings = new CameraSettings( _device );
             _camera = new Camera( settings );
 
+
             // load the textures
             _spriteSheet = new SpriteSheet( Content.Load<Texture2D>( "tex/spritesheet" ) );
 
+
             // load our effect
-            _effect = new TextureEffect( Content.Load<Effect>( "fx/texture" ) );
+            _effect = new PointLightEffect( Content.Load<Effect>( "fx/camlight" ) );
             // ( (PointLightEffect)_effect ).LightAttenuation = 128.0f;
-            ( (TextureEffect)_effect ).Texture = _spriteSheet.Texture;
+            ( (PointLightEffect)_effect ).Texture = _spriteSheet.Texture;
+
 
             // create the world if we can't find the file
             if ( File.Exists( "./worlds/test.dat" ) )
@@ -98,13 +94,13 @@ namespace Kyoob
                 }
                 if ( _world != null )
                 {
-                    Console.WriteLine( "Loaded world from file." );
+                    Terminal.WriteLine( "Loaded world from file." );
                 }
             }
             if ( _world == null )
             {
                 _world = new World( _device, _effect, _spriteSheet );
-                Console.WriteLine( "Created new world." );
+                Terminal.WriteLine( "Created new world." );
             }
         }
 
@@ -118,6 +114,7 @@ namespace Kyoob
             {
                 Directory.CreateDirectory( "./worlds/" );
             }
+
 
             // only save the file if it doesn't exist
             if ( !File.Exists( "./worlds/test.dat" ) )
@@ -158,29 +155,11 @@ namespace Kyoob
             _device.Clear( new Color( ( (LightedEffect)_effect ).AmbientColor ) );
 
 
-            // draw the world
+            // draw the world and the terminal
             _effect.Projection = _camera.Projection;
             _effect.View = _camera.View;
-            _world.Draw( _camera );
-
-
-            // draw FPS
-            _spriteBatch.Begin();
-            _spriteBatch.DrawString( _font, _fps + " FPS", Vector2.One * 10.0f, Color.White );
-            Terminal.Draw( gameTime, _spriteBatch );
-            _spriteBatch.End();
-            _device.DepthStencilState = _depthState;
-
-
-            // update FPS data
-            ++_frameCount;
-            _tickCount += gameTime.ElapsedGameTime.TotalSeconds;
-            if ( _tickCount >= 1.0 )
-            {
-                _tickCount -= 1.0;
-                _fps = _frameCount;
-                _frameCount = 0;
-            }
+            _world.Draw( gameTime, _camera );
+            Terminal.Draw( gameTime );
 
 
             base.Draw( gameTime );

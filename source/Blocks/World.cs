@@ -28,6 +28,11 @@ namespace Kyoob.Blocks
         private Dictionary<Vector3, double> _noiseCache;
         private LibNoise.Perlin _noise;
 
+        private int     _drawCount  = 0;
+        private int     _frameCount = 0;
+        private double  _timeCount  = 0.0;
+        private double  _tickCount  = 0.0;
+
         /// <summary>
         /// Gets the graphics device this world is on.
         /// </summary>
@@ -67,11 +72,11 @@ namespace Kyoob.Blocks
             _noiseCache = new Dictionary<Vector3, double>();
 
             // add some arbitrary chunks
-            for ( int x = -3; x <= 3; ++x )
+            for ( int x = -2; x <= 2; ++x )
             {
-                for ( int y = -3; y <= 3; ++y )
+                for ( int y = -0; y <= 0; ++y )
                 {
-                    for ( int z = -3; z <= 3; ++z )
+                    for ( int z = -2; z <= 2; ++z )
                     {
                         CreateChunk( x, y, z );
                     }
@@ -197,13 +202,12 @@ namespace Kyoob.Blocks
         /// <summary>
         /// Draws the world.
         /// </summary>
+        /// <param name="gameTime">Frame time information.</param>
         /// <param name="camera">The current camera to use for getting visible tiles.</param>
-        public void Draw( Camera camera )
+        public void Draw( GameTime gameTime, Camera camera )
         {
+            // time how long it takes to draw our chunks
             _watch = Stopwatch.StartNew();
-
-
-            // set the sprite sheet texture and draw each chunk
             int count = 0;
             foreach ( Chunk chunk in _chunks.Values )
             {
@@ -214,10 +218,27 @@ namespace Kyoob.Blocks
                 chunk.Draw( _effect );
                 ++count;
             }
-
-
             _watch.Stop();
-            // Console.WriteLine( "Draw {0} chunks: {1:0.00}ms", count, _watch.Elapsed.TotalMilliseconds );
+
+
+            // update our average chunk drawing information
+            ++_frameCount;
+            _drawCount += count;
+            _tickCount += gameTime.ElapsedGameTime.TotalSeconds;
+            _timeCount += _watch.Elapsed.TotalMilliseconds;
+            if ( _tickCount >= 1.0 )
+            {
+                Terminal.WriteLine(
+                    "Avg {0:0.00} chunks in {1:0.00}ms",
+                    (float)_drawCount / _frameCount,
+                           _timeCount / _frameCount
+                );
+
+                _frameCount = 0;
+                _tickCount -= 1.0;
+                _timeCount = 0.0;
+                _drawCount = 0;
+            }
         }
 
         /// <summary>
@@ -258,7 +279,7 @@ namespace Kyoob.Blocks
             BinaryReader bin = new BinaryReader( stream );
             if ( bin.ReadInt32() != MagicNumber )
             {
-                Console.WriteLine( "Encountered invalid world in stream." );
+                Terminal.WriteLine( "Encountered invalid world in stream." );
                 return null;
             }
 
@@ -270,9 +291,9 @@ namespace Kyoob.Blocks
             }
             catch ( Exception ex )
             {
-                Console.WriteLine( "Failed to load world." );
-                Console.WriteLine( "-- {0}", ex.Message );
-                Console.WriteLine( ex.StackTrace );
+                Terminal.WriteLine( "Failed to load world." );
+                Terminal.WriteLine( "-- {0}", ex.Message );
+                // Terminal.WriteLine( ex.StackTrace );
 
                 return null;
             }
