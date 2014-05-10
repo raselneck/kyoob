@@ -13,6 +13,11 @@ Dependencies
   * I have no clue if this will work with MonoGame
 * [LibNoise for .NET](https://libnoisedotnet.codeplex.com/)
 
+Screenshot
+----------
+
+![ScreenShot](https://raw.githubusercontent.com/csdevrich/kyoob/master/screenshot.png)
+
 License
 -------
 
