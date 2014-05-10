@@ -13,7 +13,7 @@ namespace Kyoob.Blocks
         /// <summary>
         /// The number of expected sprites in the X direction.
         /// </summary>
-        private const int NumberOfSpritesX = 2;
+        private const int NumberOfSpritesX = 3;
 
         /// <summary>
         /// The number of expected sprites in the Y direction.
@@ -113,6 +113,7 @@ namespace Kyoob.Blocks
             _coords.Add( BlockType.Dirt, new Vector2( TexCoordWidth, 0.0f ) );
             _coords.Add( BlockType.Stone, new Vector2( 0.0f, TexCoordHeight ) );
             _coords.Add( BlockType.Sand, new Vector2( TexCoordWidth, TexCoordHeight ) );
+            _coords.Add( BlockType.Water, new Vector2( TexCoordWidth * 2, 0.0f ) );
         }
 
         /// <summary>

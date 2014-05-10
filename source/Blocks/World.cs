@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Effects;
+using Kyoob.Terrain;
 
 #warning TODO : Use something like Octree<BoundingBox> or Octree<Chunk> for querying visible sphere.
 
@@ -13,7 +15,7 @@ namespace Kyoob.Blocks
     /// <summary>
     /// Creates a new world.
     /// </summary>
-    public class World
+    public class World : IDisposable
     {
         /// <summary>
         /// The magic number for worlds. (FourCC = 'WRLD')
@@ -25,8 +27,7 @@ namespace Kyoob.Blocks
         private BaseEffect _effect;
         private SpriteSheet _spriteSheet;
         private Dictionary<Index3D, Chunk> _chunks;
-        private Dictionary<Vector3, double> _noiseCache;
-        private LibNoise.Perlin _noise;
+        private TerrainGenerator _terrain;
 
         private int     _drawCount  = 0;
         private int     _frameCount = 0;
@@ -56,32 +57,48 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Gets this world's terrain generator.
+        /// </summary>
+        public TerrainGenerator TerrainGenerator
+        {
+            get
+            {
+                return _terrain;
+            }
+        }
+
+        /// <summary>
         /// Creates a new world.
         /// </summary>
         /// <param name="device">The graphics device.</param>
         /// <param name="effect">The base effect.</param>
         /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
-        public World( GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet )
+        /// <param name="terrain">The terrain generator to use.</param>
+        public World( GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet, TerrainGenerator terrain )
         {
             // set variables
             _device = device;
             _effect = effect;
             _spriteSheet = spriteSheet;
             _chunks = new Dictionary<Index3D, Chunk>();
-            _noise = new LibNoise.Perlin();
-            _noiseCache = new Dictionary<Vector3, double>();
+            _terrain = terrain;
 
+            _creationThread = new Thread( new ThreadStart( ChunkCreationThread ) );
+            _creationThread.Start();
+
+            /*
             // add some arbitrary chunks
-            for ( int x = -2; x <= 2; ++x )
+            for ( int x = -3; x <= 3; ++x )
             {
-                for ( int y = -0; y <= 0; ++y )
+                for ( int y = -1; y <= 1; ++y )
                 {
-                    for ( int z = -2; z <= 2; ++z )
+                    for ( int z = -3; z <= 3; ++z )
                     {
                         CreateChunk( x, y, z );
                     }
                 }
             }
+            */
         }
 
         /// <summary>
@@ -91,18 +108,18 @@ namespace Kyoob.Blocks
         /// <param name="device">The graphics device.</param>
         /// <param name="effect">The base effect.</param>
         /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
-        public World( BinaryReader bin, GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet )
+        /// <param name="terrain">The terrain generator to use.</param>
+        private World( BinaryReader bin, GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet, TerrainGenerator terrain )
         {
             // set variables
             _device = device;
             _effect = effect;
             _spriteSheet = spriteSheet;
             _chunks = new Dictionary<Index3D, Chunk>();
-            _noise = new LibNoise.Perlin();
-            _noiseCache = new Dictionary<Vector3, double>();
+            _terrain = terrain;
 
-            // load the seed and chunks
-            _noise.Seed = bin.ReadInt32();
+            // load the seed (and terrain) and chunks
+            _terrain.Seed = bin.ReadInt32();
             int count = bin.ReadInt32();
             for ( int i = 0; i < count; ++i )
             {
@@ -124,22 +141,59 @@ namespace Kyoob.Blocks
         /// <param name="z">The Z index.</param>
         private void CreateChunk( int x, int y, int z )
         {
-            // create the chunk index
-            Index3D index = new Index3D( x, y, z );
-
-            // make sure we don't already have that chunk created
-            if ( _chunks.ContainsKey( index ) )
+            lock ( _chunks )
             {
-                return;
-            }
+                // create the chunk index
+                Index3D index = new Index3D( x, y, z );
 
-            // create the chunk and store it
-            Chunk chunk = new Chunk( this, new Vector3(
-                x * 8.0f,
-                y * 8.0f,
-                z * 8.0f
-            ) );
-            _chunks.Add( index, chunk );
+                // make sure we don't already have that chunk created
+                if ( _chunks.ContainsKey( index ) )
+                {
+                    return;
+                }
+
+                // create the chunk and store it
+                Chunk chunk = new Chunk( this, new Vector3(
+                    x * 8.0f,
+                    y * 8.0f,
+                    z * 8.0f
+                ) );
+                _chunks.Add( index, chunk );
+            }
+        }
+
+
+
+        private Thread _creationThread;
+
+        private void ChunkCreationThread()
+        {
+            for ( int x = -3; x <= 3; ++x )
+            {
+                for ( int y = -3; y <= 3; ++y )
+                {
+                    for ( int z = -3; z <= 3; ++z )
+                    {
+                        CreateChunk( x, y, z );
+                    }
+                }
+            }
+            _creationThread.Join( 1000 );
+            Terminal.WriteLine( Color.Cyan, "World creation complete." );
+        }
+
+
+
+        /// <summary>
+        /// Disposes of this world, including all of the chunks in it.
+        /// </summary>
+        public void Dispose()
+        {
+            _creationThread.Join( 10 );
+            foreach ( Chunk chunk in _chunks.Values )
+            {
+                chunk.Dispose();
+            }
         }
 
         /// <summary>
@@ -160,46 +214,6 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Gets the block type for world coordinates.
-        /// </summary>
-        /// <param name="world">The world coordinates.</param>
-        /// <returns></returns>
-        public BlockType GetBlockType( Vector3 world )
-        {
-            // modify the world position for noise values
-            world /= 17.0f;
-            double noise = 0.0;
-
-            // if we have the noise value cached, use that instead of generating the value
-            if ( _noiseCache.ContainsKey( world ) )
-            {
-                noise = _noiseCache[ world ];
-            }
-            else
-            {
-                noise = _noise.GetValue( world.X, world.Y, world.Z );
-                _noiseCache.Add( world, noise );
-            }
-
-            // just some arbitrary values
-            BlockType type = BlockType.Air;
-            if ( Math.Abs( noise ) >= 0.60 )
-            {
-                type = BlockType.Dirt;
-            }
-            else if ( Math.Abs( noise ) >= 0.40 && Math.Abs( noise ) < 0.50 )
-            {
-                type = BlockType.Stone;
-            }
-            else if ( Math.Abs( noise ) >= 0.50 && Math.Abs( noise ) < 0.60 )
-            {
-                type = BlockType.Sand;
-            }
-
-            return type;
-        }
-
-        /// <summary>
         /// Draws the world.
         /// </summary>
         /// <param name="gameTime">Frame time information.</param>
@@ -209,14 +223,17 @@ namespace Kyoob.Blocks
             // time how long it takes to draw our chunks
             _watch = Stopwatch.StartNew();
             int count = 0;
-            foreach ( Chunk chunk in _chunks.Values )
+            lock ( _chunks )
             {
-                if ( !camera.CanSee( chunk.Bounds ) )
+                foreach ( Chunk chunk in _chunks.Values )
                 {
-                    continue;
+                    if ( !camera.CanSee( chunk.Bounds ) )
+                    {
+                        continue;
+                    }
+                    chunk.Draw( _effect );
+                    ++count;
                 }
-                chunk.Draw( _effect );
-                ++count;
             }
             _watch.Stop();
 
@@ -228,8 +245,8 @@ namespace Kyoob.Blocks
             _timeCount += _watch.Elapsed.TotalMilliseconds;
             if ( _tickCount >= 1.0 )
             {
-                Terminal.WriteLine(
-                    "Avg {0:0.00} chunks in {1:0.00}ms",
+                Terminal.WriteLine( Color.Yellow,
+                    "{0:0.00} chunks in {1:0.00}ms",
                     (float)_drawCount / _frameCount,
                            _timeCount / _frameCount
                 );
@@ -252,7 +269,7 @@ namespace Kyoob.Blocks
             bin.Write( MagicNumber );
 
             // save the noise seed and number of chunks and then each chunk
-            bin.Write( _noise.Seed );
+            bin.Write( _terrain.Seed );
             bin.Write( _chunks.Count );
             foreach ( Index3D key in _chunks.Keys )
             {
@@ -273,26 +290,27 @@ namespace Kyoob.Blocks
         /// <param name="device">The graphics device to create the world on.</param>
         /// <param name="effect">The effect to use when rendering the world.</param>
         /// <param name="spriteSheet">The world's sprite sheet.</param>
-        public static World ReadFrom( Stream stream, GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet )
+        /// <param name="terrain">The terrain generator to use.</param>
+        public static World ReadFrom( Stream stream, GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet, TerrainGenerator terrain )
         {
             // create our helper reader and make sure we find the world's magic number
             BinaryReader bin = new BinaryReader( stream );
             if ( bin.ReadInt32() != MagicNumber )
             {
-                Terminal.WriteLine( "Encountered invalid world in stream." );
+                Terminal.WriteLine( Color.Red, "Encountered invalid world in stream." );
                 return null;
             }
 
             // now try to read the world
             try
             {
-                World world = new World( bin, device, effect, spriteSheet );
+                World world = new World( bin, device, effect, spriteSheet, terrain );
                 return world;
             }
             catch ( Exception ex )
             {
-                Terminal.WriteLine( "Failed to load world." );
-                Terminal.WriteLine( "-- {0}", ex.Message );
+                Terminal.WriteLine( Color.Red, "Failed to load world." );
+                Terminal.WriteLine( Color.Red, "-- {0}", ex.Message );
                 // Terminal.WriteLine( ex.StackTrace );
 
                 return null;

@@ -5,14 +5,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Effects;
 
-#pragma warning disable 1587 // I don't care about "invalid XML comment placement"
+#pragma warning disable 1587 // disable "invalid XML comment placement"
 
 namespace Kyoob.Blocks
 {
     /// <summary>
     /// A data structure containing a chunk of blocks.
     /// </summary>
-    public sealed class Chunk
+    public sealed class Chunk : IDisposable
     {
         /// <summary>
         /// The magic number for chunks. (FourCC = 'CHNK')
@@ -76,7 +76,8 @@ namespace Kyoob.Blocks
                     {
                         // create the block
                         Vector3 coords = _world.ChunkToWorld( _position, x, y, z );
-                        _blocks[ x, y, z ] = new Block( coords, _world.GetBlockType( coords ) );
+                        BlockType type = _world.TerrainGenerator.GetBlockType( coords );
+                        _blocks[ x, y, z ] = new Block( coords, type );
                     }
                 }
             }
@@ -222,8 +223,11 @@ namespace Kyoob.Blocks
             {
                 _buffer.Dispose();
             }
-            _buffer = new VertexBuffer( _world.GraphicsDevice, VertexPositionNormalTexture.VertexDeclaration, _vertexCount, BufferUsage.None );
-            _buffer.SetData<VertexPositionNormalTexture>( bufferData.ToArray() );
+            if ( _vertexCount > 0 )
+            {
+                _buffer = new VertexBuffer( _world.GraphicsDevice, VertexPositionNormalTexture.VertexDeclaration, _vertexCount, BufferUsage.None );
+                _buffer.SetData<VertexPositionNormalTexture>( bufferData.ToArray() );
+            }
         }
 
         /// <summary>
@@ -250,7 +254,19 @@ namespace Kyoob.Blocks
         {
             // get the world block type
             Vector3 coords = _world.ChunkToWorld( _position, x, y, z );
-            return _world.GetBlockType( coords ) == BlockType.Air;
+            return _world.TerrainGenerator.GetBlockType( coords ) == BlockType.Air;
+        }
+
+        /// <summary>
+        /// Disposes of this chunk.
+        /// </summary>
+        public void Dispose()
+        {
+            if ( _buffer != null )
+            {
+                _buffer.Dispose();
+                _buffer = null;
+            }
         }
 
         /// <summary>
@@ -259,12 +275,15 @@ namespace Kyoob.Blocks
         /// <param name="effect">The effect to use to draw.</param>
         public void Draw( BaseEffect effect )
         {
-            // draw our vertex buffer
-            _world.GraphicsDevice.SetVertexBuffer( _buffer );
-            foreach ( EffectPass pass in effect.Effect.CurrentTechnique.Passes )
+            if ( _buffer != null )
             {
-                pass.Apply();
-                _world.GraphicsDevice.DrawPrimitives( PrimitiveType.TriangleList, 0, _triangleCount );
+                // draw our vertex buffer
+                _world.GraphicsDevice.SetVertexBuffer( _buffer );
+                foreach ( EffectPass pass in effect.Effect.CurrentTechnique.Passes )
+                {
+                    pass.Apply();
+                    _world.GraphicsDevice.DrawPrimitives( PrimitiveType.TriangleList, 0, _triangleCount );
+                }
             }
 
             // _octree.Draw( _world.GraphicsDevice, effect );
@@ -311,7 +330,7 @@ namespace Kyoob.Blocks
             BinaryReader bin = new BinaryReader( stream );
             if ( bin.ReadInt32() != MagicNumber )
             {
-                Terminal.WriteLine( "Encountered invalid chunk in stream." );
+                Terminal.WriteLine( Color.Red, "Encountered invalid chunk in stream." );
                 return null;
             }
 
@@ -323,8 +342,8 @@ namespace Kyoob.Blocks
             }
             catch ( Exception ex )
             {
-                Terminal.WriteLine( "Failed to load chunk." );
-                Terminal.WriteLine( "-- {0}", ex.Message );
+                Terminal.WriteLine( Color.Red, "Failed to load chunk." );
+                Terminal.WriteLine( Color.Red, "-- {0}", ex.Message );
                 // Terminal.WriteLine( ex.StackTrace );
 
                 return null;

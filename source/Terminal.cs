@@ -26,11 +26,17 @@ namespace Kyoob
             public double RemainingTime;
 
             /// <summary>
+            /// The message's text color.
+            /// </summary>
+            public Color TextColor;
+
+            /// <summary>
             /// Creates a new terminal message.
             /// </summary>
             /// <param name="message">The message.</param>
-            public TerminalMessage( string message )
+            public TerminalMessage( Color color, string message )
             {
+                TextColor = color;
                 Message = message;
                 RemainingTime = 3.0; // default to 3 seconds
             }
@@ -41,7 +47,6 @@ namespace Kyoob
         private static DepthStencilState _depthState;
         private static SpriteBatch _spriteBatch;
         private static SpriteFont _font;
-        private static Color _fontColor;
         private static float _lineHeight;
 
         // FPS monitoring is delegated to the terminal
@@ -66,27 +71,11 @@ namespace Kyoob
         }
 
         /// <summary>
-        /// Gets or sets the terminal's font color.
-        /// </summary>
-        public static Color FontColor
-        {
-            get
-            {
-                return _fontColor;
-            }
-            set
-            {
-                _fontColor = value;
-            }
-        }
-
-        /// <summary>
         /// Static terminal initialization.
         /// </summary>
         static Terminal()
         {
             _font = null;
-            _fontColor = Color.White;
             _frameCount = 0;
             _fps = 0;
             _tickCount = 0;
@@ -141,11 +130,11 @@ namespace Kyoob
                 
                 // draw FPS and then all messages from the top of the screen down
                 Vector2 position = new Vector2( 10.0f, 10.0f );
-                _spriteBatch.DrawString( _font, _fps + " FPS", position, _fontColor );
+                _spriteBatch.DrawString( _font, _fps + " FPS", position, Color.White );
                 for ( int i = 0; i < _messages.Count; ++i )
                 {
                     position.Y += _lineHeight;
-                    _spriteBatch.DrawString( _font, _messages[ i ].Message, position, _fontColor );
+                    _spriteBatch.DrawString( _font, _messages[ i ].Message, position, _messages[ i ].TextColor );
                 }
 
                 _spriteBatch.End();
@@ -166,29 +155,33 @@ namespace Kyoob
         /// <summary>
         /// Writes a message to the terminal.
         /// </summary>
+        /// <param name="color">The color to display the message in.</param>
         /// <param name="message">The string message.</param>
         /// <param name="options">The formatting options.</param>
-        public static void WriteLine( string message, params object[] options )
+        public static void WriteLine( Color color, string message, params object[] options )
         {
-            // format the message
-            message = string.Format( message, options );
-
-            // if there are any new lines, then we need to split them up
-            if ( message.Contains( "\n" ) )
+            lock ( _messages )
             {
-                string[] parts = message.Split( '\n' );
-                for ( int i = 0; i < parts.Length; ++i )
+                // format the message
+                message = string.Format( message, options );
+
+                // if there are any new lines, then we need to split them up
+                if ( message.Contains( "\n" ) )
                 {
-                    if ( !string.IsNullOrEmpty( parts[ i ] ) )
+                    string[] parts = message.Split( '\n' );
+                    for ( int i = 0; i < parts.Length; ++i )
                     {
-                        _messages.Add( new TerminalMessage( message ) );
+                        if ( !string.IsNullOrEmpty( parts[ i ] ) )
+                        {
+                            _messages.Add( new TerminalMessage( color, message ) );
+                        }
                     }
                 }
-            }
-            // otherwise we just add the message
-            else
-            {
-                _messages.Add( new TerminalMessage( message ) );
+                // otherwise we just add the message
+                else
+                {
+                    _messages.Add( new TerminalMessage( color, message ) );
+                }
             }
         }
     }

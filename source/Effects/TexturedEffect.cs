@@ -7,7 +7,7 @@ namespace Kyoob.Effects
     /// <summary>
     /// A wrapper for a simple texturing effect.
     /// </summary>
-    public class TextureEffect : BaseEffect
+    public class TexturedEffect : BaseEffect
     {
         private Texture2D _texture;
 
@@ -31,7 +31,7 @@ namespace Kyoob.Effects
         /// Creates a new texturing effect wrapper.
         /// </summary>
         /// <param name="effect">The effect to wrap.</param>
-        public TextureEffect( Effect effect )
+        public TexturedEffect( Effect effect )
             : base( effect )
         {
             Texture = null;

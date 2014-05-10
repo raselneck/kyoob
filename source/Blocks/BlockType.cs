@@ -25,6 +25,11 @@ namespace Kyoob.Blocks
         /// <summary>
         /// Sand block.
         /// </summary>
-        Sand
+        Sand,
+
+        /// <summary>
+        /// Water block.
+        /// </summary>
+        Water
     }
 }

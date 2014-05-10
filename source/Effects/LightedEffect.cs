@@ -7,7 +7,7 @@ namespace Kyoob.Effects
     /// <summary>
     /// Base class for any effect that uses lights.
     /// </summary>
-    public abstract class LightedEffect : TextureEffect
+    public abstract class LightedEffect : TexturedEffect
     {
         private Vector3 _ambientColor;
         private Vector3 _diffuseColor;

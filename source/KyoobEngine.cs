@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
 using Kyoob.Effects;
+using Kyoob.Terrain;
 
 #warning TODO : Add wireframe vertex buffer for chunks. (?)
 #warning TODO : Input manager. (?)
@@ -81,26 +82,31 @@ namespace Kyoob
 
             // load our effect
             _effect = new PointLightEffect( Content.Load<Effect>( "fx/camlight" ) );
-            // ( (PointLightEffect)_effect ).LightAttenuation = 128.0f;
-            ( (PointLightEffect)_effect ).Texture = _spriteSheet.Texture;
+            ( (PointLightEffect)_effect ).LightAttenuation = 128.0f;
+            ( (TexturedEffect)_effect ).Texture = _spriteSheet.Texture;
+
+
+            // create a planet terrain generator
+            TerrainGenerator terrain = new PerlinTerrain( 0 );
 
 
             // create the world if we can't find the file
-            if ( File.Exists( "./worlds/test.dat" ) )
+            const string WorldFile = "./worlds/test.dat";
+            if ( File.Exists( WorldFile ) )
             {
-                using ( Stream stream = File.OpenRead( "./worlds/test.dat" ) )
+                using ( Stream stream = File.OpenRead( WorldFile ) )
                 {
-                    _world = World.ReadFrom( stream, _device, _effect, _spriteSheet );
+                    _world = World.ReadFrom( stream, _device, _effect, _spriteSheet, terrain );
                 }
                 if ( _world != null )
                 {
-                    Terminal.WriteLine( "Loaded world from file." );
+                    Terminal.WriteLine( Color.Green, "Loaded world from file." );
                 }
             }
             if ( _world == null )
             {
-                _world = new World( _device, _effect, _spriteSheet );
-                Terminal.WriteLine( "Created new world." );
+                _world = new World( _device, _effect, _spriteSheet, terrain );
+                Terminal.WriteLine( Color.Red, "Created new world." );
             }
         }
 
@@ -116,6 +122,7 @@ namespace Kyoob
             }
 
 
+            /*
             // only save the file if it doesn't exist
             if ( !File.Exists( "./worlds/test.dat" ) )
             {
@@ -125,6 +132,9 @@ namespace Kyoob
                     _world.SaveTo( stream );
                 }
             }
+            */
+
+            _world.Dispose();
         }
 
         /// <summary>

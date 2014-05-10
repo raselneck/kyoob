@@ -37,10 +37,15 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="fx\texture.fx">
+    <Compile Include="fx\texture.hlsl">
       <Name>texture</Name>
       <Importer>EffectImporter</Importer>
       <Processor>EffectProcessor</Processor>
+    </Compile>
+    <Compile Include="tex\water.png">
+      <Name>water</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -51,7 +56,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="fx\camlight.fx">
+    <Compile Include="fx\camlight.hlsl">
       <Name>camlight</Name>
       <Importer>EffectImporter</Importer>
       <Processor>EffectProcessor</Processor>
