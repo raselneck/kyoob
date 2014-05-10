@@ -99,7 +99,6 @@
     <Compile Include="KyoobEngine.cs" />
     <Compile Include="Terminal.cs" />
     <Compile Include="Terrain\PerlinTerrain.cs" />
-    <Compile Include="Terrain\PlanetTerrain.cs" />
     <Compile Include="Terrain\TerrainGenerator.cs" />
   </ItemGroup>
   <ItemGroup>

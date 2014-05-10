@@ -109,11 +109,11 @@ namespace Kyoob.Blocks
             _texture = texture;
 
             _coords = new Dictionary<BlockType, Vector2>();
-            _coords.Add( BlockType.Air, new Vector2( 0.0f, 0.0f ) );
-            _coords.Add( BlockType.Dirt, new Vector2( TexCoordWidth, 0.0f ) );
-            _coords.Add( BlockType.Stone, new Vector2( 0.0f, TexCoordHeight ) );
-            _coords.Add( BlockType.Sand, new Vector2( TexCoordWidth, TexCoordHeight ) );
-            _coords.Add( BlockType.Water, new Vector2( TexCoordWidth * 2, 0.0f ) );
+            _coords.Add( BlockType.Air,     new Vector2( 0.0f,              0.0f ) );
+            _coords.Add( BlockType.Dirt,    new Vector2( TexCoordWidth,     0.0f ) );
+            _coords.Add( BlockType.Stone,   new Vector2( 0.0f,              TexCoordHeight ) );
+            _coords.Add( BlockType.Sand,    new Vector2( TexCoordWidth,     TexCoordHeight ) );
+            _coords.Add( BlockType.Water,   new Vector2( TexCoordWidth * 2, 0.0f ) );
         }
 
         /// <summary>

@@ -2,6 +2,8 @@
 using Microsoft.Xna.Framework;
 using Kyoob.Blocks;
 
+#warning TODO : Improve this so it actually looks like terrain.
+
 namespace Kyoob.Terrain
 {
     /// <summary>
@@ -39,36 +41,13 @@ namespace Kyoob.Terrain
         }
 
         /// <summary>
-        /// Queries the Perlin noise module.
-        /// </summary>
-        /// <param name="x">The X coordinate.</param>
-        /// <param name="y">The Y coordinate.</param>
-        /// <param name="z">The Z coordinate.</param>
-        /// <param name="scale">The scale.</param>
-        /// <param name="height">The height modifier.</param>
-        /// <param name="power">The power.</param>
-        /// <returns></returns>
-        private double QueryNoise( double x, double y, double z, double scale, double height, double power )
-        {
-            double noise = _noise.GetValue( x / scale, y / scale, z / scale );
-            noise *= height;
-
-            if ( power != 0 )
-            {
-                noise = Math.Pow( noise, power );
-            }
-
-            return noise;
-        }
-
-        /// <summary>
         /// Gets the block type for the given world coordinates.
         /// </summary>
         /// <param name="position">The position in the world.</param>
         /// <returns></returns>
         public override BlockType GetBlockType( Vector3 position )
         {
-            position /= 33.0f;
+            position /= 23.0f;
             double value = _noise.GetValue( position.X, position.Y, position.Z );
             value = Math.Abs( value );
 

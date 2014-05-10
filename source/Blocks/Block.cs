@@ -39,7 +39,7 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Checks to see if this block is active or not.
+        /// Gets or sets whether or not this block is active.
         /// </summary>
         public bool IsActive
         {

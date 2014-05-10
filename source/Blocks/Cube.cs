@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Kyoob.Effects;
 
 namespace Kyoob.Blocks
 {
@@ -12,146 +10,24 @@ namespace Kyoob.Blocks
     public sealed class Cube
     {
         /// <summary>
-        /// The number of triangles in a cube.
+        /// The number of triangles per cube face.
         /// </summary>
-        public const int CubeTriangleCount = 12;
+        public const int TrianglesPerFace = 2;
 
         /// <summary>
-        /// The number of vertices in a cube.
+        /// The number of vertices per cube face.
         /// </summary>
-        public const int CubeVertexCount = 36;
+        public const int VerticesPerFace = 6;
 
         /// <summary>
-        /// The "universal" vertex buffer for cubes.
-        /// </summary>
-        public static VertexBuffer CubeVertices;
-
-        private Matrix _world;
-
-        /// <summary>
-        /// Gets or sets the cube's position. Will also be the center of the bounding box.
-        /// </summary>
-        public Vector3 Position
-        {
-            get
-            {
-                return _world.Translation;
-            }
-            set
-            {
-                _world.Translation = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets the cube's world matrix.
-        /// </summary>
-        public Matrix World
-        {
-            get
-            {
-                return _world;
-            }
-        }
-
-        /// <summary>
-        /// Static constructor to initialize the tables.
-        /// </summary>
-        static Cube()
-        {
-            CubeVertices = null;
-        }
-
-        /// <summary>
-        /// Creates a new cube.
-        /// </summary>
-        /// <param name="device">The graphics device to create the cube on.</param>
-        /// <param name="spriteSheet">The sprite sheet to use for texture coordinates.</param>
-        /// <param name="type">The destined block type.</param>
-        public Cube( GraphicsDevice device, SpriteSheet spriteSheet, BlockType type )
-            : this( device, Vector3.Zero, spriteSheet, type )
-        {
-        }
-
-        /// <summary>
-        /// Creates a new cube.
-        /// </summary>
-        /// <param name="device">The graphics device to create the cube on.</param>
-        /// <param name="x">The X coordinate.</param>
-        /// <param name="y">The Y coordinate.</param>
-        /// <param name="z">The Z coordinate.</param>
-        /// <param name="spriteSheet">The sprite sheet to use for texture coordinates.</param>
-        /// <param name="type">The destined block type.</param>
-        public Cube( GraphicsDevice device, float x, float y, float z, SpriteSheet spriteSheet, BlockType type )
-            : this( device, new Vector3( x, y, z ), spriteSheet, type )
-        {
-        }
-
-        /// <summary>
-        /// Creates a new cube.
-        /// </summary>
-        /// <param name="device">The graphics device to create the cube on.</param>
-        /// <param name="position">The position.</param>
-        /// <param name="spriteSheet">The sprite sheet to use for texture coordinates.</param>
-        /// <param name="type">The destined block type.</param>
-        public Cube( GraphicsDevice device, Vector3 position, SpriteSheet spriteSheet, BlockType type )
-        {
-            _world = Matrix.CreateTranslation( position );
-            CheckVertexBuffer( device, spriteSheet, type );
-        }
-
-        /// <summary>
-        /// Generates the cube mesh data if necessary and populates a vertex buffer.
-        /// </summary>
-        /// <param name="device">The graphics device to create the cube on.</param>
-        /// <param name="spriteSheet">The sprite sheet to use for texture coordinates.</param>
-        /// <param name="type">The destined block type.</param>
-        private static void CheckVertexBuffer( GraphicsDevice device, SpriteSheet spriteSheet, BlockType type )
-        {
-            // data from http://tech.pro/tutorial/750/creating-a-textured-box-in-xna
-
-            // make sure we have our data set
-            if ( CubeVertices == null )
-            {
-                CubeVertices = CreateBuffer( device, Vector3.Zero, spriteSheet, type );
-            }
-            device.SetVertexBuffer( CubeVertices );
-        }
-
-        /// <summary>
-        /// Creates a vertex buffer of a textured cube.
-        /// </summary>
-        /// <param name="device">The graphics device to create on.</param>
-        /// <param name="center">The center of the cube.</param>
-        /// <param name="spritesheet">The sprite sheet to use for texture coordinates.</param>
-        /// <param name="type">The destined block type.</param>
-        /// <returns></returns>
-        public static VertexBuffer CreateBuffer( GraphicsDevice device, Vector3 center, SpriteSheet spritesheet, BlockType type )
-        {
-            // get data for each face
-            List<VertexPositionNormalTexture> data = new List<VertexPositionNormalTexture>( 36 );
-            data.AddRange( GetFaceData( center, CubeFace.Front, spritesheet, type ) );
-            data.AddRange( GetFaceData( center, CubeFace.Back, spritesheet, type ) );
-            data.AddRange( GetFaceData( center, CubeFace.Top, spritesheet, type ) );
-            data.AddRange( GetFaceData( center, CubeFace.Bottom, spritesheet, type ) );
-            data.AddRange( GetFaceData( center, CubeFace.Left, spritesheet, type ) );
-            data.AddRange( GetFaceData( center, CubeFace.Right, spritesheet, type ) );
-
-            // copy that data into a vertex buffer
-            VertexBuffer buffer = new VertexBuffer( device, VertexPositionNormalTexture.VertexDeclaration, data.Count, BufferUsage.None );
-            buffer.SetData<VertexPositionNormalTexture>( data.ToArray() );
-            return buffer;
-        }
-
-        /// <summary>
-        /// Gets cube face data.
+        /// Creates data for a single cube face.
         /// </summary>
         /// <param name="center">The center of the cube.</param>
         /// <param name="face">The cube face to create data for.</param>
         /// <param name="spritesheet">The sprite sheet to use for texture coordinates.</param>
         /// <param name="type">The destined block type.</param>
         /// <returns></returns>
-        public static VertexPositionNormalTexture[] GetFaceData( Vector3 center, CubeFace face, SpriteSheet spritesheet, BlockType type )
+        public static VertexPositionNormalTexture[] CreateFaceData( Vector3 center, CubeFace face, SpriteSheet spritesheet, BlockType type )
         {
             VertexPositionNormalTexture[] data = new VertexPositionNormalTexture[ 6 ];
 
@@ -238,26 +114,6 @@ namespace Kyoob.Blocks
             }
             
             return data;
-        }
-
-        /// <summary>
-        /// Draws this cube to a graphics device.
-        /// </summary>
-        /// <param name="device">The device to draw to.</param>
-        /// <param name="effect">The effect to use to draw this cube.</param>
-        public void Draw( GraphicsDevice device, BaseEffect effect )
-        {
-            effect.World = World;
-
-            // vertex buffer binding and unbinding is expensive for lots of cubes,
-            // so let's *assume* that the vertex buffer is bound
-
-            //device.SetVertexBuffer( CubeVertices ); // stupid fucking SpriteBatch
-            foreach ( EffectPass pass in effect.Effect.CurrentTechnique.Passes )
-            {
-                pass.Apply();
-                device.DrawPrimitives( PrimitiveType.TriangleList, 0, CubeTriangleCount );
-            }
         }
     }
 }

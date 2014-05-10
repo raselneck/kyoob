@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Effects;
 using Kyoob.Terrain;
 
-#warning TODO : Use something like Octree<BoundingBox> or Octree<Chunk> for querying visible sphere.
+#warning TODO : Use something like Octree<BoundingBox> or Octree<Chunk> for querying what's visible and having chunks load/unload
 
 namespace Kyoob.Blocks
 {
@@ -83,22 +83,16 @@ namespace Kyoob.Blocks
             _chunks = new Dictionary<Index3D, Chunk>();
             _terrain = terrain;
 
-            _creationThread = new Thread( new ThreadStart( ChunkCreationThread ) );
-            _creationThread.Start();
+            // set our debuggin variables
+            _drawCount = 0;
+            _frameCount = 0;
+            _timeCount = 0.0;
+            _tickCount = 0.0;
 
-            /*
-            // add some arbitrary chunks
-            for ( int x = -3; x <= 3; ++x )
-            {
-                for ( int y = -1; y <= 1; ++y )
-                {
-                    for ( int z = -3; z <= 3; ++z )
-                    {
-                        CreateChunk( x, y, z );
-                    }
-                }
-            }
-            */
+            // start the chunk creation thread
+            _creationThread = new Thread( new ThreadStart( ChunkCreationCallback ) );
+            _creationThread.Name = "Test Chunk Creation";
+            _creationThread.Start();
         }
 
         /// <summary>
@@ -141,24 +135,22 @@ namespace Kyoob.Blocks
         /// <param name="z">The Z index.</param>
         private void CreateChunk( int x, int y, int z )
         {
-            lock ( _chunks )
+            lock ( _chunks ) // gain a thread-exclusive lock
             {
                 // create the chunk index
                 Index3D index = new Index3D( x, y, z );
 
                 // make sure we don't already have that chunk created
-                if ( _chunks.ContainsKey( index ) )
+                if ( !_chunks.ContainsKey( index ) )
                 {
-                    return;
+                    // create the chunk and store it
+                    Chunk chunk = new Chunk( this, new Vector3(
+                        x * 16.0f,
+                        y * 16.0f,
+                        z * 16.0f
+                    ) );
+                    _chunks.Add( index, chunk );
                 }
-
-                // create the chunk and store it
-                Chunk chunk = new Chunk( this, new Vector3(
-                    x * 8.0f,
-                    y * 8.0f,
-                    z * 8.0f
-                ) );
-                _chunks.Add( index, chunk );
             }
         }
 
@@ -166,18 +158,28 @@ namespace Kyoob.Blocks
 
         private Thread _creationThread;
 
-        private void ChunkCreationThread()
+        /// <summary>
+        /// The callback for the chunk creation thread.
+        /// </summary>
+        private void ChunkCreationCallback()
         {
-            for ( int x = -3; x <= 3; ++x )
+            // just create some chunks
+            for ( int x = 0; x <= 2; ++x )
             {
-                for ( int y = -3; y <= 3; ++y )
+                for ( int y = -1; y <= 1; ++y )
                 {
-                    for ( int z = -3; z <= 3; ++z )
+                    for ( int z = 0; z <= 2; ++z )
                     {
+                        // locking takes place in CreateChunk
                         CreateChunk( x, y, z );
+                        CreateChunk( x, y, -z );
+                        CreateChunk( -x, y, z );
+                        CreateChunk( -x, y, -z );
                     }
                 }
             }
+
+            // dispose of the thread and write that we're done creating the world
             _creationThread.Join( 1000 );
             Terminal.WriteLine( Color.Cyan, "World creation complete." );
         }
@@ -189,7 +191,10 @@ namespace Kyoob.Blocks
         /// </summary>
         public void Dispose()
         {
-            _creationThread.Join( 10 );
+            // join the thread
+            _creationThread.Join( 100 );
+
+            // dispose of all chunks
             foreach ( Chunk chunk in _chunks.Values )
             {
                 chunk.Dispose();
@@ -200,11 +205,11 @@ namespace Kyoob.Blocks
         /// Converts a chunk's local coordinates to world coordinates.
         /// </summary>
         /// <param name="center">The center of the chunk.</param>
-        /// <param name="x">The X index.</param>
-        /// <param name="y">The Y index.</param>
-        /// <param name="z">The Z index.</param>
+        /// <param name="x">The local X index.</param>
+        /// <param name="y">The local Y index.</param>
+        /// <param name="z">The local Z index.</param>
         /// <returns></returns>
-        public Vector3 ChunkToWorld( Vector3 center, int x, int y, int z )
+        public Vector3 LocalToWorld( Vector3 center, int x, int y, int z )
         {
             return new Vector3(
                 center.X + ( x - 8 ),
@@ -221,12 +226,15 @@ namespace Kyoob.Blocks
         public void Draw( GameTime gameTime, Camera camera )
         {
             // time how long it takes to draw our chunks
-            _watch = Stopwatch.StartNew();
             int count = 0;
-            lock ( _chunks )
+            lock ( _chunks ) // gain thread-exclusive lock
             {
+                // don't include locking time (even though it's only ~50ns)
+                _watch = Stopwatch.StartNew();
+
                 foreach ( Chunk chunk in _chunks.Values )
                 {
+                    // only draw the chunk if we can see it
                     if ( !camera.CanSee( chunk.Bounds ) )
                     {
                         continue;
@@ -234,8 +242,9 @@ namespace Kyoob.Blocks
                     chunk.Draw( _effect );
                     ++count;
                 }
+
+                _watch.Stop();
             }
-            _watch.Stop();
 
 
             // update our average chunk drawing information
@@ -243,7 +252,7 @@ namespace Kyoob.Blocks
             _drawCount += count;
             _tickCount += gameTime.ElapsedGameTime.TotalSeconds;
             _timeCount += _watch.Elapsed.TotalMilliseconds;
-            if ( _tickCount >= 1.0 )
+            if ( _tickCount >= 2.0 )
             {
                 Terminal.WriteLine( Color.Yellow,
                     "{0:0.00} chunks in {1:0.00}ms",
@@ -252,7 +261,7 @@ namespace Kyoob.Blocks
                 );
 
                 _frameCount = 0;
-                _tickCount -= 1.0;
+                _tickCount -= 2.0;
                 _timeCount = 0.0;
                 _drawCount = 0;
             }

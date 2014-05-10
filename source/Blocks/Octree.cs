@@ -237,7 +237,7 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Clears this octree. Subdivisions, if any, will remain intact for speed.
+        /// Clears this octree. Subdivisions, if any, will remain intact.
         /// </summary>
         public void Clear()
         {
@@ -253,24 +253,12 @@ namespace Kyoob.Blocks
 
 
         /// <summary>
-        /// Draws the octree's bounds.
+        /// Draws the bounds of every object within the octree for debugging purposes.
         /// </summary>
         /// <param name="device">The graphics device to draw to.</param>
         /// <param name="effect">The effect to draw with.</param>
-        public void Draw( GraphicsDevice device, BaseEffect effect )
+        public void DebugDraw( GraphicsDevice device, BaseEffect effect )
         {
-            /*
-            // draw bounds of octrees
-            _bounds.Draw( device, effect );
-            if ( HasDivided )
-            {
-                for ( int i = 0; i < 8; ++i )
-                {
-                    _children[ i ].Draw( device, effect );
-                }
-            }
-            */
-
             // draw bounds of all objects
             foreach ( T obj in _objects )
             {
@@ -280,11 +268,9 @@ namespace Kyoob.Blocks
             {
                 for ( int i = 0; i < 8; ++i )
                 {
-                    _children[ i ].Draw( device, effect );
+                    _children[ i ].DebugDraw( device, effect );
                 }
             }
         }
-
-
     }
 }

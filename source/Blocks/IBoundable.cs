@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 namespace Kyoob.Blocks
 {
     /// <summary>
-    /// An interface for boundable objects.
+    /// An interface for objects that can have bounding boxes.
     /// </summary>
     public interface IBoundable
     {

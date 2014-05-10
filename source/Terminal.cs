@@ -33,6 +33,7 @@ namespace Kyoob
             /// <summary>
             /// Creates a new terminal message.
             /// </summary>
+            /// <param name="color">The message's color.</param>
             /// <param name="message">The message.</param>
             public TerminalMessage( Color color, string message )
             {

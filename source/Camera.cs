@@ -14,10 +14,9 @@ namespace Kyoob
         private CameraSettings _settings;
         private Matrix _view;
         private Matrix _projection;
-        private BoundingFrustum _frustum;
         private Vector3 _position;
         private Vector3 _translation;
-        private Vector3 _target;
+        private BoundingFrustum _frustum;
         private float _yaw;
         private float _pitch;
         private MouseState _lastMouse;
@@ -67,17 +66,6 @@ namespace Kyoob
         }
 
         /// <summary>
-        /// Gets the camera's target direction.
-        /// </summary>
-        public Vector3 Target
-        {
-            get
-            {
-                return _target;
-            }
-        }
-
-        /// <summary>
         /// Gets the camera's view frustum.
         /// </summary>
         public BoundingFrustum Frustum
@@ -102,7 +90,6 @@ namespace Kyoob
             _position = _settings.InitialPosition;
             _yaw = _settings.InitialYaw;
             _pitch = _settings.InitialPitch;
-            _target = Vector3.Zero;
 
             _lastMouse = Mouse.GetState();
         }
@@ -236,11 +223,11 @@ namespace Kyoob
 
             // get new target and up vectors
             Vector3 forward = Vector3.Transform( Vector3.Forward, rotation );
-            _target = _position + forward;
+            Vector3 target = _position + forward;
             Vector3 up = Vector3.Transform( Vector3.Up, rotation );
 
             // update view matrix and bounding frustum
-            _view = Matrix.CreateLookAt( _position, _target, up );
+            _view = Matrix.CreateLookAt( _position, target, up );
             _frustum = new BoundingFrustum( _view * _projection );
         }
     }

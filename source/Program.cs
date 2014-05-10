@@ -2,8 +2,7 @@ using System;
 
 namespace Kyoob
 {
-    // technically only supports Windows
-#if WINDOWS
+#if WINDOWS // technically only supports Windows, idk
     static class Program
     {
         /// <summary>

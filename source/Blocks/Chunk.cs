@@ -19,14 +19,14 @@ namespace Kyoob.Blocks
         /// </summary>
         private const int MagicNumber = 0x4B4E4843;
 
-        private World _world;
-        private Block[ , , ] _blocks;
         private Vector3 _position;
         private BoundingBox _bounds;
+        private World _world;
+        private Block[ , , ] _blocks;
+        private Octree<Block> _octree;
         private VertexBuffer _buffer;
         private int _triangleCount;
         private int _vertexCount;
-        private Octree<Block> _octree;
 
         /// <summary>
         /// Gets this chunk's bounds.
@@ -75,7 +75,7 @@ namespace Kyoob.Blocks
                     for ( int z = 0; z < 16; ++z )
                     {
                         // create the block
-                        Vector3 coords = _world.ChunkToWorld( _position, x, y, z );
+                        Vector3 coords = _world.LocalToWorld( _position, x, y, z );
                         BlockType type = _world.TerrainGenerator.GetBlockType( coords );
                         _blocks[ x, y, z ] = new Block( coords, type );
                     }
@@ -119,7 +119,7 @@ namespace Kyoob.Blocks
                     for ( int z = 0; z < 16; ++z )
                     {
                         // load block data
-                        Vector3 coords = _world.ChunkToWorld( _position, x, y, z );
+                        Vector3 coords = _world.LocalToWorld( _position, x, y, z );
                         BlockType type = (BlockType)bin.ReadByte();
                         bool active = bin.ReadBoolean();
 
@@ -185,32 +185,32 @@ namespace Kyoob.Blocks
                         Block block = _blocks[ x, y, z ];
                         if ( !above )
                         {
-                            bufferData.AddRange( Cube.GetFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
+                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
                             _triangleCount += 6;
                         }
                         if ( !below )
                         {
-                            bufferData.AddRange( Cube.GetFaceData( block.Position, CubeFace.Bottom, _world.SpriteSheet, block.Type ) );
+                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Bottom, _world.SpriteSheet, block.Type ) );
                             _triangleCount += 6;
                         }
                         if ( !left )
                         {
-                            bufferData.AddRange( Cube.GetFaceData( block.Position, CubeFace.Left, _world.SpriteSheet, block.Type ) );
+                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Left, _world.SpriteSheet, block.Type ) );
                             _triangleCount += 6;
                         }
                         if ( !right )
                         {
-                            bufferData.AddRange( Cube.GetFaceData( block.Position, CubeFace.Right, _world.SpriteSheet, block.Type ) );
+                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Right, _world.SpriteSheet, block.Type ) );
                             _triangleCount += 6;
                         }
                         if ( !front )
                         {
-                            bufferData.AddRange( Cube.GetFaceData( block.Position, CubeFace.Front, _world.SpriteSheet, block.Type ) );
+                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Front, _world.SpriteSheet, block.Type ) );
                             _triangleCount += 6;
                         }
                         if ( !back )
                         {
-                            bufferData.AddRange( Cube.GetFaceData( block.Position, CubeFace.Back, _world.SpriteSheet, block.Type ) );
+                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Back, _world.SpriteSheet, block.Type ) );
                             _triangleCount += 6;
                         }
                     }
@@ -231,20 +231,6 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Checks to see if the given coordinates are given in the chunk.
-        /// </summary>
-        /// <param name="x">The X coordinate.</param>
-        /// <param name="y">The Y coordinate.</param>
-        /// <param name="z">The Z coordinate.</param>
-        /// <returns></returns>
-        private bool IsValidInChunk( int x, int y, int z )
-        {
-            return ( x >= 0 && x < 16 )
-                && ( y >= 0 && y < 16 )
-                && ( z >= 0 && z < 16 );
-        }
-
-        /// <summary>
         /// Checks to see if a block is empty.
         /// </summary>
         /// <param name="x">The X index of the block to check.</param>
@@ -253,7 +239,7 @@ namespace Kyoob.Blocks
         private bool IsEmpty( int x, int y, int z )
         {
             // get the world block type
-            Vector3 coords = _world.ChunkToWorld( _position, x, y, z );
+            Vector3 coords = _world.LocalToWorld( _position, x, y, z );
             return _world.TerrainGenerator.GetBlockType( coords ) == BlockType.Air;
         }
 
@@ -270,12 +256,43 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Unloads the chunk's data from the graphics card.
+        /// </summary>
+        public void Unload()
+        {
+            _triangleCount = 0;
+            _vertexCount = 0;
+            _octree.Clear();
+            if ( _buffer != null )
+            {
+                _buffer.Dispose();
+                _buffer = null;
+
+                Terminal.WriteLine( Color.Cyan, "Unloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
+            }
+        }
+
+        /// <summary>
+        /// Reloads the chunk's data into the graphics card.
+        /// </summary>
+        public void Reload()
+        {
+            if ( _buffer == null )
+            {
+                BuildVoxelBuffer();
+
+                Terminal.WriteLine( Color.Cyan, "Reloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
+            }
+        }
+
+        /// <summary>
         /// Draws this chunk.
         /// </summary>
         /// <param name="effect">The effect to use to draw.</param>
         public void Draw( BaseEffect effect )
         {
-            if ( _buffer != null )
+            // if we have a buffer, then attach it to the graphics device and draw
+            if ( _buffer != null && _triangleCount > 0 )
             {
                 // draw our vertex buffer
                 _world.GraphicsDevice.SetVertexBuffer( _buffer );
@@ -285,8 +302,6 @@ namespace Kyoob.Blocks
                     _world.GraphicsDevice.DrawPrimitives( PrimitiveType.TriangleList, 0, _triangleCount );
                 }
             }
-
-            // _octree.Draw( _world.GraphicsDevice, effect );
         }
 
         /// <summary>

@@ -10,12 +10,10 @@ using Kyoob.Blocks;
 using Kyoob.Effects;
 using Kyoob.Terrain;
 
-#warning TODO : Add wireframe vertex buffer for chunks. (?)
 #warning TODO : Input manager. (?)
 #warning TODO : Add commands to terminal.
 #warning TODO : Add some more lighting stuff, maybe shadows.
 #warning TODO : Implement effect manager.
-#warning TODO : Create base terrain generator and implementations for worlds.
 #warning TODO : Motion blur. (?)
 #warning TODO : Physics.
 
@@ -82,7 +80,7 @@ namespace Kyoob
 
             // load our effect
             _effect = new PointLightEffect( Content.Load<Effect>( "fx/camlight" ) );
-            ( (PointLightEffect)_effect ).LightAttenuation = 128.0f;
+            ( (PointLightEffect)_effect ).LightAttenuation = 32.0f;
             ( (TexturedEffect)_effect ).Texture = _spriteSheet.Texture;
 
 
@@ -100,13 +98,13 @@ namespace Kyoob
                 }
                 if ( _world != null )
                 {
-                    Terminal.WriteLine( Color.Green, "Loaded world from file." );
+                    Terminal.WriteLine( Color.Cyan, "Loaded world from file." );
                 }
             }
             if ( _world == null )
             {
                 _world = new World( _device, _effect, _spriteSheet, terrain );
-                Terminal.WriteLine( Color.Red, "Created new world." );
+                Terminal.WriteLine( Color.Cyan, "Creating new world..." );
             }
         }
 
@@ -123,14 +121,10 @@ namespace Kyoob
 
 
             /*
-            // only save the file if it doesn't exist
-            if ( !File.Exists( "./worlds/test.dat" ) )
+            // save the world (figuratively, of course)
+            using ( Stream stream = File.Create( "./worlds/test.dat" ) )
             {
-                // save the world
-                using ( Stream stream = File.Create( "./worlds/test.dat" ) )
-                {
-                    _world.SaveTo( stream );
-                }
+                _world.SaveTo( stream );
             }
             */
 
