@@ -251,6 +251,45 @@ namespace Kyoob.Blocks
             }
         }
 
+        /// <summary>
+        /// Checks to see if a bounding box collides with this octree.
+        /// </summary>
+        /// <param name="box">The bounding box.</param>
+        /// <returns></returns>
+        public bool Collides( BoundingBox box )
+        {
+            // make sure the bounds contains the box
+            ContainmentType type = _bounds.Contains( box );
+            if ( type != ContainmentType.Contains )
+            {
+                return false;
+            }
+
+            // check children first
+            if ( HasDivided )
+            {
+                for ( int i = 0; i < 8; ++i )
+                {
+                    if ( _children[ i ].Collides( box ) )
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            // now check all objects
+            foreach ( T obj in _objects )
+            {
+                if ( obj.Bounds.Intersects( box ) )
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+
 
         /// <summary>
         /// Draws the bounds of every object within the octree for debugging purposes.
@@ -259,6 +298,8 @@ namespace Kyoob.Blocks
         /// <param name="effect">The effect to draw with.</param>
         public void DebugDraw( GraphicsDevice device, BaseEffect effect )
         {
+#if DEBUG
+
             // draw bounds of all objects
             foreach ( T obj in _objects )
             {
@@ -271,6 +312,8 @@ namespace Kyoob.Blocks
                     _children[ i ].DebugDraw( device, effect );
                 }
             }
+
+#endif
         }
     }
 }

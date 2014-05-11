@@ -8,8 +8,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Effects;
 using Kyoob.Terrain;
 
-#warning TODO : Use something like Octree<BoundingBox> or Octree<Chunk> for querying what's visible and having chunks load/unload
-
 namespace Kyoob.Blocks
 {
     /// <summary>
@@ -29,10 +27,10 @@ namespace Kyoob.Blocks
         private Dictionary<Index3D, Chunk> _chunks;
         private TerrainGenerator _terrain;
 
-        private int     _drawCount  = 0;
-        private int     _frameCount = 0;
-        private double  _timeCount  = 0.0;
-        private double  _tickCount  = 0.0;
+        private int _drawCount;
+        private int _frameCount;
+        private double _timeCount;
+        private double _tickCount;
 
         /// <summary>
         /// Gets the graphics device this world is on.
@@ -64,6 +62,21 @@ namespace Kyoob.Blocks
             get
             {
                 return _terrain;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the effect to use with the world.
+        /// </summary>
+        public BaseEffect Effect
+        {
+            get
+            {
+                return _effect;
+            }
+            set
+            {
+                _effect = value;
             }
         }
 
@@ -145,9 +158,9 @@ namespace Kyoob.Blocks
                 {
                     // create the chunk and store it
                     Chunk chunk = new Chunk( this, new Vector3(
-                        x * 16.0f,
-                        y * 16.0f,
-                        z * 16.0f
+                        x * Chunk.Size,
+                        y * Chunk.Size,
+                        z * Chunk.Size
                     ) );
                     _chunks.Add( index, chunk );
                 }
@@ -164,11 +177,11 @@ namespace Kyoob.Blocks
         private void ChunkCreationCallback()
         {
             // just create some chunks
-            for ( int x = 0; x <= 2; ++x )
+            for ( int x = 0; x <= 6; ++x )
             {
-                for ( int y = -1; y <= 1; ++y )
+                for ( int y = 0; y <= 1; ++y )
                 {
-                    for ( int z = 0; z <= 2; ++z )
+                    for ( int z = 0; z <= 6; ++z )
                     {
                         // locking takes place in CreateChunk
                         CreateChunk( x, y, z );
@@ -179,9 +192,10 @@ namespace Kyoob.Blocks
                 }
             }
 
-            // dispose of the thread and write that we're done creating the world
+            // join the thread and write that we're done creating the world
             _creationThread.Join( 1000 );
-            Terminal.WriteLine( Color.Cyan, "World creation complete." );
+            Terminal.WriteLine( Color.Cyan, 3.0, "World creation complete." );
+            Terminal.WriteLine( Color.Cyan, 3.0, "Created {0} chunks.", _chunks.Count );
         }
 
 
@@ -212,10 +226,41 @@ namespace Kyoob.Blocks
         public Vector3 LocalToWorld( Vector3 center, int x, int y, int z )
         {
             return new Vector3(
-                center.X + ( x - 8 ),
-                center.Y + ( y - 8 ),
-                center.Z + ( z - 8 )
+                center.X + x - Chunk.Size / 2,
+                center.Y + y - Chunk.Size / 2,
+                center.Z + z - Chunk.Size / 2
             );
+        }
+
+        /// <summary>
+        /// Converts world coordinates to local coordinates.
+        /// </summary>
+        /// <param name="center">The center coordinates a chunk.</param>
+        /// <param name="world">The world coordinates.</param>
+        public Vector3 WorldToLocal( Vector3 center, Vector3 world )
+        {
+            return new Vector3(
+                world.X - center.X + Chunk.Size / 2,
+                world.Y - center.Y + Chunk.Size / 2,
+                world.Z - center.Z + Chunk.Size / 2
+            );
+        }
+
+        /// <summary>
+        /// Gets the chunk at the given index.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <returns></returns>
+        public Chunk GetChunk( Index3D index )
+        {
+            lock ( _chunks )
+            {
+                if ( _chunks.ContainsKey( index ) )
+                {
+                    return _chunks[ index ];
+                }
+            }
+            return null;
         }
 
         /// <summary>
@@ -252,16 +297,16 @@ namespace Kyoob.Blocks
             _drawCount += count;
             _tickCount += gameTime.ElapsedGameTime.TotalSeconds;
             _timeCount += _watch.Elapsed.TotalMilliseconds;
-            if ( _tickCount >= 2.0 )
+            if ( _tickCount >= 1.0 )
             {
-                Terminal.WriteLine( Color.Yellow,
+                Terminal.WriteLine( Color.Yellow, 0.95,
                     "{0:0.00} chunks in {1:0.00}ms",
                     (float)_drawCount / _frameCount,
                            _timeCount / _frameCount
                 );
 
                 _frameCount = 0;
-                _tickCount -= 2.0;
+                _tickCount -= 1.0;
                 _timeCount = 0.0;
                 _drawCount = 0;
             }
@@ -306,7 +351,7 @@ namespace Kyoob.Blocks
             BinaryReader bin = new BinaryReader( stream );
             if ( bin.ReadInt32() != MagicNumber )
             {
-                Terminal.WriteLine( Color.Red, "Encountered invalid world in stream." );
+                Terminal.WriteLine( Color.Red, 3.0, "Encountered invalid world in stream." );
                 return null;
             }
 
@@ -318,8 +363,8 @@ namespace Kyoob.Blocks
             }
             catch ( Exception ex )
             {
-                Terminal.WriteLine( Color.Red, "Failed to load world." );
-                Terminal.WriteLine( Color.Red, "-- {0}", ex.Message );
+                Terminal.WriteLine( Color.Red, 3.0, "Failed to load world." );
+                Terminal.WriteLine( Color.Red, 3.0, "-- {0}", ex.Message );
                 // Terminal.WriteLine( ex.StackTrace );
 
                 return null;

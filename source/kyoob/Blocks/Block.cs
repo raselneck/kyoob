@@ -28,13 +28,17 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Gets this block's type.
+        /// Gets or sets this block's type.
         /// </summary>
         public BlockType Type
         {
             get
             {
                 return _type;
+            }
+            set
+            {
+                _type = value;
             }
         }
 

@@ -9,8 +9,8 @@ sampler2D _textureSampler : register(s0) = sampler_state
     MinFilter = Point;
     MagFilter = Point;
     MipFilter = Point;
-    AddressU  = Clamp;
-    AddressV  = Clamp;
+    AddressU  = Wrap;
+    AddressV  = Wrap;
 };
 
 // vertex shader input data

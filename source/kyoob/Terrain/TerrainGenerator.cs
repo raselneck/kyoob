@@ -9,7 +9,19 @@ namespace Kyoob.Terrain
     /// </summary>
     public abstract class TerrainGenerator
     {
+        /// <summary>
+        /// The delegate callback for when the current chunk is changed.
+        /// </summary>
+        /// <param name="chunk">The new chunk.</param>
+        protected delegate void ChunkChangedDelegate( Chunk chunk );
+
         private int _seed;
+        private Chunk _chunk;
+
+        /// <summary>
+        /// The event that gets called when the chunk is changed.
+        /// </summary>
+        protected event ChunkChangedDelegate ChunkChanged;
 
         /// <summary>
         /// Gets or sets the seed for the seed for the terrain generator.
@@ -23,6 +35,28 @@ namespace Kyoob.Terrain
             set
             {
                 _seed = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the current chunk.
+        /// </summary>
+        public Chunk CurrentChunk
+        {
+            get
+            {
+                return _chunk;
+            }
+            set
+            {
+                if ( _chunk != value )
+                {
+                    _chunk = value;
+                    if ( ChunkChanged != null )
+                    {
+                        ChunkChanged( _chunk );
+                    }
+                }
             }
         }
 

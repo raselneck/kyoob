@@ -7,6 +7,8 @@ using Kyoob.Effects;
 
 #pragma warning disable 1587 // disable "invalid XML comment placement"
 
+#warning TODO : Change bounds calculations to use Chunk.Size
+
 namespace Kyoob.Blocks
 {
     /// <summary>
@@ -14,6 +16,11 @@ namespace Kyoob.Blocks
     /// </summary>
     public sealed class Chunk : IDisposable
     {
+        /// <summary>
+        /// The size of each chunk. (Where each chunk is Size x Size x Size.)
+        /// </summary>
+        public const int Size = 16;
+
         /// <summary>
         /// The magic number for chunks. (FourCC = 'CHNK')
         /// </summary>
@@ -51,6 +58,17 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Gets the world this chunk is in.
+        /// </summary>
+        public World World
+        {
+            get
+            {
+                return _world;
+            }
+        }
+
+        /// <summary>
         /// Creates a new chunk.
         /// </summary>
         /// <param name="world">The world this chunk is in.</param>
@@ -59,7 +77,7 @@ namespace Kyoob.Blocks
         {
             // initialize our data
             _world = world;
-            _blocks = new Block[ 16, 16, 16 ];
+            _blocks = new Block[ Size, Size, Size ];
             _position = position;
             _bounds = new BoundingBox(
                 new Vector3( _position.X - 8.5f, _position.Y - 8.5f, _position.Z - 8.5f ),
@@ -67,16 +85,23 @@ namespace Kyoob.Blocks
             );
             _octree = new Octree<Block>( _bounds );
 
+            // tell the terrain generator to generate data for us
+            _world.TerrainGenerator.CurrentChunk = this;
+
             // create blocks
-            for ( int x = 0; x < 16; ++x )
+            for ( int x = 0; x < Size; ++x )
             {
-                for ( int y = 0; y < 16; ++y )
+                for ( int y = 0; y < Size; ++y )
                 {
-                    for ( int z = 0; z < 16; ++z )
+                    for ( int z = 0; z < Size; ++z )
                     {
                         // create the block
                         Vector3 coords = _world.LocalToWorld( _position, x, y, z );
-                        BlockType type = _world.TerrainGenerator.GetBlockType( coords );
+                        BlockType type = BlockType.Bedrock;
+                        if ( coords.Y > 0 )
+                        {
+                            type = _world.TerrainGenerator.GetBlockType( coords );
+                        }
                         _blocks[ x, y, z ] = new Block( coords, type );
                     }
                 }
@@ -95,7 +120,7 @@ namespace Kyoob.Blocks
         {
             // set world and create blocks
             _world = world;
-            _blocks = new Block[ 16, 16, 16 ];
+            _blocks = new Block[ Size, Size, Size ];
 
             // read position
             _position = new Vector3(
@@ -112,11 +137,11 @@ namespace Kyoob.Blocks
             _octree = new Octree<Block>( _bounds );
 
             // load each block
-            for ( int x = 0; x < 16; ++x )
+            for ( int x = 0; x < Size; ++x )
             {
-                for ( int y = 0; y < 16; ++y )
+                for ( int y = 0; y < Size; ++y )
                 {
-                    for ( int z = 0; z < 16; ++z )
+                    for ( int z = 0; z < Size; ++z )
                     {
                         // load block data
                         Vector3 coords = _world.LocalToWorld( _position, x, y, z );
@@ -152,20 +177,19 @@ namespace Kyoob.Blocks
             _octree.Clear();
 
             // begin block iteration
-            for ( int x = 0; x < 16; ++x )
+            for ( int x = 0; x < Size; ++x )
             {
-                for ( int y = 0; y < 16; ++y )
+                for ( int y = 0; y < Size; ++y )
                 {
-                    for ( int z = 0; z < 16; ++z )
+                    for ( int z = 0; z < Size; ++z )
                     {
+                        Block block = _blocks[ x, y, z ];
+
                         // make sure the block is active
-                        if ( !_blocks[ x, y, z ].IsActive )
+                        if ( !block.IsActive )
                         {
                             continue;
                         }
-
-                        // add the block to the octree because it's active
-                        _octree.Add( _blocks[ x, y, z ] );
 
                         // check blocks in all directions
                         bool above = !IsEmpty( x, y + 1, z );
@@ -175,6 +199,15 @@ namespace Kyoob.Blocks
                         bool front = !IsEmpty( x, y, z - 1 );
                         bool back  = !IsEmpty( x, y, z + 1 );
 
+                        // if the type is dirt and there's nothing on top, then it's grass
+                        if ( block.Type == BlockType.Dirt && !above )
+                        {
+                            block.Type = BlockType.Grass;
+                        }
+
+                        // add the block to the octree because it's active
+                        _octree.Add( block );
+
                         // make sure the block is actually not exposed
                         if ( above && below && left && right && front && back )
                         {
@@ -182,43 +215,47 @@ namespace Kyoob.Blocks
                         }
 
                         // get the block and check which faces are exposed
-                        Block block = _blocks[ x, y, z ];
                         if ( !above )
                         {
                             bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += 6;
+                            _triangleCount += Cube.TrianglesPerFace;
+                            _vertexCount += Cube.VerticesPerFace;
                         }
                         if ( !below )
                         {
                             bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Bottom, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += 6;
+                            _triangleCount += Cube.TrianglesPerFace;
+                            _vertexCount += Cube.VerticesPerFace;
                         }
                         if ( !left )
                         {
                             bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Left, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += 6;
+                            _triangleCount += Cube.TrianglesPerFace;
+                            _vertexCount += Cube.VerticesPerFace;
                         }
                         if ( !right )
                         {
                             bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Right, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += 6;
+                            _triangleCount += Cube.TrianglesPerFace;
+                            _vertexCount += Cube.VerticesPerFace;
                         }
                         if ( !front )
                         {
                             bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Front, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += 6;
+                            _triangleCount += Cube.TrianglesPerFace;
+                            _vertexCount += Cube.VerticesPerFace;
                         }
                         if ( !back )
                         {
                             bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Back, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += 6;
+                            _triangleCount += Cube.TrianglesPerFace;
+                            _vertexCount += Cube.VerticesPerFace;
                         }
                     }
                 }
             }
 
             // set our vertex count and create the buffer
-            _vertexCount = _triangleCount * 3;
             if ( _buffer != null )
             {
                 _buffer.Dispose();
@@ -256,6 +293,15 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Checks to see if a bounding box collides with this chunk.
+        /// </summary>
+        /// <param name="box">The bounding box.</param>
+        public bool Collides( BoundingBox box )
+        {
+            return _octree.Collides( box );
+        }
+
+        /// <summary>
         /// Unloads the chunk's data from the graphics card.
         /// </summary>
         public void Unload()
@@ -268,7 +314,7 @@ namespace Kyoob.Blocks
                 _buffer.Dispose();
                 _buffer = null;
 
-                Terminal.WriteLine( Color.Cyan, "Unloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
+                Terminal.WriteLine( Color.Cyan, 1.5, "Unloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
             }
         }
 
@@ -281,7 +327,7 @@ namespace Kyoob.Blocks
             {
                 BuildVoxelBuffer();
 
-                Terminal.WriteLine( Color.Cyan, "Reloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
+                Terminal.WriteLine( Color.Cyan, 1.5, "Reloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
             }
         }
 
@@ -345,7 +391,7 @@ namespace Kyoob.Blocks
             BinaryReader bin = new BinaryReader( stream );
             if ( bin.ReadInt32() != MagicNumber )
             {
-                Terminal.WriteLine( Color.Red, "Encountered invalid chunk in stream." );
+                Terminal.WriteLine( Color.Red, 3.0, "Encountered invalid chunk in stream." );
                 return null;
             }
 
@@ -357,8 +403,8 @@ namespace Kyoob.Blocks
             }
             catch ( Exception ex )
             {
-                Terminal.WriteLine( Color.Red, "Failed to load chunk." );
-                Terminal.WriteLine( Color.Red, "-- {0}", ex.Message );
+                Terminal.WriteLine( Color.Red, 3.0, "Failed to load chunk." );
+                Terminal.WriteLine( Color.Red, 3.0, "-- {0}", ex.Message );
                 // Terminal.WriteLine( ex.StackTrace );
 
                 return null;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Kyoob.Blocks;
 
 namespace Kyoob
 {
@@ -73,6 +74,35 @@ namespace Kyoob
             get
             {
                 return _frustum;
+            }
+        }
+
+        /// <summary>
+        /// Gets the camera's world index.
+        /// </summary>
+        public Index3D WorldIndex
+        {
+            get
+            {
+                return new Index3D(
+                    (int)_position.X / 16,
+                    (int)_position.Y / 16,
+                    (int)_position.Z / 16
+                );
+            }
+        }
+
+        /// <summary>
+        /// Gets the pseudo bounds of the camera.
+        /// </summary>
+        public BoundingBox Bounds
+        {
+            get
+            {
+                return new BoundingBox(
+                    new Vector3( _position.X - 0.5f, _position.Y - 0.5f, _position.Z - 0.5f ),
+                    new Vector3( _position.X + 0.5f, _position.Y + 0.5f, _position.Z + 0.5f )
+                );
             }
         }
 
@@ -150,10 +180,11 @@ namespace Kyoob
         /// Updates the camera.
         /// </summary>
         /// <param name="gameTime">Frame time information.</param>
-        public void Update( GameTime gameTime )
+        /// <param name="world">The world that the camera is navigating in.</param>
+        public void Update( GameTime gameTime, World world )
         {
             CheckUserInput( gameTime );
-            ApplyTransformations();
+            ApplyTransformations( world );
         }
 
         /// <summary>
@@ -211,7 +242,8 @@ namespace Kyoob
         /// <summary>
         /// Applies transformations.
         /// </summary>
-        private void ApplyTransformations()
+        /// <param name="world">The world we're navigating in.</param>
+        private void ApplyTransformations( World world )
         {
             // calculate camera's rotation
             Matrix rotation = Rotation;
@@ -219,6 +251,21 @@ namespace Kyoob
             // translate based on rotation
             _translation = Vector3.Transform( _translation, rotation );
             _position += _translation;
+
+            /*
+            // check if we're colliding anywhere in the world
+            Chunk chunk = world.GetChunk( WorldIndex );
+            if ( chunk != null )
+            {
+                if ( chunk.Collides( Bounds ) )
+                {
+                    _position -= _translation;
+                    Terminal.WriteLine( Color.Red, "Collided" );
+                }
+            }
+            */
+
+            // reset the translation
             _translation = Vector3.Zero;
 
             // get new target and up vectors

@@ -38,7 +38,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\build\debug\</OutputPath>
+    <OutputPath>..\..\build\debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE;WINDOWS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -46,12 +46,12 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <PlatformTarget>x86</PlatformTarget>
     <XnaCompressContent>false</XnaCompressContent>
-    <DocumentationFile>..\build\debug\kyoob.xml</DocumentationFile>
+    <DocumentationFile>..\..\build\debug\kyoob.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\build\release\</OutputPath>
+    <OutputPath>..\..\build\release\</OutputPath>
     <DefineConstants>TRACE;WINDOWS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -59,11 +59,11 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <PlatformTarget>x86</PlatformTarget>
     <XnaCompressContent>true</XnaCompressContent>
-    <DocumentationFile>..\build\release\kyoob.xml</DocumentationFile>
+    <DocumentationFile>..\..\build\release\kyoob.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LibNoise">
-      <HintPath>..\references\LibNoise.dll</HintPath>
+      <HintPath>..\..\references\LibNoise.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Xna.Framework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
     <Reference Include="Microsoft.Xna.Framework.Game, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
@@ -108,10 +108,14 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\content\KyoobContent.contentproj">
+    <ProjectReference Include="..\..\content\KyoobContent.contentproj">
       <Name>KyoobContent %28content%29</Name>
       <XnaReferenceType>Content</XnaReferenceType>
       <Project>{7304DE30-B32B-4FE6-92FB-BD987149CA54}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\noiseutils\Kyoob.NoiseUtils.csproj">
+      <Project>{f66beb36-b974-48c5-abe5-02e6824f94fe}</Project>
+      <Name>Kyoob.NoiseUtils</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

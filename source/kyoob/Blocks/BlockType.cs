@@ -13,9 +13,19 @@ namespace Kyoob.Blocks
         Air,
 
         /// <summary>
+        /// Bedrock block.
+        /// </summary>
+        Bedrock,
+
+        /// <summary>
         /// Dirt block.
         /// </summary>
         Dirt,
+
+        /// <summary>
+        /// Grass block.
+        /// </summary>
+        Grass,
 
         /// <summary>
         /// Stone block.

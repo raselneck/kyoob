@@ -21,9 +21,15 @@ Screenshot
 License
 -------
 
-All code in this repo is licensed under the MIT license. If you want the full
-text, check out [license.md](license.md). For a summary, check out
-[TL;DR legal](https://www.tldrlegal.com/l/mit).
+All code in this repo, except for anything in the Kyoob.NoiseUtils namespace
+(the code for this is conveniently located in a separate project and folder),
+is licensed under the MIT license. The Kyoob.NoiseUtils namespace contains code
+ported from C++ to C#, and is released under the LGPL v2.1 license. From my
+understanding, a port is considered a derivative work and must therefore be
+released under the same license as the parent work. The original NoiseUtils
+library ((c) 2003-2005 Jason Bevins) can be found [here](http://libnoise.sourceforge.net/downloads/noiseutils.zip).
+
+See the `licenses` folder for full license texts.
 
 Images are (currently) taken from Minecraft and used for educational purposes
 only. Nothing malicious was intended.

@@ -18,9 +18,8 @@ namespace Kyoob.Blocks
         /// <summary>
         /// The number of expected sprites in the Y direction.
         /// </summary>
-        private const int NumberOfSpritesY = 2;
+        private const int NumberOfSpritesY = 3;
 
-        private Dictionary<BlockType, Vector2> _coords;
         private Texture2D _texture;
 
         /// <summary>
@@ -107,27 +106,66 @@ namespace Kyoob.Blocks
         public SpriteSheet( Texture2D texture )
         {
             _texture = texture;
+        }
 
-            _coords = new Dictionary<BlockType, Vector2>();
-            _coords.Add( BlockType.Air,     new Vector2( 0.0f,              0.0f ) );
-            _coords.Add( BlockType.Dirt,    new Vector2( TexCoordWidth,     0.0f ) );
-            _coords.Add( BlockType.Stone,   new Vector2( 0.0f,              TexCoordHeight ) );
-            _coords.Add( BlockType.Sand,    new Vector2( TexCoordWidth,     TexCoordHeight ) );
-            _coords.Add( BlockType.Water,   new Vector2( TexCoordWidth * 2, 0.0f ) );
+        /// <summary>
+        /// Gets the texture coordinates for the sprite at the given X and Y coordinates.
+        /// </summary>
+        /// <param name="x">The X coordinate.</param>
+        /// <param name="y">The Y coordinate.</param>
+        /// <returns></returns>
+        private Vector2 GetCoords( int x, int y )
+        {
+            return new Vector2( x * TexCoordWidth, y * TexCoordHeight );
+        }
+
+        /// <summary>
+        /// Gets the texture coordinates for a grass block on the given face.
+        /// </summary>
+        /// <param name="face">The block face.</param>
+        /// <returns></returns>
+        private Vector2 GetGrassCoords( CubeFace face )
+        {
+            switch (face)
+            {
+                case CubeFace.Left:
+                case CubeFace.Right:
+                case CubeFace.Front:
+                case CubeFace.Back:
+                    return GetCoords( 2, 2 );
+                case CubeFace.Top:
+                    return GetCoords( 2, 1 );
+                case CubeFace.Bottom:
+                default:
+                    return GetCoords( 1, 0 );
+            }
         }
 
         /// <summary>
         /// Gets the texture coordinates of the given block type.
         /// </summary>
         /// <param name="type">The block type.</param>
-        /// <returns></returns>
-        public Vector2 GetTexCoords( BlockType type )
+        /// <param name="face">The cube face.</param>
+        public Vector2 GetTexCoords( BlockType type, CubeFace face )
         {
-            if ( _coords.ContainsKey( type ) )
+            // check the block type
+            switch ( type )
             {
-                return _coords[ type ];
+                case BlockType.Grass:
+                    return GetGrassCoords( face );
+                case BlockType.Bedrock:
+                    return GetCoords( 0, 2 );
+                case BlockType.Dirt:
+                    return GetCoords( 1, 0 );
+                case BlockType.Sand:
+                    return GetCoords( 1, 1 );
+                case BlockType.Stone:
+                    return GetCoords( 0, 1 );
+                case BlockType.Water:
+                    return GetCoords( 2, 0 );
+                default:
+                    return GetCoords( 0, 0 );
             }
-            return _coords[ BlockType.Air ]; // default to a transparent texture sprite
         }
     }
 }

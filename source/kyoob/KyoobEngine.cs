@@ -71,6 +71,7 @@ namespace Kyoob
 
             // create the camera
             CameraSettings settings = new CameraSettings( _device );
+            settings.InitialPosition = new Vector3( 0.0f, 10.0f, 0.0f );
             _camera = new Camera( settings );
 
 
@@ -80,7 +81,8 @@ namespace Kyoob
 
             // load our effect
             _effect = new PointLightEffect( Content.Load<Effect>( "fx/camlight" ) );
-            ( (PointLightEffect)_effect ).LightAttenuation = 32.0f;
+            ( (PointLightEffect)_effect ).LightAttenuation = 64.0f;
+            // _effect = new TexturedEffect( Content.Load<Effect>( "fx/texture" ) );
             ( (TexturedEffect)_effect ).Texture = _spriteSheet.Texture;
 
 
@@ -98,13 +100,13 @@ namespace Kyoob
                 }
                 if ( _world != null )
                 {
-                    Terminal.WriteLine( Color.Cyan, "Loaded world from file." );
+                    Terminal.WriteLine( Color.Cyan, 3.0, "Loaded world from file." );
                 }
             }
             if ( _world == null )
             {
                 _world = new World( _device, _effect, _spriteSheet, terrain );
-                Terminal.WriteLine( Color.Cyan, "Creating new world..." );
+                Terminal.WriteLine( Color.Cyan, 3.0, "Creating new world..." );
             }
         }
 
@@ -142,8 +144,11 @@ namespace Kyoob
 
 
             Terminal.Update( gameTime );
-            _camera.Update( gameTime );
-            ( (PointLightEffect)_effect ).LightPosition = _camera.Position;
+            _camera.Update( gameTime, _world );
+            if ( _effect is PointLightEffect )
+            {
+                ( (PointLightEffect)_effect ).LightPosition = _camera.Position;
+            }
 
 
             base.Update( gameTime );
@@ -155,8 +160,15 @@ namespace Kyoob
         /// <param name="gameTime">Frame time information.</param>
         protected override void Draw( GameTime gameTime )
         {
-            // _device.Clear( Color.CornflowerBlue );
-            _device.Clear( new Color( ( (LightedEffect)_effect ).AmbientColor ) );
+            // clear based on ambient color if we can
+            if ( _effect is LightedEffect )
+            {
+                _device.Clear( new Color( ( (LightedEffect)_effect ).AmbientColor ) );
+            }
+            else
+            {
+                _device.Clear( Color.CornflowerBlue );
+            }
 
 
             // draw the world and the terminal

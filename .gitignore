@@ -1,5 +1,6 @@
 build/*
-source/obj/*
+source/kyoob/obj/*
+source/noiseutils/obj/*
 content/obj/*
 content/bin/*
 *.user

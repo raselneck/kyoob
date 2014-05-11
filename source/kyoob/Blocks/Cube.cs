@@ -50,7 +50,7 @@ namespace Kyoob.Blocks
             Vector3 nRight = Vector3.Right;
 
             // texture coordinate data
-            Vector2 tl = spritesheet.GetTexCoords( type );
+            Vector2 tl = spritesheet.GetTexCoords( type, face );
             Vector2 tr = new Vector2( tl.X + spritesheet.TexCoordWidth, tl.Y );
             Vector2 bl = new Vector2( tl.X, tl.Y + spritesheet.TexCoordHeight );
             Vector2 br = new Vector2( tl.X + spritesheet.TexCoordWidth, tl.Y + spritesheet.TexCoordHeight );
