@@ -17,6 +17,7 @@ namespace Kyoob.Terrain
 
         private int _seed;
         private Chunk _chunk;
+        private TerrainLevels _levels;
 
         /// <summary>
         /// The event that gets called when the chunk is changed.
@@ -61,12 +62,24 @@ namespace Kyoob.Terrain
         }
 
         /// <summary>
+        /// Gets the terrain level data used by this terrain generator.
+        /// </summary>
+        public TerrainLevels Levels
+        {
+            get
+            {
+                return _levels;
+            }
+        }
+
+        /// <summary>
         /// Creates a new terrain generator.
         /// </summary>
         /// <param name="seed">The generator's seed.</param>
         public TerrainGenerator( int seed )
         {
             _seed = seed;
+            _levels = new TerrainLevels();
         }
 
         /// <summary>

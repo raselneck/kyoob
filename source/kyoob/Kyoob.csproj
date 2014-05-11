@@ -100,6 +100,7 @@
     <Compile Include="Terminal.cs" />
     <Compile Include="Terrain\PerlinTerrain.cs" />
     <Compile Include="Terrain\TerrainGenerator.cs" />
+    <Compile Include="Terrain\TerrainLevels.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="KyoobIcon.ico" />

@@ -23,6 +23,13 @@ Screenshot
 
 ![ScreenShot](https://raw.githubusercontent.com/csdevrich/kyoob/master/screenshot.png)
 
+Bugs
+----
+
+* If you close the window before the chunk creation thread is finished, then
+  the program will crash with a NullReferenceException as the thread attempts
+  to create a chunk's VertexBuffer. I currently do not know why.
+
 License
 -------
 

@@ -69,9 +69,18 @@ namespace Kyoob
             Terminal.Font = Content.Load<SpriteFont>( "font/arial" );
 
 
+            // create a perlin terrain generator
+            PerlinTerrain terrain = new PerlinTerrain( 0 );
+            terrain.HorizontalBias = 23.0f;
+            terrain.VerticalBias = 20.0f;
+            terrain.Levels.AddLevel( 4.0f, BlockType.Stone );
+            terrain.Levels.AddLevel( 7.0f, BlockType.Sand );
+            terrain.Levels.AddLevel( 20.0f, BlockType.Dirt );
+
+
             // create the camera
             CameraSettings settings = new CameraSettings( _device );
-            settings.InitialPosition = new Vector3( 0.0f, 10.0f, 0.0f );
+            settings.InitialPosition = new Vector3( 0.0f, terrain.VerticalBias, 0.0f );
             _camera = new Camera( settings );
 
 
@@ -84,11 +93,6 @@ namespace Kyoob
             ( (PointLightEffect)_effect ).LightAttenuation = 64.0f;
             // _effect = new TexturedEffect( Content.Load<Effect>( "fx/texture" ) );
             ( (TexturedEffect)_effect ).Texture = _spriteSheet.Texture;
-
-
-            // create a planet terrain generator
-            TerrainGenerator terrain = new PerlinTerrain( 0 );
-
 
             // create the world if we can't find the file
             const string WorldFile = "./worlds/test.dat";
