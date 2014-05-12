@@ -60,7 +60,8 @@ VSOutput VSFunc( VSInput input )
 float4 PSFunc( VSOutput input ) : COLOR0
 {
     float3 diffuseColor = _diffuseColor;
-    diffuseColor *= tex2D( _textureSampler, input.UV ).rgb;
+    float4 texColor = tex2D( _textureSampler, input.UV );
+    diffuseColor *= texColor.rgb;
 
     float3 lightDir = normalize( _lightPosition - input.WorldPos );
     float  diffuse  = saturate( dot( normalize( input.Normal ), lightDir ) );
@@ -68,8 +69,7 @@ float4 PSFunc( VSOutput input ) : COLOR0
     float  att      = 1 - pow( clamp( dist / _lightAttenuation, 0.0, 1.0 ), _lightFalloff );
 
     float3 light    = _ambientColor + diffuse * att * _lightColor;
-    light *= tex2D( _textureSampler, input.UV ).a;
-    return float4( diffuseColor * light, 1.0 );
+    return float4( diffuseColor * light, texColor.a );
 }
 
 
@@ -77,6 +77,19 @@ technique MainTechnique
 {
     pass Pass0
     {
+        AlphaBlendEnable = FALSE;
+        VertexShader     = compile vs_2_0 VSFunc();
+        PixelShader      = compile ps_2_0 PSFunc();
+    }
+}
+
+technique AlphaTechnique
+{
+    pass Pass0
+    {
+        AlphaBlendEnable = TRUE;
+        DestBlend        = INVSRCALPHA;
+        SrcBlend         = SRCALPHA;
         VertexShader     = compile vs_2_0 VSFunc();
         PixelShader      = compile ps_2_0 PSFunc();
     }

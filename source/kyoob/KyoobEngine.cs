@@ -10,7 +10,6 @@ using Kyoob.Blocks;
 using Kyoob.Effects;
 using Kyoob.Terrain;
 
-#warning TODO : Everything is super fucking disorganized right now.
 #warning TODO : There's really no need for chunk->world and world->chunk coordinate conversions for the terrain generator.
 #warning TODO : Input manager. (?)
 #warning TODO : Add input/commands to terminal.
@@ -33,7 +32,7 @@ namespace Kyoob
         private Camera _camera;
         private SkySphere _skySphere;
         private EffectRenderer _renderer;
-        private BaseEffect _effect;
+        private PointLightEffect _effect;
         private World _world;
 
         /// <summary>
@@ -104,15 +103,13 @@ namespace Kyoob
 
 
             // load our effects
-            PointLightEffect world = new PointLightEffect( Content.Load<Effect>( "fx/world" ) );
-            world.Texture = _spriteSheet.Texture;
-            world.LightAttenuation = 96.0f;
-            AlphaEffect alpha = new AlphaEffect( Content.Load<Effect>( "fx/alpha" ) );
+            _effect = new PointLightEffect( Content.Load<Effect>( "fx/world" ) );
+            _effect.Texture = _spriteSheet.Texture;
+            _effect.LightAttenuation = 96.0f;
 
 
             // create the renderer
-            _renderer = new EffectRenderer( _device, world, alpha );
-            _effect = world;
+            _renderer = new EffectRenderer( _device, _effect, _camera );
 
 
             // create the world if we can't find the file
@@ -170,10 +167,7 @@ namespace Kyoob
 
             Terminal.Update( gameTime );
             _camera.Update( gameTime, _world );
-            if ( _effect is PointLightEffect )
-            {
-                ( (PointLightEffect)_effect ).LightPosition = _camera.Position;
-            }
+            _effect.LightPosition = _camera.Position;
 
 
             base.Update( gameTime );
@@ -186,15 +180,7 @@ namespace Kyoob
         protected override void Draw( GameTime gameTime )
         {
             // clear based on ambient color if we can
-            if ( _effect is LightedEffect )
-            {
-                // _renderer.ClearColor = new Color(  )
-            }
-            else
-            {
-                _renderer.ClearColor = Color.CornflowerBlue;
-            }
-
+            _renderer.ClearColor = new Color( _effect.AmbientColor );
 
             // draw the world and the terminal
             _effect.Projection = _camera.Projection;

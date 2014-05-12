@@ -90,7 +90,6 @@
     <Compile Include="Blocks\Chunk.cs" />
     <Compile Include="Blocks\Cube.cs" />
     <Compile Include="CameraSettings.cs" />
-    <Compile Include="Effects\AlphaEffect.cs" />
     <Compile Include="Effects\EffectRenderer.cs" />
     <Compile Include="Effects\LightedEffect.cs" />
     <Compile Include="Effects\PointLightEffect.cs" />

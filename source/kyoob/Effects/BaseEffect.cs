@@ -84,5 +84,18 @@ namespace Kyoob.Effects
             View = Matrix.Identity;
             Projection = Matrix.Identity;
         }
+
+        /// <summary>
+        /// Sets the current technique.
+        /// </summary>
+        /// <param name="name">The name of the technique.</param>
+        public void SetTechnique( string name )
+        {
+            EffectTechnique technique = _effect.Techniques[ name ];
+            if ( technique != null )
+            {
+                _effect.CurrentTechnique = technique;
+            }
+        }
     }
 }

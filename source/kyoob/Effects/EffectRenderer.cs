@@ -4,8 +4,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Blocks;
 
-#warning TODO : This doesn't work at all. And it's going to be super fucking disorganized.
-
 namespace Kyoob.Effects
 {
     /// <summary>
@@ -14,12 +12,10 @@ namespace Kyoob.Effects
     public class EffectRenderer
     {
         private GraphicsDevice _device;
-        private BaseEffect _mainEffect;
-        private AlphaEffect _blendEffect;
-        private SpriteBatch _spriteBatch;
-        private RenderTarget2D _renderTarget;
-        private Queue<VoxelBuffer> _solidQueue;
-        private Queue<VoxelBuffer> _alphaQueue;
+        private BaseEffect _effect;
+        private Camera _camera;
+        private List<VoxelBuffer> _solidQueue;
+        private List<VoxelBuffer> _alphaQueue;
         private Color _clearColor;
 
         /// <summary>
@@ -52,25 +48,15 @@ namespace Kyoob.Effects
         /// Creates a new effect renderer.
         /// </summary>
         /// <param name="device">The graphics device to render to.</param>
-        /// <param name="main">The main rendering effect to use.</param>
-        /// <param name="blend">The alpha blending effect to use.</param>
-        public EffectRenderer( GraphicsDevice device, BaseEffect main, AlphaEffect blend )
+        /// <param name="effect">The effect to render with.</param>
+        /// <param name="camera">The camera to use.</param>
+        public EffectRenderer( GraphicsDevice device, BaseEffect effect, Camera camera )
         {
             _device = device;
-            _mainEffect = main;
-            _blendEffect = blend;
-            _solidQueue = new Queue<VoxelBuffer>();
-            _alphaQueue = new Queue<VoxelBuffer>();
-            _spriteBatch = new SpriteBatch( _device );
-
-            // set our render target to mimic the back buffer
-            PresentationParameters pp = device.PresentationParameters;
-            _renderTarget = new RenderTarget2D(
-                _device, pp.BackBufferWidth, pp.BackBufferHeight,
-                false, _device.DisplayMode.Format,
-                pp.DepthStencilFormat, pp.MultiSampleCount, pp.RenderTargetUsage
-            );
-
+            _effect = effect;
+            _camera = camera;
+            _solidQueue = new List<VoxelBuffer>();
+            _alphaQueue = new List<VoxelBuffer>();
             _clearColor = Color.CornflowerBlue;
         }
 
@@ -80,7 +66,7 @@ namespace Kyoob.Effects
         /// <param name="buffer">The buffer.</param>
         public void QueueSolid( VoxelBuffer buffer )
         {
-            _solidQueue.Enqueue( buffer );
+            _solidQueue.Add( buffer );
         }
 
         /// <summary>
@@ -89,20 +75,31 @@ namespace Kyoob.Effects
         /// <param name="buffer">The buffer.</param>
         public void QueueAlpha( VoxelBuffer buffer )
         {
-            _alphaQueue.Enqueue( buffer );
+            _alphaQueue.Add( buffer );
         }
 
         /// <summary>
         /// Renders everything to the screen.
         /// </summary>
-        /// <param name="skySphere">The sky sphere to draw.</param>
         public void Render()
         {
-            while ( _solidQueue.Count > 0 )
+            // draw solid shit
+            _effect.SetTechnique( "MainTechnique" );
+            for ( int i = 0; i < _solidQueue.Count; ++i )
             {
-                VoxelBuffer buff = _solidQueue.Dequeue();
-                buff.Draw( _device, _mainEffect );
+                VoxelBuffer buffer = _solidQueue[ i ];
+                buffer.Draw( _device, _effect );
             }
+            _solidQueue.Clear();
+
+            // draw transparent shit
+            _effect.SetTechnique( "AlphaTechnique" );
+            for ( int i = 0; i < _alphaQueue.Count; ++i )
+            {
+                VoxelBuffer buffer = _alphaQueue[ i ];
+                buffer.Draw( _device, _effect );
+            }
+            _alphaQueue.Clear();
         }
     }
 }

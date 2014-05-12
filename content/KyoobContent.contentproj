@@ -72,13 +72,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="fx\alpha.hlsl">
-      <Name>alpha</Name>
-      <Importer>EffectImporter</Importer>
-      <Processor>EffectProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="model\skysphere.fbx">
       <Name>skysphere</Name>
       <Importer>FbxImporter</Importer>

@@ -7,8 +7,6 @@ using Kyoob.Effects;
 
 #pragma warning disable 1587 // disable "invalid XML comment placement"
 
-#warning TODO : Create separate vertex buffers for the water and the terrain. (Make like a VoxelBuffer class or something?)
-
 namespace Kyoob.Blocks
 {
     /// <summary>
@@ -169,8 +167,10 @@ namespace Kyoob.Blocks
              * face's data for constructing our vertex buffer.
              */
 
-            // create our buffer data list, reset our counts, and clear our octree
+            // clear out everything that needs to be cleared
+            _terrainBuff.Clear();
             _terrainBuff.Dispose();
+            _waterBuff.Clear();
             _waterBuff.Dispose();
             _octree.Clear();
 
@@ -192,7 +192,7 @@ namespace Kyoob.Blocks
                         // add the block to the octree because it's active
                         _octree.Add( block );
 
-                        // if the type is dirt and there's nothing on top, then it's grass
+                        // if the type is dirt and there's nothing on top, then the block should be grass.
                         if ( block.Type == BlockType.Dirt && GetBlockType( x, y + 1, z ) == BlockType.Air )
                         {
                             block.Type = BlockType.Grass;
@@ -204,43 +204,46 @@ namespace Kyoob.Blocks
 
                         // check above
                         BlockType type = GetBlockType( x, y + 1, z );
-                        if ( ( IsEmptyBlockType( type ) && block.Type != BlockType.Water ) ||
-                             ( type == BlockType.Air && block.Type == BlockType.Water ) )
+                        if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
+                        }
+                        if ( block.Type == BlockType.Water && type == BlockType.Air )
+                        {
+                            _waterBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
                         }
 
                         // check below
                         type = GetBlockType( x, y - 1, z );
-                        if ( IsEmptyBlockType( type ) && block.Type != BlockType.Water )
+                        if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Bottom, _world.SpriteSheet, block.Type ) );
                         }
 
                         // check to the left
                         type = GetBlockType( x - 1, y, z );
-                        if ( IsEmptyBlockType( type ) && block.Type != BlockType.Water )
+                        if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Left, _world.SpriteSheet, block.Type ) );
                         }
 
                         // check to the right
                         type = GetBlockType( x + 1, y, z );
-                        if ( IsEmptyBlockType( type ) && block.Type != BlockType.Water )
+                        if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Right, _world.SpriteSheet, block.Type ) );
                         }
 
                         // check in front
                         type = GetBlockType( x, y, z - 1 );
-                        if ( IsEmptyBlockType( type ) && block.Type != BlockType.Water )
+                        if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Front, _world.SpriteSheet, block.Type ) );
                         }
 
                         // check in back
                         type = GetBlockType( x, y, z + 1 );
-                        if ( IsEmptyBlockType( type ) && block.Type != BlockType.Water )
+                        if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Back, _world.SpriteSheet, block.Type ) );
                         }
