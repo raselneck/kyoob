@@ -45,8 +45,8 @@ VSOutput VSFunc( VSInput input )
 
     // transform input position
     float4 worldPosition = mul( input.Position, _world );
-    float4 viewPosition  = mul( worldPosition, _view );
-    output.Position      = mul( viewPosition, _projection );
+        float4 viewPosition  = mul( worldPosition, _view );
+        output.Position      = mul( viewPosition, _projection );
 
     // send input data to pixel shader
     output.UV            = input.UV;

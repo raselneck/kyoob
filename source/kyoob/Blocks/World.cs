@@ -19,7 +19,7 @@ namespace Kyoob.Blocks
         /// The magic number for worlds. (FourCC = 'WRLD')
         /// </summary>
         private const int MagicNumber = 0x444C5257;
-        
+
         private Stopwatch _watch;
         private EffectRenderer _renderer;
         private SpriteSheet _spriteSheet;

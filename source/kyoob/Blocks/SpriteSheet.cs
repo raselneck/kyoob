@@ -126,7 +126,7 @@ namespace Kyoob.Blocks
         /// <returns></returns>
         private Vector2 GetGrassCoords( CubeFace face )
         {
-            switch (face)
+            switch ( face )
             {
                 case CubeFace.Left:
                 case CubeFace.Right:

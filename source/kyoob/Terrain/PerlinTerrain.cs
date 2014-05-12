@@ -74,7 +74,7 @@ namespace Kyoob.Terrain
         {
             _noise = new LibNoise.Perlin();
             _noise.Seed = seed;
-            
+
             _builder = new PlaneMapBuilder();
             _builder.SourceModule = _noise;
             _builder.DestinationWidth = Chunk.Size + 2;

@@ -58,9 +58,9 @@ namespace Kyoob.Blocks
 
             // set bounds and calculate dimensions and center
             _bounds = bounds;
-            float width  = Math.Abs( _bounds.Max.X - _bounds.Min.X );
+            float width = Math.Abs( _bounds.Max.X - _bounds.Min.X );
             float height = Math.Abs( _bounds.Max.Y - _bounds.Min.Y );
-            float depth  = Math.Abs( _bounds.Max.Z - _bounds.Min.Z );
+            float depth = Math.Abs( _bounds.Max.Z - _bounds.Min.Z );
             _dimensions = new Vector3( width, height, depth );
             _center = new Vector3( _bounds.Min.X + width / 2, _bounds.Min.Y + height / 2, _bounds.Min.Z + depth / 2 );
         }
@@ -123,7 +123,7 @@ namespace Kyoob.Blocks
             // go through our items and try to move them into children
             for ( int i = 0; i < _objects.Count; ++i )
             {
-                T obj = _objects[i];
+                T obj = _objects[ i ];
                 foreach ( Octree<T> child in _children )
                 {
                     if ( child.Contains( obj.Bounds ) )

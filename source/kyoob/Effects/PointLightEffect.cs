@@ -85,10 +85,10 @@ namespace Kyoob.Effects
         public PointLightEffect( Effect effect )
             : base( effect )
         {
-            LightColor       = new Vector3( 1.0f, 1.0f, 1.0f );
-            LightPosition    = new Vector3( 0.0f, 0.0f, 0.0f );
+            LightColor = new Vector3( 1.0f, 1.0f, 1.0f );
+            LightPosition = new Vector3( 0.0f, 0.0f, 0.0f );
             LightAttenuation = 10.0f;
-            LightFalloff     = 4.0f;
+            LightFalloff = 4.0f;
         }
     }
 }

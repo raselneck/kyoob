@@ -149,10 +149,10 @@ namespace Kyoob.NoiseUtils
 
             double xExtent = _boundUpperX - _boundLowerX;
             double zExtent = _boundUpperZ - _boundLowerZ;
-            double xDelta  = xExtent / (double)DestinationWidth;
-            double zDelta  = zExtent / (double)DestinationHeight;
-            double xCur    = _boundLowerX;
-            double zCur    = _boundLowerZ;
+            double xDelta = xExtent / (double)DestinationWidth;
+            double zDelta = zExtent / (double)DestinationHeight;
+            double xCur = _boundLowerX;
+            double zCur = _boundLowerZ;
 
             // fill the noise map with all of the values from the model
             for ( int z = 0; z < DestinationHeight; ++z )

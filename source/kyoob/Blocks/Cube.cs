@@ -55,7 +55,7 @@ namespace Kyoob.Blocks
             Vector2 bl = new Vector2( tl.X, tl.Y + spritesheet.TexCoordHeight );
             Vector2 br = new Vector2( tl.X + spritesheet.TexCoordWidth, tl.Y + spritesheet.TexCoordHeight );
 
-            switch (face)
+            switch ( face )
             {
                 case CubeFace.Front:
                     // front face
@@ -112,7 +112,7 @@ namespace Kyoob.Blocks
                     data[ 5 ] = new VertexPositionNormalTexture( brb, nRight, br );
                     break;
             }
-            
+
             return data;
         }
     }

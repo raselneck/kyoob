@@ -161,7 +161,7 @@ namespace Kyoob
             if ( _font != null )
             {
                 _spriteBatch.Begin();
-                
+
                 // draw FPS and then all messages from the top of the screen down
                 Vector2 position = new Vector2( 10.0f, 10.0f );
                 for ( int i = 0; i < Math.Min( _messages.Count, MaxMessagesOnScreen ); ++i )
