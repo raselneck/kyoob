@@ -7,7 +7,7 @@ using Kyoob.Effects;
 
 #pragma warning disable 1587 // disable "invalid XML comment placement"
 
-#warning TODO : Change bounds calculations to use Chunk.Size
+#warning TODO : Create separate vertex buffers for the water and the terrain. (Make like a VoxelBuffer class or something?)
 
 namespace Kyoob.Blocks
 {
@@ -31,9 +31,8 @@ namespace Kyoob.Blocks
         private World _world;
         private Block[ , , ] _blocks;
         private Octree<Block> _octree;
-        private VertexBuffer _buffer;
-        private int _triangleCount;
-        private int _vertexCount;
+        private VoxelBuffer _terrainBuff;
+        private VoxelBuffer _waterBuff;
 
         /// <summary>
         /// Gets this chunk's bounds.
@@ -80,12 +79,14 @@ namespace Kyoob.Blocks
             _blocks = new Block[ Size, Size, Size ];
             _position = position;
             _bounds = new BoundingBox(
-                new Vector3( _position.X - 8.5f, _position.Y - 8.5f, _position.Z - 8.5f ),
-                new Vector3( _position.X + 7.5f, _position.Y + 7.5f, _position.Z + 7.5f )
+                new Vector3( _position.X - Size / 2 - 0.5f, _position.Y - Size / 2 - 0.5f, _position.Z - Size / 2 - 0.5f ),
+                new Vector3( _position.X + Size / 2 - 0.5f, _position.Y + Size / 2 - 0.5f, _position.Z + Size / 2 - 0.5f )
             );
             _octree = new Octree<Block>( _bounds );
+            _terrainBuff = new VoxelBuffer();
+            _waterBuff = new VoxelBuffer();
 
-            // tell the terrain generator to generate data for us
+            // tell the terrain generator to generate data for this chunk
             _world.TerrainGenerator.CurrentChunk = this;
 
             // create blocks
@@ -95,20 +96,16 @@ namespace Kyoob.Blocks
                 {
                     for ( int z = 0; z < Size; ++z )
                     {
-                        // create the block
+                        // get block data
                         Vector3 coords = _world.LocalToWorld( _position, x, y, z );
-                        BlockType type = BlockType.Bedrock;
-                        if ( coords.Y > 0 )
-                        {
-                            type = _world.TerrainGenerator.GetBlockType( coords );
-                        }
+                        BlockType type = _world.TerrainGenerator.GetBlockType( coords );
                         _blocks[ x, y, z ] = new Block( coords, type );
                     }
                 }
             }
 
             // build the voxel buffer and octree
-            BuildVoxelBuffer();
+            BuildVoxelBuffers();
         }
 
         /// <summary>
@@ -121,6 +118,8 @@ namespace Kyoob.Blocks
             // set world and create blocks
             _world = world;
             _blocks = new Block[ Size, Size, Size ];
+            _terrainBuff = new VoxelBuffer();
+            _waterBuff = new VoxelBuffer();
 
             // read position
             _position = new Vector3(
@@ -131,8 +130,8 @@ namespace Kyoob.Blocks
 
             // create bounds and octree
             _bounds = new BoundingBox(
-                new Vector3( _position.X - 8.5f, _position.Y - 8.5f, _position.Z - 8.5f ),
-                new Vector3( _position.X + 7.5f, _position.Y + 7.5f, _position.Z + 7.5f )
+                new Vector3( _position.X - Size / 2 - 0.5f, _position.Y - Size / 2 - 0.5f, _position.Z - Size / 2 - 0.5f ),
+                new Vector3( _position.X + Size / 2 - 0.5f, _position.Y + Size / 2 - 0.5f, _position.Z + Size / 2 - 0.5f )
             );
             _octree = new Octree<Block>( _bounds );
 
@@ -156,13 +155,13 @@ namespace Kyoob.Blocks
             }
 
             // finally, build our buffer and octree
-            BuildVoxelBuffer();
+            BuildVoxelBuffers();
         }
 
         /// <summary>
-        /// Builds the voxel buffer.
+        /// Builds the voxel buffers.
         /// </summary>
-        private void BuildVoxelBuffer()
+        private void BuildVoxelBuffers()
         {
             /**
              * What we need to do is go through all of our blocks and determine which are exposed at all
@@ -171,9 +170,8 @@ namespace Kyoob.Blocks
              */
 
             // create our buffer data list, reset our counts, and clear our octree
-            List<VertexPositionNormalTexture> bufferData = new List<VertexPositionNormalTexture>();
-            _triangleCount = 0;
-            _vertexCount = 0;
+            _terrainBuff.Dispose();
+            _waterBuff.Dispose();
             _octree.Clear();
 
             // begin block iteration
@@ -191,93 +189,92 @@ namespace Kyoob.Blocks
                             continue;
                         }
 
-                        // check blocks in all directions
-                        bool above = !IsEmpty( x, y + 1, z );
-                        bool below = !IsEmpty( x, y - 1, z );
-                        bool left  = !IsEmpty( x - 1, y, z );
-                        bool right = !IsEmpty( x + 1, y, z );
-                        bool front = !IsEmpty( x, y, z - 1 );
-                        bool back  = !IsEmpty( x, y, z + 1 );
+                        // add the block to the octree because it's active
+                        _octree.Add( block );
 
                         // if the type is dirt and there's nothing on top, then it's grass
-                        if ( block.Type == BlockType.Dirt && !above )
+                        if ( block.Type == BlockType.Dirt && GetBlockType( x, y + 1, z ) == BlockType.Air )
                         {
                             block.Type = BlockType.Grass;
                         }
 
-                        // add the block to the octree because it's active
-                        _octree.Add( block );
+                        /**
+                         * Now we need to check which directions are empty for the block.
+                         */
 
-                        // make sure the block is actually not exposed
-                        if ( above && below && left && right && front && back )
+                        // check above
+                        BlockType type = GetBlockType( x, y + 1, z );
+                        if ( ( IsEmptyBlockType( type ) && block.Type != BlockType.Water ) ||
+                             ( type == BlockType.Air && block.Type == BlockType.Water ) )
                         {
-                            continue;
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
                         }
 
-                        // get the block and check which faces are exposed
-                        if ( !above )
+                        // check below
+                        type = GetBlockType( x, y - 1, z );
+                        if ( IsEmptyBlockType( type ) && block.Type != BlockType.Water )
                         {
-                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += Cube.TrianglesPerFace;
-                            _vertexCount += Cube.VerticesPerFace;
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Bottom, _world.SpriteSheet, block.Type ) );
                         }
-                        if ( !below )
+
+                        // check to the left
+                        type = GetBlockType( x - 1, y, z );
+                        if ( IsEmptyBlockType( type ) && block.Type != BlockType.Water )
                         {
-                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Bottom, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += Cube.TrianglesPerFace;
-                            _vertexCount += Cube.VerticesPerFace;
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Left, _world.SpriteSheet, block.Type ) );
                         }
-                        if ( !left )
+
+                        // check to the right
+                        type = GetBlockType( x + 1, y, z );
+                        if ( IsEmptyBlockType( type ) && block.Type != BlockType.Water )
                         {
-                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Left, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += Cube.TrianglesPerFace;
-                            _vertexCount += Cube.VerticesPerFace;
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Right, _world.SpriteSheet, block.Type ) );
                         }
-                        if ( !right )
+
+                        // check in front
+                        type = GetBlockType( x, y, z - 1 );
+                        if ( IsEmptyBlockType( type ) && block.Type != BlockType.Water )
                         {
-                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Right, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += Cube.TrianglesPerFace;
-                            _vertexCount += Cube.VerticesPerFace;
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Front, _world.SpriteSheet, block.Type ) );
                         }
-                        if ( !front )
+
+                        // check in back
+                        type = GetBlockType( x, y, z + 1 );
+                        if ( IsEmptyBlockType( type ) && block.Type != BlockType.Water )
                         {
-                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Front, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += Cube.TrianglesPerFace;
-                            _vertexCount += Cube.VerticesPerFace;
-                        }
-                        if ( !back )
-                        {
-                            bufferData.AddRange( Cube.CreateFaceData( block.Position, CubeFace.Back, _world.SpriteSheet, block.Type ) );
-                            _triangleCount += Cube.TrianglesPerFace;
-                            _vertexCount += Cube.VerticesPerFace;
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Back, _world.SpriteSheet, block.Type ) );
                         }
                     }
                 }
             }
 
             // set our vertex count and create the buffer
-            if ( _buffer != null )
-            {
-                _buffer.Dispose();
-            }
-            if ( _vertexCount > 0 )
-            {
-                _buffer = new VertexBuffer( _world.GraphicsDevice, VertexPositionNormalTexture.VertexDeclaration, _vertexCount, BufferUsage.None );
-                _buffer.SetData<VertexPositionNormalTexture>( bufferData.ToArray() );
-            }
+            _terrainBuff.Compile( _world.GraphicsDevice );
+            _waterBuff.Compile( _world.GraphicsDevice );
         }
 
         /// <summary>
-        /// Checks to see if a block is empty.
+        /// Checks to see if a block type is an empty block type.
+        /// </summary>
+        /// <param name="type">The block type.</param>
+        /// <returns></returns>
+        private bool IsEmptyBlockType( BlockType type )
+        {
+            return type == BlockType.Air
+                || type == BlockType.Water;
+        }
+
+        /// <summary>
+        /// Gets the block type in the world relative to the given local coordinates.
         /// </summary>
         /// <param name="x">The X index of the block to check.</param>
         /// <param name="y">The Y index of the block to check.</param>
         /// <param name="z">The Z index of the block to check.</param>
-        private bool IsEmpty( int x, int y, int z )
+        private BlockType GetBlockType( int x, int y, int z )
         {
             // get the world block type
             Vector3 coords = _world.LocalToWorld( _position, x, y, z );
-            return _world.TerrainGenerator.GetBlockType( coords ) == BlockType.Air;
+            return _world.TerrainGenerator.GetBlockType( coords );
         }
 
         /// <summary>
@@ -285,11 +282,8 @@ namespace Kyoob.Blocks
         /// </summary>
         public void Dispose()
         {
-            if ( _buffer != null )
-            {
-                _buffer.Dispose();
-                _buffer = null;
-            }
+            _terrainBuff.Dispose();
+            _waterBuff.Dispose();
         }
 
         /// <summary>
@@ -306,16 +300,11 @@ namespace Kyoob.Blocks
         /// </summary>
         public void Unload()
         {
-            _triangleCount = 0;
-            _vertexCount = 0;
             _octree.Clear();
-            if ( _buffer != null )
-            {
-                _buffer.Dispose();
-                _buffer = null;
+            _terrainBuff.Dispose();
+            _waterBuff.Dispose();
 
-                Terminal.WriteLine( Color.Cyan, 1.5, "Unloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
-            }
+            Terminal.WriteLine( Color.Cyan, 1.5, "Unloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
         }
 
         /// <summary>
@@ -323,31 +312,22 @@ namespace Kyoob.Blocks
         /// </summary>
         public void Reload()
         {
-            if ( _buffer == null )
-            {
-                BuildVoxelBuffer();
+            //_terrainBuff.Compile( _world.GraphicsDevice );
+            //_waterBuff.Compile( _world.GraphicsDevice );
 
-                Terminal.WriteLine( Color.Cyan, 1.5, "Reloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
-            }
+            BuildVoxelBuffers();
+
+            Terminal.WriteLine( Color.Cyan, 1.5, "Reloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
         }
 
         /// <summary>
         /// Draws this chunk.
         /// </summary>
-        /// <param name="effect">The effect to use to draw.</param>
-        public void Draw( BaseEffect effect )
+        /// <param name="renderer">The renderer to draw with.</param>
+        public void Draw( EffectRenderer renderer )
         {
-            // if we have a buffer, then attach it to the graphics device and draw
-            if ( _buffer != null && _triangleCount > 0 )
-            {
-                // draw our vertex buffer
-                _world.GraphicsDevice.SetVertexBuffer( _buffer );
-                foreach ( EffectPass pass in effect.Effect.CurrentTechnique.Passes )
-                {
-                    pass.Apply();
-                    _world.GraphicsDevice.DrawPrimitives( PrimitiveType.TriangleList, 0, _triangleCount );
-                }
-            }
+            renderer.QueueSolid( _terrainBuff );
+            renderer.QueueAlpha( _waterBuff );
         }
 
         /// <summary>

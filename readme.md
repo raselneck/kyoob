@@ -29,6 +29,8 @@ Bugs
 * If you close the window before the chunk creation thread is finished, then
   the program will crash with a NullReferenceException as the thread attempts
   to create a chunk's VertexBuffer. I currently do not know why.
+* Terrain generation doesn't entirely work. What you see right now is kind of
+  a "it works this way so let's go with it" kind of hack.
 
 License
 -------
@@ -42,7 +44,14 @@ must therefore be released under the same license as the parent work. The origin
 NoiseUtils library ((c) 2003-2005 Jason Bevins) can be found
 [here](http://libnoise.sourceforge.net/downloads/noiseutils.zip).
 
-See the `licenses` folder for full license texts.
-
 Images are (currently) taken from Minecraft and used for educational purposes
 only. Nothing malicious was intended.
+
+Skybox generated with [Spacescape](http://alexcpeterson.com/spacescape) and exported
+from Photoshop using NVIDIA's Photoshop Plugins. (For reference, the skybox texture
+order is: right, left, top, bottom, front, back.)
+
+Sky sphere model and HLSL code taken from [Creating a SkySphere](http://msdn.microsoft.com/en-us/library/bb464016.aspx),
+which is released under the Microsoft Permissive License (Ms-PL).
+
+See the `licenses` folder for full license texts.

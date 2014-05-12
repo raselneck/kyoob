@@ -10,8 +10,10 @@ using Kyoob.Blocks;
 using Kyoob.Effects;
 using Kyoob.Terrain;
 
+#warning TODO : Everything is super fucking disorganized right now.
+#warning TODO : There's really no need for chunk->world and world->chunk coordinate conversions for the terrain generator.
 #warning TODO : Input manager. (?)
-#warning TODO : Add commands to terminal.
+#warning TODO : Add input/commands to terminal.
 #warning TODO : Add some more lighting stuff, maybe shadows.
 #warning TODO : Implement effect manager.
 #warning TODO : Motion blur. (?)
@@ -29,6 +31,8 @@ namespace Kyoob
 
         private SpriteSheet _spriteSheet;
         private Camera _camera;
+        private SkySphere _skySphere;
+        private EffectRenderer _renderer;
         private BaseEffect _effect;
         private World _world;
 
@@ -69,30 +73,47 @@ namespace Kyoob
             Terminal.Font = Content.Load<SpriteFont>( "font/arial" );
 
 
-            // create a perlin terrain generator
+            // create a perlin terrain generator (needs work)
             PerlinTerrain terrain = new PerlinTerrain( 0 );
-            terrain.HorizontalBias = 23.0f;
-            terrain.VerticalBias = 20.0f;
-            terrain.Levels.AddLevel( 4.0f, BlockType.Stone );
-            terrain.Levels.AddLevel( 7.0f, BlockType.Sand );
-            terrain.Levels.AddLevel( 20.0f, BlockType.Dirt );
+            terrain.Seed = 114;
+            terrain.HorizontalBias = 1 / 53.0f;
+            terrain.VerticalBias = 24.0f;
+            terrain.Levels.WaterLevel = 6.0f;
+            terrain.Levels.AddLevel( 4.00f, BlockType.Stone );
+            terrain.Levels.AddLevel( 9.00f, BlockType.Sand );
+            terrain.Levels.AddLevel( 24.0f, BlockType.Dirt );
 
 
             // create the camera
             CameraSettings settings = new CameraSettings( _device );
-            settings.InitialPosition = new Vector3( 0.0f, terrain.VerticalBias, 0.0f );
+            settings.InitialPosition = new Vector3( 0.0f, 16.0f, 0.0f );
             _camera = new Camera( settings );
+
+
+            // load the sky sphere
+            _skySphere = new SkySphere(
+                Content.Load<Model>( "model/skysphere" ),
+                _device,
+                new SkySphereEffect( Content.Load<Effect>( "fx/skysphere" ) ),
+                Content.Load<TextureCube>( "tex/skysphere" )
+            );
 
 
             // load the textures
             _spriteSheet = new SpriteSheet( Content.Load<Texture2D>( "tex/spritesheet" ) );
 
 
-            // load our effect
-            _effect = new PointLightEffect( Content.Load<Effect>( "fx/camlight" ) );
-            ( (PointLightEffect)_effect ).LightAttenuation = 64.0f;
-            // _effect = new TexturedEffect( Content.Load<Effect>( "fx/texture" ) );
-            ( (TexturedEffect)_effect ).Texture = _spriteSheet.Texture;
+            // load our effects
+            PointLightEffect world = new PointLightEffect( Content.Load<Effect>( "fx/world" ) );
+            world.Texture = _spriteSheet.Texture;
+            world.LightAttenuation = 96.0f;
+            AlphaEffect alpha = new AlphaEffect( Content.Load<Effect>( "fx/alpha" ) );
+
+
+            // create the renderer
+            _renderer = new EffectRenderer( _device, world, alpha );
+            _effect = world;
+
 
             // create the world if we can't find the file
             const string WorldFile = "./worlds/test.dat";
@@ -100,7 +121,7 @@ namespace Kyoob
             {
                 using ( Stream stream = File.OpenRead( WorldFile ) )
                 {
-                    _world = World.ReadFrom( stream, _device, _effect, _spriteSheet, terrain );
+                    _world = World.ReadFrom( stream, _renderer, _spriteSheet, terrain );
                 }
                 if ( _world != null )
                 {
@@ -109,7 +130,7 @@ namespace Kyoob
             }
             if ( _world == null )
             {
-                _world = new World( _device, _effect, _spriteSheet, terrain );
+                _world = new World( _renderer, _spriteSheet, terrain );
                 Terminal.WriteLine( Color.Cyan, 3.0, "Creating new world..." );
             }
         }
@@ -167,18 +188,18 @@ namespace Kyoob
             // clear based on ambient color if we can
             if ( _effect is LightedEffect )
             {
-                _device.Clear( new Color( ( (LightedEffect)_effect ).AmbientColor ) );
+                // _renderer.ClearColor = new Color(  )
             }
             else
             {
-                _device.Clear( Color.CornflowerBlue );
+                _renderer.ClearColor = Color.CornflowerBlue;
             }
 
 
             // draw the world and the terminal
             _effect.Projection = _camera.Projection;
             _effect.View = _camera.View;
-            _world.Draw( gameTime, _camera );
+            _world.Draw( gameTime, _camera, _skySphere );
             Terminal.Draw( gameTime );
 
 

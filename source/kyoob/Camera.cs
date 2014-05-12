@@ -197,6 +197,15 @@ namespace Kyoob
             KeyboardState keyboard = Keyboard.GetState();
             float units = (float)gameTime.ElapsedGameTime.TotalSeconds * 6.0f;
 
+
+            // if we right click, print the position
+            if ( mouse.RightButton == ButtonState.Released && _lastMouse.RightButton == ButtonState.Pressed )
+            {
+                Terminal.WriteLine( Color.White, 3.0, "[{0:0.00},{1:0.00},{2:0.00}]",
+                    _position.X, _position.Y, _position.Z );
+            }
+
+
             // check if "sprinting"
             if ( keyboard.IsKeyDown( Keys.LeftShift ) )
             {

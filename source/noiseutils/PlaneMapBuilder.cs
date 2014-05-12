@@ -4,8 +4,6 @@ using LibNoise.Models;
 
 using MathHelper = Microsoft.Xna.Framework.MathHelper;
 
-#warning TODO : For seamless, try lerping all 9 surrounding values instead of just 4.
-
 namespace Kyoob.NoiseUtils
 {
     /// <summary>
@@ -17,7 +15,6 @@ namespace Kyoob.NoiseUtils
         private double _boundLowerZ;
         private double _boundUpperX;
         private double _boundUpperZ;
-        private bool _isSeamless;
 
         /// <summary>
         /// Gets or sets the lower X bound.
@@ -80,27 +77,11 @@ namespace Kyoob.NoiseUtils
         }
 
         /// <summary>
-        /// Gets or sets whether or not the map builder is seamless.
-        /// </summary>
-        public bool IsSeamless
-        {
-            get
-            {
-                return _isSeamless;
-            }
-            set
-            {
-                _isSeamless = value;
-            }
-        }
-
-        /// <summary>
         /// Creates a new plane map builder.
         /// </summary>
         public PlaneMapBuilder()
         {
             SetBounds( 0.0, 0.0, 0.0, 0.0 );
-            _isSeamless = false;
         }
 
         /// <summary>
@@ -123,6 +104,18 @@ namespace Kyoob.NoiseUtils
                 _boundUpperZ = _boundLowerZ;
                 _boundLowerZ = temp;
             }
+        }
+
+        /// <summary>
+        /// Linearly interpolates two values.
+        /// </summary>
+        /// <param name="a">The first value.</param>
+        /// <param name="b">The second value.</param>
+        /// <param name="amount">The amount to lerp.</param>
+        /// <returns></returns>
+        private float LerpF( double a, double b, double amount )
+        {
+            return MathHelper.Lerp( (float)a, (float)b, (float)amount );
         }
 
         /// <summary>
@@ -156,8 +149,8 @@ namespace Kyoob.NoiseUtils
 
             double xExtent = _boundUpperX - _boundLowerX;
             double zExtent = _boundUpperZ - _boundLowerZ;
-            double xDelta  = xExtent / DestinationWidth;
-            double zDelta  = zExtent / DestinationHeight;
+            double xDelta  = xExtent / (double)DestinationWidth;
+            double zDelta  = zExtent / (double)DestinationHeight;
             double xCur    = _boundLowerX;
             double zCur    = _boundLowerZ;
 
@@ -168,27 +161,7 @@ namespace Kyoob.NoiseUtils
 
                 for ( int x = 0; x < DestinationWidth; ++x )
                 {
-                    float value = 0.0f;
-                    if ( _isSeamless )
-                    {
-                        // basically lerps values all around the current one together
-                        double sw = plane.GetValue( xCur          , zCur           );
-                        double se = plane.GetValue( xCur + xExtent, zCur           );
-                        double nw = plane.GetValue( xCur          , zCur + zExtent );
-                        double ne = plane.GetValue( xCur + xExtent, zCur + zExtent );
-
-                        double xBlend = 1.0 - ( ( xCur - _boundLowerX ) / xExtent );
-                        double zBlend = 1.0 - ( ( zCur - _boundLowerZ ) / zExtent );
-
-                        double z0 = MathHelper.Lerp( (float)sw, (float)se, (float)xBlend );
-                        double z1 = MathHelper.Lerp( (float)nw, (float)ne, (float)xBlend );
-                        value     = MathHelper.Lerp( (float)z0, (float)z1, (float)zBlend );
-                    }
-                    else
-                    {
-                        value = (float)plane.GetValue( xCur, zCur );
-                    }
-
+                    float value = (float)plane.GetValue( xCur, zCur );
                     NoiseMap[ x, z ] = value;
                     xCur += xDelta;
                 }

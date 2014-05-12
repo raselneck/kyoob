@@ -21,8 +21,7 @@ namespace Kyoob.Blocks
         private const int MagicNumber = 0x444C5257;
         
         private Stopwatch _watch;
-        private GraphicsDevice _device;
-        private BaseEffect _effect;
+        private EffectRenderer _renderer;
         private SpriteSheet _spriteSheet;
         private Dictionary<Index3D, Chunk> _chunks;
         private TerrainGenerator _terrain;
@@ -39,7 +38,7 @@ namespace Kyoob.Blocks
         {
             get
             {
-                return _device;
+                return _renderer.GraphicsDevice;
             }
         }
 
@@ -66,32 +65,15 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Gets or sets the effect to use with the world.
-        /// </summary>
-        public BaseEffect Effect
-        {
-            get
-            {
-                return _effect;
-            }
-            set
-            {
-                _effect = value;
-            }
-        }
-
-        /// <summary>
         /// Creates a new world.
         /// </summary>
-        /// <param name="device">The graphics device.</param>
-        /// <param name="effect">The base effect.</param>
+        /// <param name="renderer">The renderer to use.</param>
         /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
         /// <param name="terrain">The terrain generator to use.</param>
-        public World( GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet, TerrainGenerator terrain )
+        public World( EffectRenderer renderer, SpriteSheet spriteSheet, TerrainGenerator terrain )
         {
             // set variables
-            _device = device;
-            _effect = effect;
+            _renderer = renderer;
             _spriteSheet = spriteSheet;
             _chunks = new Dictionary<Index3D, Chunk>();
             _terrain = terrain;
@@ -112,15 +94,13 @@ namespace Kyoob.Blocks
         /// Creates a new world by loading it from a stream.
         /// </summary>
         /// <param name="bin">The binary reader to use when reading the world.</param>
-        /// <param name="device">The graphics device.</param>
-        /// <param name="effect">The base effect.</param>
+        /// <param name="renderer">The renderer to use.</param>
         /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
         /// <param name="terrain">The terrain generator to use.</param>
-        private World( BinaryReader bin, GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet, TerrainGenerator terrain )
+        private World( BinaryReader bin, EffectRenderer renderer, SpriteSheet spriteSheet, TerrainGenerator terrain )
         {
             // set variables
-            _device = device;
-            _effect = effect;
+            _renderer = renderer;
             _spriteSheet = spriteSheet;
             _chunks = new Dictionary<Index3D, Chunk>();
             _terrain = terrain;
@@ -179,7 +159,7 @@ namespace Kyoob.Blocks
             // just create some chunks
             for ( int x = 0; x <= 6; ++x )
             {
-                for ( int y = 0; y <= 1; ++y )
+                for ( int y = 0; y <= 2; ++y )
                 {
                     for ( int z = 0; z <= 6; ++z )
                     {
@@ -268,7 +248,8 @@ namespace Kyoob.Blocks
         /// </summary>
         /// <param name="gameTime">Frame time information.</param>
         /// <param name="camera">The current camera to use for getting visible tiles.</param>
-        public void Draw( GameTime gameTime, Camera camera )
+        /// <param name="skySphere">The sky sphere to draw.</param>
+        public void Draw( GameTime gameTime, Camera camera, SkySphere skySphere )
         {
             // time how long it takes to draw our chunks
             int count = 0;
@@ -284,11 +265,15 @@ namespace Kyoob.Blocks
                     {
                         continue;
                     }
-                    chunk.Draw( _effect );
+                    chunk.Draw( _renderer );
                     ++count;
                 }
 
                 _watch.Stop();
+
+                _renderer.GraphicsDevice.Clear( _renderer.ClearColor );
+                skySphere.Draw( camera );
+                _renderer.Render();
             }
 
 
@@ -341,11 +326,10 @@ namespace Kyoob.Blocks
         /// Reads a world's data from a stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
-        /// <param name="device">The graphics device to create the world on.</param>
-        /// <param name="effect">The effect to use when rendering the world.</param>
+        /// <param name="renderer">The renderer to use.</param>
         /// <param name="spriteSheet">The world's sprite sheet.</param>
         /// <param name="terrain">The terrain generator to use.</param>
-        public static World ReadFrom( Stream stream, GraphicsDevice device, BaseEffect effect, SpriteSheet spriteSheet, TerrainGenerator terrain )
+        public static World ReadFrom( Stream stream, EffectRenderer renderer, SpriteSheet spriteSheet, TerrainGenerator terrain )
         {
             // create our helper reader and make sure we find the world's magic number
             BinaryReader bin = new BinaryReader( stream );
@@ -358,7 +342,7 @@ namespace Kyoob.Blocks
             // now try to read the world
             try
             {
-                World world = new World( bin, device, effect, spriteSheet, terrain );
+                World world = new World( bin, renderer, spriteSheet, terrain );
                 return world;
             }
             catch ( Exception ex )

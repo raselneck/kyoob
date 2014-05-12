@@ -37,6 +37,22 @@ namespace Kyoob.Terrain
         }
 
         private List<LevelTypePair> _levels;
+        private float _waterLevel;
+
+        /// <summary>
+        /// Gets or sets the water level.
+        /// </summary>
+        public float WaterLevel
+        {
+            get
+            {
+                return _waterLevel;
+            }
+            set
+            {
+                _waterLevel = value;
+            }
+        }
 
         /// <summary>
         /// Creates a new terrain level settings object.
@@ -44,7 +60,6 @@ namespace Kyoob.Terrain
         public TerrainLevels()
         {
             _levels = new List<LevelTypePair>();
-            _levels.Add( new LevelTypePair( 0.0001f, BlockType.Bedrock ) );
             _levels.Add( new LevelTypePair( 1024.0f, BlockType.Air ) );
         }
 
@@ -83,6 +98,18 @@ namespace Kyoob.Terrain
         /// <returns></returns>
         public BlockType GetBlockType( float height )
         {
+            int index = 0;
+            while ( height > _levels[ index ].Level )
+            {
+                ++index;
+                if ( index == _levels.Count - 1 )
+                {
+                    break;
+                }
+            }
+            return _levels[ index ].Type;
+
+            /*
             int index;
             for ( index = 0; index < _levels.Count; ++index )
             {
@@ -92,7 +119,12 @@ namespace Kyoob.Terrain
                 }
             }
 
+            if ( index == _levels.Count )
+            {
+                --index;
+            }
             return _levels[ index ].Type;
+            */
         }
     }
 }

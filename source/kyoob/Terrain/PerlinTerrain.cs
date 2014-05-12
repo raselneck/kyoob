@@ -3,9 +3,8 @@ using Microsoft.Xna.Framework;
 using Kyoob.Blocks;
 using Kyoob.NoiseUtils;
 
-#pragma warning disable 1587 // disable "invalid XML comment placement"
-
-#warning TODO : Make block type heights customizable.
+#warning TODO : Look into a perlin noise smoothing algorithm.
+#warning TODO : Terrain levels don't really work.
 
 namespace Kyoob.Terrain
 {
@@ -75,9 +74,11 @@ namespace Kyoob.Terrain
         {
             _noise = new LibNoise.Perlin();
             _noise.Seed = seed;
+            
             _builder = new PlaneMapBuilder();
-            // _builder.IsSeamless = true;
             _builder.SourceModule = _noise;
+            _builder.DestinationWidth = Chunk.Size + 2;
+            _builder.DestinationHeight = Chunk.Size + 2;
 
             _hBias = 17.0f; // prime numbers work best
             _vBias = 10.0f;
@@ -93,13 +94,11 @@ namespace Kyoob.Terrain
         {
             // need to grow these by 1 for when the chunk checks just outside its bounds
             Vector3 position = chunk.Center;
-            float lowerX = ( position.X - Chunk.Size / 2.0f - 1.0f ) / _hBias;
-            float upperX = ( position.X + Chunk.Size / 2.0f + 1.0f ) / _hBias;
-            float lowerZ = ( position.Z - Chunk.Size / 2.0f - 1.0f ) / _hBias;
-            float upperZ = ( position.Z + Chunk.Size / 2.0f + 1.0f ) / _hBias;
+            float lowerX = ( position.X - Chunk.Size / 2 - 1 ) * _hBias;
+            float upperX = ( position.X + Chunk.Size / 2 + 1 ) * _hBias;
+            float lowerZ = ( position.Z - Chunk.Size / 2 - 1 ) * _hBias;
+            float upperZ = ( position.Z + Chunk.Size / 2 + 1 ) * _hBias;
 
-            _builder.DestinationWidth  = Chunk.Size + 2;
-            _builder.DestinationHeight = Chunk.Size + 2;
             _builder.SetBounds( lowerX, upperX, lowerZ, upperZ );
             _builder.Build();
         }
@@ -111,27 +110,45 @@ namespace Kyoob.Terrain
         /// <returns></returns>
         public override BlockType GetBlockType( Vector3 position )
         {
-            /**
-             * Ranges:
-             *  0 - 2  = Stone
-             *  3 - 4  = Sand
-             *  4 - 9  = Dirt
-             */
-
+            // get the local coordinates and then get the designated height value
             Vector3 local = CurrentChunk.World.WorldToLocal( CurrentChunk.Center, position );
             int x = (int)( local.X ) + 1;
             int z = (int)( local.Z ) + 1;
             float value = _builder.NoiseMap[ x, z ];
-            if ( value < -1.0f )
-            {
-                value = -1.0f;
-            }
-            value =  ( value + 1.0f ) * ( _vBias / 2.0f );
+            value = MathHelper.Clamp( value, -1.0f, 1.0f ) / 2.0f + 0.5f; // value will now be in [0,1] range
+            value *= _vBias;
 
+            // get the actual block type
             BlockType type = BlockType.Air;
-            if ( position.Y <= value )
+            if ( position.Y == 0 )
             {
+                // we want bedrock to pad the bottom of the world
+                type = BlockType.Bedrock;
+            }
+            // y = 0 is the absolute minimum (which is bedrock), so we need to check above it
+            else if ( position.Y > 0 )
+            {
+                /*
+                // get the designated block type for this height value
                 type = Levels.GetBlockType( value );
+
+                // some hard coding to force anything just below water to be sand
+                if ( position.Y < Levels.WaterLevel && ( type == BlockType.Dirt || type == BlockType.Grass ) )
+                {
+                    type = BlockType.Sand;
+                }
+                */
+
+                if ( position.Y < value )
+                {
+                    type = Levels.GetBlockType( value );
+                }
+
+                // if the type should still be air and we're below the water level, then the type should be water
+                if ( type == BlockType.Air && position.Y <= Levels.WaterLevel )
+                {
+                    type = BlockType.Water;
+                }
             }
             return type;
         }

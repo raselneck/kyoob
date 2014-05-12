@@ -11,6 +11,11 @@ namespace Kyoob
     public static class Terminal
     {
         /// <summary>
+        /// The maximum number of messages to display on screen at a time.
+        /// </summary>
+        private const int MaxMessagesOnScreen = 12;
+
+        /// <summary>
         /// Contains terminal message data.
         /// </summary>
         private struct TerminalMessage
@@ -116,9 +121,10 @@ namespace Kyoob
         /// <param name="gameTime">Frame time information.</param>
         public static void Update( GameTime gameTime )
         {
-            // update all messages, and remove them if they're dead
+            // update only the messages that will show on screen, and remove them if they're dead
             TerminalMessage message;
-            for ( int i = 0; i < _messages.Count; ++i )
+            int count = 0;
+            for ( int i = 0; i < Math.Min( _messages.Count, MaxMessagesOnScreen ); ++i )
             {
                 message = _messages[ i ];
                 message.RemainingTime -= gameTime.ElapsedGameTime.TotalSeconds;
@@ -129,6 +135,7 @@ namespace Kyoob
                 }
                 else
                 {
+                    ++count;
                     _messages[ i ] = message;
                 }
             }
@@ -157,7 +164,7 @@ namespace Kyoob
                 
                 // draw FPS and then all messages from the top of the screen down
                 Vector2 position = new Vector2( 10.0f, 10.0f );
-                for ( int i = 0; i < _messages.Count; ++i )
+                for ( int i = 0; i < Math.Min( _messages.Count, MaxMessagesOnScreen ); ++i )
                 {
                     // add the line height first for when we implement command input
                     position.Y += _lineHeight;

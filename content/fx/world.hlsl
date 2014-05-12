@@ -9,6 +9,7 @@ float3    _lightPosition    = float3( 0.0, 0.0, 0.0 );
 float     _lightAttenuation = 10.0;
 float     _lightFalloff     = 4.0;
 
+// point clamp the textures for the good ol' blocky style
 texture2D _texture;
 sampler2D _textureSampler : register(s0) = sampler_state
 {
@@ -42,9 +43,12 @@ VSOutput VSFunc( VSInput input )
 {
     VSOutput output;
 
+    // transform input position
     float4 worldPosition = mul( input.Position, _world );
     float4 viewPosition  = mul( worldPosition, _view );
     output.Position      = mul( viewPosition, _projection );
+
+    // send input data to pixel shader
     output.UV            = input.UV;
     output.Normal        = mul( input.Normal, _world );
     output.WorldPos      = worldPosition;
@@ -64,6 +68,7 @@ float4 PSFunc( VSOutput input ) : COLOR0
     float  att      = 1 - pow( clamp( dist / _lightAttenuation, 0.0, 1.0 ), _lightFalloff );
 
     float3 light    = _ambientColor + diffuse * att * _lightColor;
+    light *= tex2D( _textureSampler, input.UV ).a;
     return float4( diffuseColor * light, 1.0 );
 }
 
@@ -72,7 +77,7 @@ technique MainTechnique
 {
     pass Pass0
     {
-        VertexShader = compile vs_2_0 VSFunc();
-        PixelShader  = compile ps_2_0 PSFunc();
+        VertexShader     = compile vs_2_0 VSFunc();
+        PixelShader      = compile ps_2_0 PSFunc();
     }
 }
