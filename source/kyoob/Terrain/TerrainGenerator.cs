@@ -85,8 +85,9 @@ namespace Kyoob.Terrain
         /// <summary>
         /// Gets the block type for the given position.
         /// </summary>
-        /// <param name="position">The world position.</param>
-        /// <returns></returns>
-        public abstract BlockType GetBlockType( Vector3 position );
+        /// <param name="x">The local X coordinate.</param>
+        /// <param name="y">The local Y coordinate.</param>
+        /// <param name="z">The local Z coordinate.</param>
+        public abstract BlockType GetBlockType( int x, int y, int z );
     }
 }

@@ -60,7 +60,6 @@ namespace Kyoob.Terrain
         public TerrainLevels()
         {
             _levels = new List<LevelTypePair>();
-            _levels.Add( new LevelTypePair( 1024.0f, BlockType.Air ) );
         }
 
         /// <summary>
@@ -108,6 +107,15 @@ namespace Kyoob.Terrain
                 }
             }
             return _levels[ index ].Level;
+        }
+
+        /// <summary>
+        /// Gets the highest level allowed.
+        /// </summary>
+        /// <returns></returns>
+        public float GetHighestLevel()
+        {
+            return _levels[ _levels.Count - 1 ].Level;
         }
 
         /// <summary>

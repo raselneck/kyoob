@@ -14,12 +14,12 @@ namespace Kyoob
         /// <summary>
         /// The number of expected sprites in the X direction.
         /// </summary>
-        private const int NumberOfSpritesX = 3;
+        private const int NumberOfSpritesX = 4;
 
         /// <summary>
         /// The number of expected sprites in the Y direction.
         /// </summary>
-        private const int NumberOfSpritesY = 3;
+        private const int NumberOfSpritesY = 4;
 
         private Texture2D _texture;
 

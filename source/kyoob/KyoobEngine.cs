@@ -177,6 +177,7 @@ namespace Kyoob
             Terminal.Update( gameTime );
             _camera.Update( gameTime, _world );
             _effect.LightPosition = _camera.Position;
+            _world.Update( gameTime, _camera );
 
 
             base.Update( gameTime );

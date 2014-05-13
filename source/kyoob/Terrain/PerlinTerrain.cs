@@ -106,14 +106,15 @@ namespace Kyoob.Terrain
         /// <summary>
         /// Gets the block type for the given world coordinates.
         /// </summary>
-        /// <param name="position">The position in the world.</param>
-        /// <returns></returns>
-        public override BlockType GetBlockType( Vector3 position )
+        /// <param name="x">The local X coordinate.</param>
+        /// <param name="y">The local Y coordinate.</param>
+        /// <param name="z">The local Z coordinate.</param>
+        public override BlockType GetBlockType( int x, int y, int z )
         {
             // get the local coordinates and then get the designated height value
-            Vector3 local = CurrentChunk.World.WorldToLocal( CurrentChunk.Center, position );
-            int x = (int)( local.X ) + 1;
-            int z = (int)( local.Z ) + 1;
+            Vector3 world = CurrentChunk.World.LocalToWorld( CurrentChunk.Center, x, y, z );
+            x++;
+            z++;
             float value = _builder.NoiseMap[ x, z ];
             value = MathHelper.Clamp( value, -1.0f, 1.0f ) / 2.0f + 0.5f; // value will now be in [0,1] range
             value *= _vBias;
@@ -121,13 +122,13 @@ namespace Kyoob.Terrain
 
             // get the actual block type
             BlockType type = BlockType.Air;
-            if ( position.Y == 0 )
+            if ( world.Y == 0 )
             {
                 // we want bedrock to pad the bottom of the world
                 type = BlockType.Bedrock;
             }
             // y = 0 is the absolute minimum (which is bedrock), so we need to check above it
-            else if ( position.Y > 0 )
+            else if ( world.Y > 0 )
             {
                 /*
                 // get the designated block type for this height value
@@ -140,13 +141,13 @@ namespace Kyoob.Terrain
                 }
                 */
 
-                if ( position.Y < value )
+                if ( world.Y < value )
                 {
                     type = Levels.GetBlockType( value );
                 }
 
                 // if the type should still be air and we're below the water level, then the type should be water
-                if ( type == BlockType.Air && position.Y <= Levels.WaterLevel )
+                if ( type == BlockType.Air && world.Y <= Levels.WaterLevel )
                 {
                     type = BlockType.Water;
                 }

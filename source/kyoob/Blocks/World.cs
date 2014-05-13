@@ -9,6 +9,8 @@ using Kyoob.Debug;
 using Kyoob.Effects;
 using Kyoob.Terrain;
 
+#warning TODO : When chunks are unloaded, their data should be saved to a file somehow so that block data can be retrieved in case a chunk was modified.
+
 namespace Kyoob.Blocks
 {
     /// <summary>
@@ -25,7 +27,14 @@ namespace Kyoob.Blocks
         private EffectRenderer _renderer;
         private SpriteSheet _spriteSheet;
         private Dictionary<Index3D, Chunk> _chunks;
+        private List<Chunk> _renderQueue;
+        private HashSet<Index3D> _indices;
         private TerrainGenerator _terrain;
+        private List<Index3D> _createList;
+        private List<Index3D> _unloadList;
+        private Vector3 _currentViewPosition;
+        private float _currentViewDistance;
+        private bool _isDisposed;
 
         private int _drawCount;
         private int _frameCount;
@@ -77,7 +86,10 @@ namespace Kyoob.Blocks
             _renderer = renderer;
             _spriteSheet = spriteSheet;
             _chunks = new Dictionary<Index3D, Chunk>();
+            _renderQueue = new List<Chunk>();
+            _indices = new HashSet<Index3D>();
             _terrain = terrain;
+            _isDisposed = false;
 
             // set our debuggin variables
             _drawCount = 0;
@@ -85,11 +97,11 @@ namespace Kyoob.Blocks
             _timeCount = 0.0;
             _tickCount = 0.0;
 
-            // start the chunk creation thread
-            _creationThread = new Thread( new ThreadStart( ChunkCreationCallback ) );
-            _creationThread.Name = "Test Chunk Creation";
-            _creationThread.Start();
+            // create our management lists
+            _createList = new List<Index3D>();
+            _unloadList = new List<Index3D>();
 
+            StartChunkManagement();
             SetTerminalCommands();
         }
 
@@ -106,7 +118,10 @@ namespace Kyoob.Blocks
             _renderer = renderer;
             _spriteSheet = spriteSheet;
             _chunks = new Dictionary<Index3D, Chunk>();
+            _renderQueue = new List<Chunk>();
+            _indices = new HashSet<Index3D>();
             _terrain = terrain;
+            _isDisposed = false;
 
             // load the seed (and terrain) and chunks
             _terrain.Seed = bin.ReadInt32();
@@ -122,7 +137,24 @@ namespace Kyoob.Blocks
                 }
             }
 
+            // create our management lists
+            _createList = new List<Index3D>();
+            _unloadList = new List<Index3D>();
+
+            StartChunkManagement();
             SetTerminalCommands();
+        }
+
+        /// <summary>
+        /// Starts the chunk management thread.
+        /// </summary>
+        private void StartChunkManagement()
+        {
+            // start the chunk creation thread
+            _chunkManagementThread = new Thread( new ThreadStart( ChunkManagementCallback ) );
+            _chunkManagementThread.Name = "Chunk Management";
+            _chunkManagementThread.IsBackground = true;
+            _chunkManagementThread.Start();
         }
 
         /// <summary>
@@ -130,7 +162,43 @@ namespace Kyoob.Blocks
         /// </summary>
         private void SetTerminalCommands()
         {
-            
+            // world.reload
+            Terminal.AddCommand( "world", "reload", ( string[] param ) =>
+            {
+                Terminal.WriteLine( Color.Red, 5.0, "world.reload is not implemented." );
+            } );
+
+            // terrain.vbias
+            Terminal.AddCommand( "terrain", "vbias", ( string[] param ) =>
+            {
+                if ( param.Length < 1 )
+                {
+                    Terminal.WriteLine( Color.Red, 3.0, "Not enough parameters." );
+                    return;
+                }
+
+                if ( _terrain is PerlinTerrain )
+                {
+                    float vbias = float.Parse( param[ 0 ] );
+                    ( (PerlinTerrain)_terrain ).VerticalBias = vbias;
+                }
+            } );
+
+            // terrain.hbias
+            Terminal.AddCommand( "terrain", "hbias", ( string[] param ) =>
+            {
+                if ( param.Length < 1 )
+                {
+                    Terminal.WriteLine( Color.Red, 3.0, "Not enough parameters." );
+                    return;
+                }
+
+                if ( _terrain is PerlinTerrain )
+                {
+                    float hbias = float.Parse( param[ 0 ] );
+                    ( (PerlinTerrain)_terrain ).HorizontalBias = hbias;
+                }
+            } );
         }
 
         /// <summary>
@@ -141,55 +209,156 @@ namespace Kyoob.Blocks
         /// <param name="z">The Z index.</param>
         private void CreateChunk( int x, int y, int z )
         {
-            lock ( _chunks ) // gain a thread-exclusive lock
+            // if we're disposed, then there's no sense in creating a chunk
+            if ( _isDisposed )
             {
-                // create the chunk index
-                Index3D index = new Index3D( x, y, z );
+                return;
+            }
 
-                // make sure we don't already have that chunk created
-                if ( !_chunks.ContainsKey( index ) )
-                {
-                    // create the chunk and store it
-                    Chunk chunk = new Chunk( this, new Vector3(
-                        x * Chunk.Size,
-                        y * Chunk.Size,
-                        z * Chunk.Size
-                    ) );
-                    _chunks.Add( index, chunk );
-                }
+            // if the y is out of bounds, no need to create an empty chunk.
+            if ( y < 0 || y > _terrain.Levels.GetLevel( BlockType.Air ) )
+            {
+                return;
+            }
+
+            /**
+             * We're going to ASSUME that the calling thread already has an exclusive lock
+             * on the chunk collection.
+             */
+
+            // create the chunk index
+            Index3D index = new Index3D( x, y, z );
+
+            // make sure we don't already have that chunk created
+            if ( !_chunks.ContainsKey( index ) )
+            {
+                // create the chunk and store it
+                Chunk chunk = new Chunk( this, IndexToPosition( index ) );
+                _chunks.Add( index, chunk );
+                _indices.Add( index );
             }
         }
 
 
 
-        private Thread _creationThread;
+
+        private Thread _chunkManagementThread;
 
         /// <summary>
-        /// The callback for the chunk creation thread.
+        /// The callback for the chunk management thread.
         /// </summary>
-        private void ChunkCreationCallback()
+        private void ChunkManagementCallback()
         {
-            // just create some chunks
-            for ( int x = 0; x <= 6; ++x )
+            Index3D temp, index;
+            HashSet<Index3D> indices = new HashSet<Index3D>();
+            int maxHeight = (int)Math.Ceiling( _terrain.Levels.GetHighestLevel() / Chunk.Size );
+
+            while ( !_isDisposed )
             {
-                for ( int y = 0; y <= 2; ++y )
+                index = PositionToIndex( _currentViewPosition );
+                int maxDist = (int)( _currentViewDistance / Chunk.Size );
+                
+                // create a list of all of the indices to check
+                for ( int x = 0; x < maxDist; ++x )
                 {
-                    for ( int z = 0; z <= 6; ++z )
+                    for ( int z = 0; z < maxDist; ++z )
                     {
-                        // locking takes place in CreateChunk
-                        CreateChunk( x, y, z );
-                        CreateChunk( x, y, -z );
-                        CreateChunk( -x, y, z );
-                        CreateChunk( -x, y, -z );
+                        for ( int y = maxHeight; y >= 0; --y )
+                        {
+                            indices.Add( new Index3D( index.X + x, y, index.Z + z ) );
+                            indices.Add( new Index3D( index.X + x, y, index.Z - z ) );
+                            indices.Add( new Index3D( index.X - x, y, index.Z + z ) );
+                            indices.Add( new Index3D( index.X - x, y, index.Z - z ) );
+                        }
                     }
                 }
-            }
 
-            // join the thread and write that we're done creating the world
-            _creationThread.Join( 1000 );
-            Terminal.WriteLine( Color.Cyan, 3.0, "World creation complete." );
-            Terminal.WriteLine( Color.Cyan, 3.0, "Created {0} chunks.", _chunks.Count );
+                // create a copy of the current vertices
+                HashSet<Index3D> copy = new HashSet<Index3D>( _indices );
+
+                // now check all of the "local" indices
+                foreach ( Index3D idx in indices )
+                {
+                    // if we have a chunk at the index, it doesn't need to be unloaded
+                    if ( _chunks.ContainsKey( idx ) )
+                    {
+                        copy.Remove( idx );
+                    }
+                    // create the chunk if we need to
+                    else
+                    {
+                        _createList.Add( idx );
+                    }
+                }
+                indices.Clear();
+
+                // check if which chunks we need to remove
+                foreach ( Index3D idx in copy )
+                {
+                    if ( _chunks.ContainsKey( idx ) )
+                    {
+                        _unloadList.Add( idx );
+                    }
+                }
+
+                lock ( _chunks )
+                {
+                    UnloadChunks();
+                    CreateChunks();
+                }
+
+                lock ( _renderQueue )
+                {
+                    _renderQueue.Clear();
+                    _renderQueue.AddRange( _chunks.Values );
+                }
+
+                // tell the garbage collector to collect shit
+                Thread.Sleep( 256 );
+            }
         }
+
+        /// <summary>
+        /// Creates all of the chunks in the create list.
+        /// </summary>
+        private void CreateChunks()
+        {
+            lock ( _createList )
+            {
+                if ( _createList.Count > 0 )
+                {
+                    Terminal.WriteLine( Color.White, 3.0, "Creating {0} chunks...", _createList.Count );
+                }
+                for ( int i = 0; i < _createList.Count; ++i )
+                {
+                    Index3D idx = _createList[ i ];
+                    CreateChunk( idx.X, idx.Y, idx.Z );
+                }
+                _createList.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Unloads all of the chunks in the unload list.
+        /// </summary>
+        private void UnloadChunks()
+        {
+            lock ( _unloadList )
+            {
+                if ( _unloadList.Count > 0 )
+                {
+                    Terminal.WriteLine( Color.White, 3.0, "Unloading {0} chunks...", _unloadList.Count );
+                }
+                for ( int i = 0; i < _unloadList.Count; ++i )
+                {
+                    Index3D idx = _unloadList[ i ];
+                    _chunks[ idx ].Unload();
+                    _chunks.Remove( idx );
+                }
+                _unloadList.Clear();
+            }
+        }
+
 
 
 
@@ -198,13 +367,18 @@ namespace Kyoob.Blocks
         /// </summary>
         public void Dispose()
         {
+            _isDisposed = true;
+
             // join the thread
-            _creationThread.Join( 100 );
+            _chunkManagementThread.Join( 100 );
 
             // dispose of all chunks
-            foreach ( Chunk chunk in _chunks.Values )
+            lock ( _chunks )
             {
-                chunk.Dispose();
+                foreach ( Chunk chunk in _chunks.Values )
+                {
+                    chunk.Dispose();
+                }
             }
         }
 
@@ -219,9 +393,9 @@ namespace Kyoob.Blocks
         public Vector3 LocalToWorld( Vector3 center, int x, int y, int z )
         {
             return new Vector3(
-                center.X + x - Chunk.Size / 2,
-                center.Y + y - Chunk.Size / 2,
-                center.Z + z - Chunk.Size / 2
+                center.X + x - Chunk.Size / 2.0f,
+                center.Y + y - Chunk.Size / 2.0f,
+                center.Z + z - Chunk.Size / 2.0f
             );
         }
 
@@ -233,27 +407,49 @@ namespace Kyoob.Blocks
         public Vector3 WorldToLocal( Vector3 center, Vector3 world )
         {
             return new Vector3(
-                world.X - center.X + Chunk.Size / 2,
-                world.Y - center.Y + Chunk.Size / 2,
-                world.Z - center.Z + Chunk.Size / 2
+                world.X - center.X + Chunk.Size / 2.0f,
+                world.Y - center.Y + Chunk.Size / 2.0f,
+                world.Z - center.Z + Chunk.Size / 2.0f
             );
         }
 
         /// <summary>
-        /// Gets the chunk at the given index.
+        /// Converts a position in the world to an index for a chunk.
         /// </summary>
-        /// <param name="index">The index.</param>
+        /// <param name="position">The position.</param>
         /// <returns></returns>
-        public Chunk GetChunk( Index3D index )
+        public Index3D PositionToIndex( Vector3 position )
         {
-            lock ( _chunks )
-            {
-                if ( _chunks.ContainsKey( index ) )
-                {
-                    return _chunks[ index ];
-                }
-            }
-            return null;
+            return new Index3D(
+                (int)position.X / Chunk.Size,
+                (int)position.Y / Chunk.Size,
+                (int)position.Z / Chunk.Size
+            );
+        }
+
+        /// <summary>
+        /// Converts a chunk index to a position in the world.
+        /// </summary>
+        /// <param name="index">The position.</param>
+        /// <returns></returns>
+        public Vector3 IndexToPosition( Index3D index )
+        {
+            return new Vector3(
+                index.X * Chunk.Size,
+                index.Y * Chunk.Size,
+                index.Z * Chunk.Size
+            );
+        }
+
+        /// <summary>
+        /// Updates the world.
+        /// </summary>
+        /// <param name="gameTime">Frame time information.</param>
+        /// <param name="camera">The current camera.</param>
+        public void Update( GameTime gameTime, Camera camera )
+        {
+            _currentViewDistance = camera.ViewDistance;
+            _currentViewPosition = camera.Position;
         }
 
         /// <summary>
@@ -266,12 +462,11 @@ namespace Kyoob.Blocks
         {
             // time how long it takes to draw our chunks
             int count = 0;
-            lock ( _chunks ) // gain thread-exclusive lock
+            lock ( _renderQueue )
             {
-                // don't include locking time (even though it's only ~50ns)
                 _watch = Stopwatch.StartNew();
 
-                foreach ( Chunk chunk in _chunks.Values )
+                foreach ( Chunk chunk in _renderQueue )
                 {
                     // only draw the chunk if we can see it
                     if ( !camera.CanSee( chunk.Bounds ) )
@@ -284,11 +479,11 @@ namespace Kyoob.Blocks
                 }
 
                 _watch.Stop();
-
-                _renderer.GraphicsDevice.Clear( _renderer.ClearColor );
-                skySphere.Draw( camera );
-                _renderer.Render();
             }
+
+            _renderer.GraphicsDevice.Clear( _renderer.ClearColor );
+            skySphere.Draw( camera );
+            _renderer.Render();
 
 
             // update our average chunk drawing information

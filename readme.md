@@ -53,13 +53,15 @@ OBJECT.FUNCTION PARAM [PARAM ...]
 Where each parameter is separated by a space. (Strings are not yet supported.)
 
 Some built-in methods:
-* `camera.getpos` prints out the camera's position.
-* `camera.setpos X Y Z` sets the camera's position.
-* `camera.index` prints the camera's world index.
 * `terminal.hide` hides the terminal's output, but still allows commands to be
   entered.
 * `terminal.show` shows the terminal's output.
-
+* `camera.getpos` prints out the camera's position.
+* `camera.setpos X Y Z` sets the camera's position.
+* `camera.index` prints the camera's world index.
+* `world.reload` reloads the current world.
+* `terrain.hbias VALUE` sets the terrain generator's horizontal bias.
+* `terrain.vbias VALUE` sets the terrain generator's vertical bias.
 
 License
 -------

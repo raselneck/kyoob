@@ -80,9 +80,11 @@ namespace Kyoob.Blocks
         /// <param name="device">The device to send the data to.</param>
         public void Compile( GraphicsDevice device )
         {
-            Dispose(); // dispose in case we already have data on the GPU
-
-            if ( _vertexCount > 0 )
+            if ( IsOnGPU )
+            {
+                return;
+            }
+            if ( _vertexCount > 0 && !device.IsDisposed )
             {
                 _vertices = new VertexBuffer( device, VertexPositionNormalTexture.VertexDeclaration, _vertexCount, BufferUsage.None );
                 _vertices.SetData<VertexPositionNormalTexture>( _data.ToArray() );
@@ -98,6 +100,7 @@ namespace Kyoob.Blocks
             {
                 _vertices.Dispose();
                 _vertices = null;
+                _data.Clear();
             }
         }
 

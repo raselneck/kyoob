@@ -91,21 +91,6 @@ namespace Kyoob
         }
 
         /// <summary>
-        /// Gets the camera's world index.
-        /// </summary>
-        public Index3D WorldIndex
-        {
-            get
-            {
-                return new Index3D(
-                    (int)_position.X / 16,
-                    (int)_position.Y / 16,
-                    (int)_position.Z / 16
-                );
-            }
-        }
-
-        /// <summary>
         /// Gets the pseudo bounds of the camera.
         /// </summary>
         public BoundingBox Bounds
@@ -113,8 +98,16 @@ namespace Kyoob
             get
             {
                 return new BoundingBox(
-                    new Vector3( _position.X - 0.5f, _position.Y - 0.5f, _position.Z - 0.5f ),
-                    new Vector3( _position.X + 0.5f, _position.Y + 0.5f, _position.Z + 0.5f )
+                    new Vector3(
+                        _position.X - 0.5f,
+                        _position.Y - 0.5f,
+                        _position.Z - 0.5f
+                    ),
+                    new Vector3(
+                        _position.X + 0.5f,
+                        _position.Y + 0.5f,
+                        _position.Z + 0.5f
+                    )
                 );
             }
         }
@@ -170,13 +163,6 @@ namespace Kyoob
                 float y = float.Parse( param[ 1 ] );
                 float z = float.Parse( param[ 2 ] );
                 _position = new Vector3( x, y, z );
-            } );
-
-            // get index
-            Terminal.AddCommand( "camera", "index", ( string[] param ) =>
-            {
-                Index3D index = WorldIndex;
-                Terminal.WriteLine( Color.White, 3.0, "[{0},{1},{2}]", index.X, index.Y, index.Z );
             } );
         }
 

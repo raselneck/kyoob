@@ -91,8 +91,16 @@ namespace Kyoob.Blocks
             _isActive = !IsEmpty;
 
             _bounds = new BoundingBox(
-                new Vector3( _position.X - 0.5f, _position.Y - 0.5f, _position.Z - 0.5f ),
-                new Vector3( _position.X + 0.5f, _position.Y + 0.5f, _position.Z + 0.5f )
+                new Vector3(
+                    _position.X - 0.5f,
+                    _position.Y - 0.5f,
+                    _position.Z - 0.5f
+                ),
+                new Vector3(
+                    _position.X + 0.5f,
+                    _position.Y + 0.5f,
+                    _position.Z + 0.5f
+                )
             );
         }
     }

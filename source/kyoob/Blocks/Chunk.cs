@@ -67,6 +67,24 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Checks to see if the chunk is loaded.
+        /// </summary>
+        public bool IsLoaded
+        {
+            get
+            {
+                lock ( _terrainBuff )
+                {
+                    lock ( _waterBuff )
+                    {
+                        return _terrainBuff.IsOnGPU && _waterBuff.IsOnGPU;
+                    }
+                }
+                
+            }
+        }
+
+        /// <summary>
         /// Creates a new chunk.
         /// </summary>
         /// <param name="world">The world this chunk is in.</param>
@@ -78,8 +96,16 @@ namespace Kyoob.Blocks
             _blocks = new Block[ Size, Size, Size ];
             _position = position;
             _bounds = new BoundingBox(
-                new Vector3( _position.X - Size / 2 - 0.5f, _position.Y - Size / 2 - 0.5f, _position.Z - Size / 2 - 0.5f ),
-                new Vector3( _position.X + Size / 2 - 0.5f, _position.Y + Size / 2 - 0.5f, _position.Z + Size / 2 - 0.5f )
+                new Vector3(
+                    _position.X - Size / 2.0f,
+                    _position.Y - Size / 2.0f,
+                    _position.Z - Size / 2.0f
+                ),
+                new Vector3(
+                    _position.X + Size / 2.0f,
+                    _position.Y + Size / 2.0f,
+                    _position.Z + Size / 2.0f
+                )
             );
             _octree = new Octree<Block>( _bounds );
             _terrainBuff = new VoxelBuffer();
@@ -97,7 +123,7 @@ namespace Kyoob.Blocks
                     {
                         // get block data
                         Vector3 coords = _world.LocalToWorld( _position, x, y, z );
-                        BlockType type = _world.TerrainGenerator.GetBlockType( coords );
+                        BlockType type = _world.TerrainGenerator.GetBlockType( x, y, z );
                         _blocks[ x, y, z ] = new Block( coords, type );
                     }
                 }
@@ -129,8 +155,16 @@ namespace Kyoob.Blocks
 
             // create bounds and octree
             _bounds = new BoundingBox(
-                new Vector3( _position.X - Size / 2 - 0.5f, _position.Y - Size / 2 - 0.5f, _position.Z - Size / 2 - 0.5f ),
-                new Vector3( _position.X + Size / 2 - 0.5f, _position.Y + Size / 2 - 0.5f, _position.Z + Size / 2 - 0.5f )
+                new Vector3(
+                    _position.X - Size / 2.0f,
+                    _position.Y - Size / 2.0f,
+                    _position.Z - Size / 2.0f
+                ),
+                new Vector3(
+                    _position.X + Size / 2.0f,
+                    _position.Y + Size / 2.0f,
+                    _position.Z + Size / 2.0f
+                )
             );
             _octree = new Octree<Block>( _bounds );
 
@@ -170,9 +204,7 @@ namespace Kyoob.Blocks
 
             // clear out everything that needs to be cleared
             _terrainBuff.Clear();
-            _terrainBuff.Dispose();
             _waterBuff.Clear();
-            _waterBuff.Dispose();
             _octree.Clear();
 
             // tell the terrain generator to generate data for this chunk
@@ -295,8 +327,7 @@ namespace Kyoob.Blocks
         private BlockType GetBlockType( int x, int y, int z )
         {
             // get the world block type
-            Vector3 coords = _world.LocalToWorld( _position, x, y, z );
-            return _world.TerrainGenerator.GetBlockType( coords );
+            return _world.TerrainGenerator.GetBlockType( x, y, z );
         }
 
         /// <summary>
