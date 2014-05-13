@@ -117,6 +117,7 @@ namespace Kyoob.Terrain
             float value = _builder.NoiseMap[ x, z ];
             value = MathHelper.Clamp( value, -1.0f, 1.0f ) / 2.0f + 0.5f; // value will now be in [0,1] range
             value *= _vBias;
+            // value *= _vBias / ( position.Y / _vBias );
 
             // get the actual block type
             BlockType type = BlockType.Air;

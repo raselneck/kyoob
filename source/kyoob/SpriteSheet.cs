@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Kyoob.Blocks;
 
-namespace Kyoob.Blocks
+namespace Kyoob
 {
     /// <summary>
     /// Contains block sprite sheet data.

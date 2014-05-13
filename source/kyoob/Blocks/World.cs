@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Kyoob.Debug;
 using Kyoob.Effects;
 using Kyoob.Terrain;
 
@@ -88,6 +89,8 @@ namespace Kyoob.Blocks
             _creationThread = new Thread( new ThreadStart( ChunkCreationCallback ) );
             _creationThread.Name = "Test Chunk Creation";
             _creationThread.Start();
+
+            SetTerminalCommands();
         }
 
         /// <summary>
@@ -118,6 +121,16 @@ namespace Kyoob.Blocks
                     _chunks.Add( index, chunk );
                 }
             }
+
+            SetTerminalCommands();
+        }
+
+        /// <summary>
+        /// Sets the world commands in the terminal.
+        /// </summary>
+        private void SetTerminalCommands()
+        {
+            
         }
 
         /// <summary>
@@ -265,6 +278,7 @@ namespace Kyoob.Blocks
                     {
                         continue;
                     }
+
                     chunk.Draw( _renderer );
                     ++count;
                 }

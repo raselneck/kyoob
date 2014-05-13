@@ -92,6 +92,25 @@ namespace Kyoob.Terrain
         }
 
         /// <summary>
+        /// Gets the maximum level for the given block type.
+        /// </summary>
+        /// <param name="type">The type to get the level for.</param>
+        /// <returns></returns>
+        public float GetLevel( BlockType type )
+        {
+            int index = 0;
+            while ( type != _levels[ index ].Type )
+            {
+                ++index;
+                if ( index == _levels.Count - 1 )
+                {
+                    break;
+                }
+            }
+            return _levels[ index ].Level;
+        }
+
+        /// <summary>
         /// Gets the block type for the given height.
         /// </summary>
         /// <param name="height">The height to get the block data for.</param>

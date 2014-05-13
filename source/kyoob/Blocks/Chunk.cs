@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Kyoob.Debug;
 using Kyoob.Effects;
 
 #pragma warning disable 1587 // disable "invalid XML comment placement"
@@ -174,6 +175,9 @@ namespace Kyoob.Blocks
             _waterBuff.Dispose();
             _octree.Clear();
 
+            // tell the terrain generator to generate data for this chunk
+            _world.TerrainGenerator.CurrentChunk = this;
+
             // begin block iteration
             for ( int x = 0; x < Size; ++x )
             {
@@ -208,9 +212,24 @@ namespace Kyoob.Blocks
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
                         }
+                        // only do the tops of water
                         if ( block.Type == BlockType.Water && type == BlockType.Air )
                         {
+                            // add the regular face
                             _waterBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
+
+                            // now add the reverse face so that we can see the water from below
+                            //VertexPositionNormalTexture[] data = Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type );
+                            //int i = 0, j = data.Length - 1;
+                            //while ( i < j )
+                            //{
+                            //    var temp = data[ i ];
+                            //    data[ i ] = data[ j ];
+                            //    data[ j ] = temp;
+                            //    ++i;
+                            //    --j;
+                            //}
+                            //_waterBuff.AddFaceData( data );
                         }
 
                         // check below
@@ -303,11 +322,18 @@ namespace Kyoob.Blocks
         /// </summary>
         public void Unload()
         {
-            _octree.Clear();
-            _terrainBuff.Dispose();
-            _waterBuff.Dispose();
-
-            Terminal.WriteLine( Color.Cyan, 1.5, "Unloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
+            lock ( _octree )
+            {
+                _octree.Clear();
+            }
+            lock ( _terrainBuff )
+            {
+                _terrainBuff.Dispose();
+            }
+            lock ( _waterBuff )
+            {
+                _waterBuff.Dispose();
+            }
         }
 
         /// <summary>
@@ -318,9 +344,19 @@ namespace Kyoob.Blocks
             //_terrainBuff.Compile( _world.GraphicsDevice );
             //_waterBuff.Compile( _world.GraphicsDevice );
 
-            BuildVoxelBuffers();
-
-            Terminal.WriteLine( Color.Cyan, 1.5, "Reloaded chunk @ [{0},{1},{2}]", _position.X, _position.Y, _position.Z );
+            lock ( _terrainBuff )
+            {
+                lock ( _waterBuff )
+                {
+                    lock ( _octree )
+                    {
+                        if ( !_terrainBuff.IsOnGPU && !_waterBuff.IsOnGPU )
+                        {
+                            BuildVoxelBuffers();
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>

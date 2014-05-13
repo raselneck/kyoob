@@ -32,6 +32,35 @@ Bugs
 * Terrain generation doesn't entirely work. What you see right now is kind of
   a "it works this way so let's go with it" kind of hack.
 
+The Terminal
+------------
+
+The terminal is the equivalent of every other game's console, except I couldn't
+call it "Console" because of `System.Console`. Currently it automatically prints
+out the current FPS and the average number of chunks drawn in one second as well
+as the average amount of time it took to draw said chunks.
+
+You can also enter commands into the console by pressing the tilde (~) key while
+running the engine, and you can bind commands using `Terminal.AddCommand`. All
+you need to do is give it an object name, a function name, and a callback (which
+is any method that returns nothing and takes in an array of strings as the only
+parameter).
+
+Currently, commands are parsed in the following format:
+```
+OBJECT.FUNCTION PARAM [PARAM ...]
+```
+Where each parameter is separated by a space. (Strings are not yet supported.)
+
+Some built-in methods:
+* `camera.getpos` prints out the camera's position.
+* `camera.setpos X Y Z` sets the camera's position.
+* `camera.index` prints the camera's world index.
+* `terminal.hide` hides the terminal's output, but still allows commands to be
+  entered.
+* `terminal.show` shows the terminal's output.
+
+
 License
 -------
 

@@ -7,14 +7,13 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
+using Kyoob.Debug;
 using Kyoob.Effects;
 using Kyoob.Terrain;
 
 #warning TODO : There's really no need for chunk->world and world->chunk coordinate conversions for the terrain generator.
 #warning TODO : Input manager. (?)
-#warning TODO : Add input/commands to terminal.
 #warning TODO : Add some more lighting stuff, maybe shadows.
-#warning TODO : Implement effect manager.
 #warning TODO : Motion blur. (?)
 #warning TODO : Physics.
 
@@ -70,6 +69,16 @@ namespace Kyoob
             // initialize the terminal
             Terminal.Initialize( this );
             Terminal.Font = Content.Load<SpriteFont>( "font/arial" );
+            Terminal.RequestControl += ( sender, args ) =>
+            {
+                _camera.ReleaseControl();
+                IsMouseVisible = true;
+            };
+            Terminal.ReleaseControl += ( sender, args ) =>
+            {
+                _camera.TakeControl();
+                IsMouseVisible = false;
+            };
 
 
             // create a perlin terrain generator (needs work)
@@ -77,9 +86,9 @@ namespace Kyoob
             terrain.Seed = 114;
             terrain.HorizontalBias = 1 / 53.0f;
             terrain.VerticalBias = 24.0f;
-            terrain.Levels.WaterLevel = 6.0f;
-            terrain.Levels.AddLevel( 4.00f, BlockType.Stone );
-            terrain.Levels.AddLevel( 9.00f, BlockType.Sand );
+            terrain.Levels.WaterLevel = 8.0f;
+            terrain.Levels.AddLevel( 7.00f, BlockType.Stone );
+            terrain.Levels.AddLevel( 12.00f, BlockType.Sand );
             terrain.Levels.AddLevel( 24.0f, BlockType.Dirt );
 
 

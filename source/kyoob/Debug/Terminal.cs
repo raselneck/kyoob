@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Kyoob
+namespace Kyoob.Debug
 {
     /// <summary>
     /// The "console" that will be drawn on screen.
@@ -55,10 +55,22 @@ namespace Kyoob
         private static SpriteBatch _spriteBatch;
         private static SpriteFont _font;
         private static float _lineHeight;
+        private static TerminalInput _input;
+        private static bool _isHidden;
 
         // FPS monitoring is delegated to the terminal
         private static int _frameCount;
         private static double _tickCount;
+
+        /// <summary>
+        /// The event that is called when the terminal requests control of user input.
+        /// </summary>
+        public static event EventHandler<EventArgs> RequestControl;
+
+        /// <summary>
+        /// The event that is called when the terminal releases control of user input.
+        /// </summary>
+        public static event EventHandler<EventArgs> ReleaseControl;
 
         /// <summary>
         /// Gets or sets the terminal's font.
@@ -72,7 +84,19 @@ namespace Kyoob
             set
             {
                 _font = value;
-                _lineHeight = _font.MeasureString( "F" ).Y;
+                _lineHeight = _font.MeasureString( "M" ).Y;
+                _input.Font = _font;
+            }
+        }
+
+        /// <summary>
+        /// Gets the terminal's command handler.
+        /// </summary>
+        public static CommandHandler Commands
+        {
+            get
+            {
+                return _input.Commands;
             }
         }
 
@@ -85,6 +109,34 @@ namespace Kyoob
             _frameCount = 0;
             _tickCount = 0;
             _messages = new List<TerminalMessage>();
+            _isHidden = false;
+
+            // setup the input
+            _input = new TerminalInput( null );
+            _input.ReleaseControl += ( sender, args ) =>
+            {
+                if ( ReleaseControl != null )
+                {
+                    ReleaseControl( sender, args );
+                }
+            };
+            _input.RequestControl += ( sender, args ) =>
+            {
+                if ( RequestControl != null )
+                {
+                    RequestControl( sender, args );
+                }
+            };
+
+            // setup some terminal commands
+            AddCommand( "terminal", "show", ( string[] param ) =>
+            {
+                _isHidden = false;
+            } );
+            AddCommand( "terminal", "hide", ( string[] param ) =>
+            {
+                _isHidden = true;
+            } );
         }
 
         /// <summary>
@@ -121,6 +173,8 @@ namespace Kyoob
         /// <param name="gameTime">Frame time information.</param>
         public static void Update( GameTime gameTime )
         {
+            _input.Update( gameTime );
+
             // update only the messages that will show on screen, and remove them if they're dead
             TerminalMessage message;
             int count = 0;
@@ -162,18 +216,37 @@ namespace Kyoob
             {
                 _spriteBatch.Begin();
 
-                // draw FPS and then all messages from the top of the screen down
+                // draw all messages from the top of the screen down (checking for input first)
                 Vector2 position = new Vector2( 10.0f, 10.0f );
-                for ( int i = 0; i < Math.Min( _messages.Count, MaxMessagesOnScreen ); ++i )
+                if ( _input.HasControl )
                 {
-                    // add the line height first for when we implement command input
-                    position.Y += _lineHeight;
-                    DrawHighlighted( _messages[ i ], position );
+                    TerminalMessage msg = new TerminalMessage( Color.White, 0.0, _input.Text + "|" );
+                    DrawHighlighted( msg, position );
+                }
+                if ( !_isHidden )
+                {
+                    for ( int i = 0; i < Math.Min( _messages.Count, MaxMessagesOnScreen ); ++i )
+                    {
+                        // add the line height first for when we implement command input
+                        position.Y += _lineHeight;
+                        DrawHighlighted( _messages[ i ], position );
+                    }
                 }
 
                 _spriteBatch.End();
                 _device.DepthStencilState = _depthState;
             }
+        }
+
+        /// <summary>
+        /// Adds a command to the terminal.
+        /// </summary>
+        /// <param name="obj">The object name.</param>
+        /// <param name="func">The function name.</param>
+        /// <param name="callback">The function callback.</param>
+        public static void AddCommand( string obj, string func, CommandCallback callback )
+        {
+            _input.Commands.AddCallback( obj, func, callback );
         }
 
         /// <summary>

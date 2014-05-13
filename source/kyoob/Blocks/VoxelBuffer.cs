@@ -18,6 +18,17 @@ namespace Kyoob.Blocks
         private int _vertexCount;
 
         /// <summary>
+        /// Checks to see if this voxel buffer is on the GPU.
+        /// </summary>
+        public bool IsOnGPU
+        {
+            get
+            {
+                return _vertices != null;
+            }
+        }
+
+        /// <summary>
         /// Creates a new voxel buffer.
         /// </summary>
         public VoxelBuffer()

@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
+using Kyoob.Debug;
 
 namespace Kyoob
 {
@@ -21,6 +22,7 @@ namespace Kyoob
         private float _yaw;
         private float _pitch;
         private MouseState _lastMouse;
+        private bool _hasControl;
 
         /// <summary>
         /// Gets the camera's view matrix.
@@ -63,6 +65,17 @@ namespace Kyoob
             get
             {
                 return Matrix.CreateFromYawPitchRoll( _yaw, _pitch, 0.0f );
+            }
+        }
+
+        /// <summary>
+        /// Gets the view distance of the camera.
+        /// </summary>
+        public float ViewDistance
+        {
+            get
+            {
+                return _settings.ClipFar;
             }
         }
 
@@ -121,7 +134,66 @@ namespace Kyoob
             _yaw = _settings.InitialYaw;
             _pitch = _settings.InitialPitch;
 
+            _hasControl = true;
             _lastMouse = Mouse.GetState();
+
+            SetTerminalCommands();
+        }
+
+        /// <summary>
+        /// Sets the camera commands in the terminal.
+        /// </summary>
+        private void SetTerminalCommands()
+        {
+            // don't need to re-bind commands
+            if ( Terminal.Commands.HasObject( "camera" ) )
+            {
+                return;
+            }
+
+            // get position
+            Terminal.AddCommand( "camera", "getpos", ( string[] param ) =>
+            {
+                Terminal.WriteLine( Color.White, 3.0, "[{0:0.00},{1:0.00},{2:0.00}]", _position.X, _position.Y, _position.Z );
+            } );
+
+            // set position
+            Terminal.AddCommand( "camera", "setpos", ( string[] param ) =>
+            {
+                if ( param.Length < 3 )
+                {
+                    Terminal.WriteLine( Color.Red, 3.0, "Not enough parameters." );
+                    return;
+                }
+
+                float x = float.Parse( param[ 0 ] );
+                float y = float.Parse( param[ 1 ] );
+                float z = float.Parse( param[ 2 ] );
+                _position = new Vector3( x, y, z );
+            } );
+
+            // get index
+            Terminal.AddCommand( "camera", "index", ( string[] param ) =>
+            {
+                Index3D index = WorldIndex;
+                Terminal.WriteLine( Color.White, 3.0, "[{0},{1},{2}]", index.X, index.Y, index.Z );
+            } );
+        }
+
+        /// <summary>
+        /// Takes control of the mouse.
+        /// </summary>
+        public void TakeControl()
+        {
+            _hasControl = true;
+        }
+
+        /// <summary>
+        /// Releases control of the mouse.
+        /// </summary>
+        public void ReleaseControl()
+        {
+            _hasControl = false;
         }
 
         /// <summary>
@@ -183,7 +255,14 @@ namespace Kyoob
         /// <param name="world">The world that the camera is navigating in.</param>
         public void Update( GameTime gameTime, World world )
         {
-            CheckUserInput( gameTime );
+            if ( _hasControl )
+            {
+                CheckUserInput( gameTime );
+            }
+            else
+            {
+                _lastMouse = Mouse.GetState();
+            }
             ApplyTransformations( world );
         }
 
@@ -260,21 +339,6 @@ namespace Kyoob
             // translate based on rotation
             _translation = Vector3.Transform( _translation, rotation );
             _position += _translation;
-
-            /*
-            // check if we're colliding anywhere in the world
-            Chunk chunk = world.GetChunk( WorldIndex );
-            if ( chunk != null )
-            {
-                if ( chunk.Collides( Bounds ) )
-                {
-                    _position -= _translation;
-                    Terminal.WriteLine( Color.Red, "Collided" );
-                }
-            }
-            */
-
-            // reset the translation
             _translation = Vector3.Zero;
 
             // get new target and up vectors

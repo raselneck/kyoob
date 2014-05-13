@@ -88,7 +88,10 @@ namespace Kyoob.Effects
             for ( int i = 0; i < _solidQueue.Count; ++i )
             {
                 VoxelBuffer buffer = _solidQueue[ i ];
-                buffer.Draw( _device, _effect );
+                lock ( buffer )
+                {
+                    buffer.Draw( _device, _effect );
+                }
             }
             _solidQueue.Clear();
 
@@ -97,7 +100,10 @@ namespace Kyoob.Effects
             for ( int i = 0; i < _alphaQueue.Count; ++i )
             {
                 VoxelBuffer buffer = _alphaQueue[ i ];
-                buffer.Draw( _device, _effect );
+                lock ( buffer )
+                {
+                    buffer.Draw( _device, _effect );
+                }
             }
             _alphaQueue.Clear();
         }
