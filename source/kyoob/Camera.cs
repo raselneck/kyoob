@@ -274,7 +274,7 @@ namespace Kyoob
             // check if "sprinting"
             if ( keyboard.IsKeyDown( Keys.LeftShift ) )
             {
-                units *= 2.25f;
+                units *= 2.50f;
             }
 
             // check keyboard

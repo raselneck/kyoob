@@ -165,7 +165,15 @@ namespace Kyoob.Blocks
             // world.reload
             Terminal.AddCommand( "world", "reload", ( string[] param ) =>
             {
-                Terminal.WriteLine( Color.Red, 5.0, "world.reload is not implemented." );
+                lock ( _chunks )
+                {
+                    foreach ( Chunk chunk in _chunks.Values )
+                    {
+                        chunk.Dispose();
+                    }
+                    _chunks.Clear();
+                    Terminal.WriteLine( Color.White, 3.0, "Cleared all chunks." );
+                }
             } );
 
             // terrain.vbias
@@ -256,7 +264,7 @@ namespace Kyoob.Blocks
             while ( !_isDisposed )
             {
                 index = PositionToIndex( _currentViewPosition );
-                int maxDist = (int)( _currentViewDistance / Chunk.Size );
+                int maxDist = (int)( _currentViewDistance * 1.5f / Chunk.Size );
                 
                 // create a list of all of the indices to check
                 for ( int x = 0; x < maxDist; ++x )
@@ -333,6 +341,16 @@ namespace Kyoob.Blocks
                 {
                     Index3D idx = _createList[ i ];
                     CreateChunk( idx.X, idx.Y, idx.Z );
+
+                    // let's update the render queue just in case we have a lot of chunks to create
+                    if ( i > 0 && i % 50 == 0 )
+                    {
+                        lock ( _renderQueue )
+                        {
+                            _renderQueue.Clear();
+                            _renderQueue.AddRange( _chunks.Values );
+                        }
+                    }
                 }
                 _createList.Clear();
             }
