@@ -26,9 +26,6 @@ Screenshot
 Bugs
 ----
 
-* If you close the window before the chunk creation thread is finished, then
-  the program will crash with a NullReferenceException as the thread attempts
-  to create a chunk's VertexBuffer. I currently do not know why.
 * Terrain generation doesn't entirely work. What you see right now is kind of
   a "it works this way so let's go with it" kind of hack.
 
@@ -66,23 +63,20 @@ Some built-in methods:
 License
 -------
 
-All code in this repo, except for anything in the Kyoob.NoiseUtils namespace
-(the code for this is conveniently located in a separate project and folder),
-is licensed under the MIT license. The Kyoob.NoiseUtils namespace contains code
-ported from the C++ NoiseUtils library to C#, and is released under the LGPL
-v2.1 license. From my understanding, a port is considered a derivative work and
-must therefore be released under the same license as the parent work. The original
-NoiseUtils library ((c) 2003-2005 Jason Bevins) can be found
-[here](http://libnoise.sourceforge.net/downloads/noiseutils.zip).
+All of the code in the repo, unless otherwise stated below, is licensed under the
+MIT license. See the `licenses` folder for full license texts.
 
-Images are (currently) taken from Minecraft and used for educational purposes
+* Sky sphere model and HLSL code taken from [Creating a SkySphere](http://msdn.microsoft.com/en-us/library/bb464016.aspx),
+  which is released under the Microsoft Permissive License (Ms-PL).
+
+Images are (currently) taken from Minecraft and are used for educational purposes
 only. Nothing malicious was intended.
 
 Skybox generated with [Spacescape](http://alexcpeterson.com/spacescape) and exported
 from Photoshop using NVIDIA's Photoshop Plugins. (For reference, the skybox texture
 order is: right, left, top, bottom, front, back.)
 
-Sky sphere model and HLSL code taken from [Creating a SkySphere](http://msdn.microsoft.com/en-us/library/bb464016.aspx),
-which is released under the Microsoft Permissive License (Ms-PL).
+Change Log
+----------
 
-See the `licenses` folder for full license texts.
+To be written.

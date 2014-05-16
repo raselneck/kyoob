@@ -107,6 +107,7 @@
     <Compile Include="Terrain\PerlinTerrain.cs" />
     <Compile Include="Terrain\TerrainGenerator.cs" />
     <Compile Include="Terrain\TerrainLevels.cs" />
+    <Compile Include="Terrain\TerrainPlane.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="KyoobIcon.ico" />
@@ -119,10 +120,6 @@
       <Name>KyoobContent %28content%29</Name>
       <XnaReferenceType>Content</XnaReferenceType>
       <Project>{7304DE30-B32B-4FE6-92FB-BD987149CA54}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\noiseutils\Kyoob.NoiseUtils.csproj">
-      <Project>{f66beb36-b974-48c5-abe5-02e6824f94fe}</Project>
-      <Name>Kyoob.NoiseUtils</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

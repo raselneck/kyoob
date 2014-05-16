@@ -1,10 +1,6 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Kyoob.Blocks;
-using Kyoob.NoiseUtils;
-
-#warning TODO : Look into a perlin noise smoothing algorithm.
-#warning TODO : Terrain levels don't really work.
 
 namespace Kyoob.Terrain
 {
@@ -14,7 +10,8 @@ namespace Kyoob.Terrain
     public class PerlinTerrain : TerrainGenerator
     {
         private LibNoise.Perlin _noise;
-        private PlaneMapBuilder _builder;
+        private TerrainPlane _plane;
+        private float[ , ] _heightMap;
         private float _hBias;
         private float _vBias;
 
@@ -31,7 +28,6 @@ namespace Kyoob.Terrain
             {
                 base.Seed = value;
                 _noise.Seed = value;
-                _builder.SourceModule = _noise;
             }
         }
 
@@ -75,10 +71,7 @@ namespace Kyoob.Terrain
             _noise = new LibNoise.Perlin();
             _noise.Seed = seed;
 
-            _builder = new PlaneMapBuilder();
-            _builder.SourceModule = _noise;
-            _builder.DestinationWidth = Chunk.Size + 2;
-            _builder.DestinationHeight = Chunk.Size + 2;
+            _plane = new TerrainPlane( _noise );
 
             _hBias = 17.0f; // prime numbers work best
             _vBias = 10.0f;
@@ -99,8 +92,8 @@ namespace Kyoob.Terrain
             float lowerZ = ( position.Z - Chunk.Size / 2 - 1 ) * _hBias;
             float upperZ = ( position.Z + Chunk.Size / 2 + 1 ) * _hBias;
 
-            _builder.SetBounds( lowerX, upperX, lowerZ, upperZ );
-            _builder.Build();
+            _plane.SetBounds( lowerX, upperX, lowerZ, upperZ );
+            _heightMap = _plane.GenerateHeightMap( Chunk.Size + 2, Chunk.Size + 2 );
         }
 
         /// <summary>
@@ -113,9 +106,7 @@ namespace Kyoob.Terrain
         {
             // get the local coordinates and then get the designated height value
             Vector3 world = CurrentChunk.World.LocalToWorld( CurrentChunk.Center, x, y, z );
-            x++;
-            z++;
-            float value = _builder.NoiseMap[ x, z ];
+            float value = _heightMap[ x + 1, z + 1 ];
             value = MathHelper.Clamp( value, -1.0f, 1.0f ) / 2.0f + 0.5f; // value will now be in [0,1] range
             value *= _vBias;
             // value *= _vBias / ( position.Y / _vBias );

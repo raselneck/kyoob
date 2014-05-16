@@ -343,7 +343,7 @@ namespace Kyoob.Blocks
                     CreateChunk( idx.X, idx.Y, idx.Z );
 
                     // let's update the render queue just in case we have a lot of chunks to create
-                    if ( i > 0 && i % 50 == 0 )
+                    if ( i > 0 && i % 75 == 0 )
                     {
                         lock ( _renderQueue )
                         {

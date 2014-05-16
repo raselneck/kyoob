@@ -84,10 +84,10 @@ namespace Kyoob
             // create a perlin terrain generator (needs work)
             PerlinTerrain terrain = new PerlinTerrain( 0 );
             terrain.Seed = 114;
-            terrain.HorizontalBias = 1 / 53.0f;
+            terrain.HorizontalBias = 1 / 101.0f;
             terrain.VerticalBias = 24.0f;
             terrain.Levels.WaterLevel = 8.0f;
-            terrain.Levels.AddLevel( 7.00f, BlockType.Stone );
+            terrain.Levels.AddLevel( 6.00f, BlockType.Stone );
             terrain.Levels.AddLevel( 12.00f, BlockType.Sand );
             terrain.Levels.AddLevel( 24.0f, BlockType.Dirt );
 

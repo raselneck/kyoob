@@ -12,11 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "git", "git", "{5392863F-BEB
 		screenshot.png = screenshot.png
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyoob.NoiseUtils", "source\noiseutils\Kyoob.NoiseUtils.csproj", "{F66BEB36-B974-48C5-ABE5-02E6824F94FE}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "licenses", "licenses", "{C52875CA-4CF2-40BD-8095-2198FC19C675}"
 	ProjectSection(SolutionItems) = preProject
-		licenses\lgpl-v2.1.md = licenses\lgpl-v2.1.md
 		licenses\mit.md = licenses\mit.md
 		licenses\ms-pl.md = licenses\ms-pl.md
 	EndProjectSection
@@ -33,10 +30,6 @@ Global
 		{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}.Release|x86.Build.0 = Release|x86
 		{7304DE30-B32B-4FE6-92FB-BD987149CA54}.Debug|x86.ActiveCfg = Debug|x86
 		{7304DE30-B32B-4FE6-92FB-BD987149CA54}.Release|x86.ActiveCfg = Release|x86
-		{F66BEB36-B974-48C5-ABE5-02E6824F94FE}.Debug|x86.ActiveCfg = Debug|x86
-		{F66BEB36-B974-48C5-ABE5-02E6824F94FE}.Debug|x86.Build.0 = Debug|x86
-		{F66BEB36-B974-48C5-ABE5-02E6824F94FE}.Release|x86.ActiveCfg = Release|x86
-		{F66BEB36-B974-48C5-ABE5-02E6824F94FE}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
