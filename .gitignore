@@ -6,4 +6,5 @@ content/bin/*
 *.user
 *.suo
 *.cache*
+*.dll
 .gitattributes

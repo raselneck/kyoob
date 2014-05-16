@@ -240,7 +240,7 @@ namespace Kyoob.Debug
         /// </summary>
         private void UpdateText()
         {
-            HashSet<Keys> newDown = new HashSet<Keys>( _newKeys.GetPressedKeys() );
+            List<Keys> newDown = new List<Keys>( _newKeys.GetPressedKeys() );
             Keys[] toCheck = _oldKeys.GetPressedKeys();
 
             foreach ( Keys key in toCheck )

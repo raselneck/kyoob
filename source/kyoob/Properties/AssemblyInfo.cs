@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle( "Kyoob" )]
-[assembly: AssemblyProduct( "kyoob" )]
+[assembly: AssemblyProduct( "Kyoob" )]
 [assembly: AssemblyDescription( "XNA Voxel Engine" )]
 [assembly: AssemblyCompany( "" )]
 [assembly: AssemblyCopyright( "Copyright © Richard Selneck 2014" )]

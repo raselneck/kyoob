@@ -47,7 +47,6 @@ float4 PSFunc( VSOutput input ) : COLOR0
     return float4( color, 1.0 );
 }
 
-
 technique MainTechnique
 {
     pass Pass0

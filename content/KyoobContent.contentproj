@@ -72,22 +72,22 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="model\skysphere.fbx">
-      <Name>skysphere</Name>
+    <Compile Include="model\skybox.fbx">
+      <Name>skybox</Name>
       <Importer>FbxImporter</Importer>
       <Processor>ModelProcessor</Processor>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="fx\skysphere.hlsl">
-      <Name>skysphere</Name>
+    <Compile Include="fx\skybox.hlsl">
+      <Name>skybox</Name>
       <Importer>EffectImporter</Importer>
       <Processor>EffectProcessor</Processor>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="tex\skysphere.dds">
-      <Name>skysphere</Name>
+    <Compile Include="tex\skybox-512.dds">
+      <Name>skybox-512</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>

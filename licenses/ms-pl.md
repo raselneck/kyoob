@@ -7,11 +7,9 @@ Microsoft Permissive License (Ms-PL)
 --------------
 
 The terms “reproduce,” “reproduction,” “derivative works,” and “distribution” have the same meaning here as under U.S. copyright law.
-
-A “contribution” is the original software, or any additions or changes to the software.
-
-A “contributor” is any person that distributes its contribution under this license.
- “Licensed patents” are a contributor’s patent claims that read directly on its contribution.
+* A “contribution” is the original software, or any additions or changes to the software.
+* A “contributor” is any person that distributes its contribution under this license.
+  “Licensed patents” are a contributor’s patent claims that read directly on its contribution.
 
 2. Grant of Rights
 ------------------

@@ -23,11 +23,6 @@ Screenshot
 
 ![ScreenShot](https://raw.githubusercontent.com/csdevrich/kyoob/master/screenshot.png)
 
-Bugs
-----
-
-None currently known.
-
 The Terminal
 ------------
 
@@ -55,9 +50,9 @@ Some built-in methods:
 * `camera.getpos` prints out the camera's position.
 * `camera.setpos X Y Z` sets the camera's position.
 * `camera.index` prints the camera's world index.
-* `world.reload` reloads the current world.
 * `terrain.hbias VALUE` sets the terrain generator's horizontal bias.
 * `terrain.vbias VALUE` sets the terrain generator's vertical bias.
+* `world.reload` reloads the current world.
 
 License
 -------
@@ -65,17 +60,71 @@ License
 All of the code in the repo, unless otherwise stated below, is licensed under the
 MIT license. See the `licenses` folder for full license texts.
 
-* Sky sphere model and HLSL code taken from [Creating a SkySphere](http://msdn.microsoft.com/en-us/library/bb464016.aspx),
+* Sky box/sphere model and HLSL code taken from [Creating a SkySphere](http://msdn.microsoft.com/en-us/library/bb464016.aspx),
   which is released under the Microsoft Permissive License (Ms-PL).
 
 Images are (currently) taken from Minecraft and are used for educational purposes
 only. Nothing malicious was intended.
 
-Skybox generated with [Spacescape](http://alexcpeterson.com/spacescape) and exported
-from Photoshop using NVIDIA's Photoshop Plugins. (For reference, the skybox texture
-order is: right, left, top, bottom, front, back.)
+Skybox generated with [SkyGen](http://www.nutty.ca/?p=381), and the resulting
+images were exported from Photoshop with NVIDIA's Photoshop Plugins.
+
+To-do
+-----
+
+I keep a better list in the code (`#warning TODO : ...` because C# doesn't have C++'s
+`#pragma message( ... )`), but I'll try to keep this one up to date.
+
+* Make cube size based off of a constant (maybe entirely modifiable?)
+* Terrain smoothing. Or better yet, actual terrain generation.
+* Improve terminal input.
+* Add some more effects (fog, shadows, motion blur, etc.)
+* Implement physics for actually playing in the world.
+
+Bugs
+----
+
+None currently known.
 
 Change Log
 ----------
 
-To be written.
+May 16, 2014
+* Added VertexBuffer for drawing bounding boxes
+* Fixed terrain so that it is actually what it should be at height levels
+* Changed "SkySphere" to "SkyBox"
+* Used [SkyGen](http://www.nutty.ca/?p=381) for realistic sky box
+
+May 15, 2014
+* Remove NoiseUtil port dependency (no more LGPL :D)
+
+May 13, 2014
+* Added some terminal commands for modifying terrain
+* Implemented infinite world generation
+* Fixed crash when the window closes
+* Formatted some code
+
+May 12, 2014
+* Added terminal commands
+* Implemented semi-transparent water
+* Formatted some code
+
+May 11, 2014
+* Implemented terrain
+
+May 10, 2014
+* Improved threading
+
+May 09, 2014
+* Started threading
+* Implemented ability to load/save chunks/worlds
+* Implemented hidden face exclusion
+* Implemented actual voxels
+
+May 07, 2014
+* Lots of speed increases
+* Implemented point light for camera
+
+May 06, 2014
+* Implemented effect wrappers
+* Initial commit (draws a bunch of cubes)

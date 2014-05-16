@@ -7,7 +7,7 @@ namespace Kyoob.Effects
     /// <summary>
     /// Contains a base class for custom effect wrappers.
     /// </summary>
-    public abstract class BaseEffect
+    public abstract class BaseEffect : IEffectMatrices
     {
         private Effect _effect;
         private Matrix _world;

@@ -345,7 +345,7 @@ namespace Kyoob.Blocks
                     CreateChunk( idx.X, idx.Y, idx.Z );
 
                     // let's update the render queue just in case we have a lot of chunks to create
-                    if ( i > 0 && i % 75 == 0 )
+                    if ( i > 0 && i % 48 == 0 )
                     {
                         lock ( _renderQueue )
                         {
@@ -477,8 +477,8 @@ namespace Kyoob.Blocks
         /// </summary>
         /// <param name="gameTime">Frame time information.</param>
         /// <param name="camera">The current camera to use for getting visible tiles.</param>
-        /// <param name="skySphere">The sky sphere to draw.</param>
-        public void Draw( GameTime gameTime, Camera camera, SkySphere skySphere )
+        /// <param name="skyBox">The sky box to draw.</param>
+        public void Draw( GameTime gameTime, Camera camera, SkyBox skyBox )
         {
             // time how long it takes to draw our chunks
             int count = 0;
@@ -502,7 +502,7 @@ namespace Kyoob.Blocks
             }
 
             _renderer.GraphicsDevice.Clear( _renderer.ClearColor );
-            skySphere.Draw( camera );
+            skyBox.Draw( camera );
             _renderer.Render();
 
 

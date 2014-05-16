@@ -10,14 +10,18 @@ namespace Kyoob
     /// </summary>
     internal static class Extensions
     {
-        private static short[] BoundingBoxIndices;
+        private static ushort[] BoundingBoxIndexData;
+        private static IndexBuffer BoundingBoxIndices;
+        private static VertexBuffer BoundingBoxBuffer;
 
         /// <summary>
         /// Static initialization of extensions.
         /// </summary>
         static Extensions()
         {
-            BoundingBoxIndices = new short[] {
+            BoundingBoxBuffer = null;
+            BoundingBoxIndices = null;
+            BoundingBoxIndexData = new ushort[] {
                 0, 1, 1, 2, 2, 3, 3, 0,
                 4, 5, 5, 6, 6, 7, 7, 4,
                 0, 4, 1, 5, 2, 6, 3, 7
@@ -34,23 +38,33 @@ namespace Kyoob
         /// <param name="effect">The effect to draw with.</param>
         public static void Draw( this BoundingBox box, GraphicsDevice device, BaseEffect effect )
         {
-            // get box corners and create primitives array
-            Vector3[] corners = box.GetCorners();
-            VertexPositionColorTexture[] primitives = new VertexPositionColorTexture[ corners.Length ];
+            // create the buffers
+            if ( BoundingBoxBuffer == null || BoundingBoxIndices == null )
+            {
+                BoundingBoxIndices = new IndexBuffer( device, IndexElementSize.SixteenBits, BoundingBoxIndexData.Length, BufferUsage.None );
+                BoundingBoxIndices.SetData<ushort>( BoundingBoxIndexData );
+                BoundingBoxBuffer = new VertexBuffer( device, VertexPositionNormalTexture.VertexDeclaration, 8, BufferUsage.None );
+            }
 
-            // copy over corner data
+            // create the buffer data
+            Vector3[] corners = box.GetCorners();
+            VertexPositionNormalTexture[] primitives = new VertexPositionNormalTexture[ corners.Length ];
             for ( int i = 0; i < corners.Length; ++i )
             {
-                primitives[ i ] = new VertexPositionColorTexture( corners[ i ], Color.White, Vector2.Zero );
+                primitives[ i ] = new VertexPositionNormalTexture( corners[ i ], Vector3.Zero, Vector2.Zero );
             }
+            BoundingBoxBuffer.SetData<VertexPositionNormalTexture>( primitives );
 
             // set world matrix and draw lines connecting corners
             effect.World = Matrix.Identity;
+            device.Indices = BoundingBoxIndices;
+            device.SetVertexBuffer( BoundingBoxBuffer );
             foreach ( EffectPass pass in effect.Effect.CurrentTechnique.Passes )
             {
                 pass.Apply();
-                device.DrawUserIndexedPrimitives( PrimitiveType.LineList, primitives, 0, 8, BoundingBoxIndices, 0, 12 );
+                device.DrawPrimitives( PrimitiveType.TriangleList, 0, 12 );
             }
+            device.SetVertexBuffer( null );
         }
 
 #endif

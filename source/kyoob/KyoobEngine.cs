@@ -11,7 +11,6 @@ using Kyoob.Debug;
 using Kyoob.Effects;
 using Kyoob.Terrain;
 
-#warning TODO : There's really no need for chunk->world and world->chunk coordinate conversions for the terrain generator.
 #warning TODO : Input manager. (?)
 #warning TODO : Add some more lighting stuff, maybe shadows.
 #warning TODO : Motion blur. (?)
@@ -29,7 +28,7 @@ namespace Kyoob
 
         private SpriteSheet _spriteSheet;
         private Camera _camera;
-        private SkySphere _skySphere;
+        private SkyBox _skyBox;
         private EffectRenderer _renderer;
         private PointLightEffect _effect;
         private World _world;
@@ -98,12 +97,12 @@ namespace Kyoob
             _camera = new Camera( settings );
 
 
-            // load the sky sphere
-            _skySphere = new SkySphere(
-                Content.Load<Model>( "model/skysphere" ),
+            // load the sky box
+            _skyBox = new SkyBox(
+                Content.Load<Model>( "model/skybox" ),
                 _device,
-                new SkySphereEffect( Content.Load<Effect>( "fx/skysphere" ) ),
-                Content.Load<TextureCube>( "tex/skysphere" )
+                new SkyBoxEffect( Content.Load<Effect>( "fx/skybox" ) ),
+                Content.Load<TextureCube>( "tex/skybox-512" )
             );
 
 
@@ -195,7 +194,7 @@ namespace Kyoob
             // draw the world and the terminal
             _effect.Projection = _camera.Projection;
             _effect.View = _camera.View;
-            _world.Draw( gameTime, _camera, _skySphere );
+            _world.Draw( gameTime, _camera, _skyBox );
             Terminal.Draw( gameTime );
 
 
