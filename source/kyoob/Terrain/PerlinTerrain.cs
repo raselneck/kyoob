@@ -121,20 +121,10 @@ namespace Kyoob.Terrain
             // y = 0 is the absolute minimum (which is bedrock), so we need to check above it
             else if ( world.Y > 0 )
             {
-                /*
-                // get the designated block type for this height value
-                type = Levels.GetBlockType( value );
-
-                // some hard coding to force anything just below water to be sand
-                if ( position.Y < Levels.WaterLevel && ( type == BlockType.Dirt || type == BlockType.Grass ) )
-                {
-                    type = BlockType.Sand;
-                }
-                */
-
+                // only change the type if the world height is less than the noise height
                 if ( world.Y < value )
                 {
-                    type = Levels.GetBlockType( value );
+                    type = Levels.GetTypeForLevel( world.Y );
                 }
 
                 // if the type should still be air and we're below the water level, then the type should be water

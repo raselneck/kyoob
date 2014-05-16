@@ -35,6 +35,10 @@ namespace Kyoob.Blocks
             Z = z;
         }
 
+        /// <summary>
+        /// Gets a textual representation of this index.
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return string.Format( "[{0},{1},{2}]", X, Y, Z );

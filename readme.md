@@ -26,8 +26,7 @@ Screenshot
 Bugs
 ----
 
-* Terrain generation doesn't entirely work. What you see right now is kind of
-  a "it works this way so let's go with it" kind of hack.
+None currently known.
 
 The Terminal
 ------------

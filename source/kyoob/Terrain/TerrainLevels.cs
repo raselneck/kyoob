@@ -9,34 +9,8 @@ namespace Kyoob.Terrain
     /// </summary>
     public sealed class TerrainLevels
     {
-        /// <summary>
-        /// Contains block type and height level pair data.
-        /// </summary>
-        private struct LevelTypePair
-        {
-            /// <summary>
-            /// The height level for this block type to start at.
-            /// </summary>
-            public float Level;
-
-            /// <summary>
-            /// The block type for this level.
-            /// </summary>
-            public BlockType Type;
-
-            /// <summary>
-            /// Creates a new block type and level pair.
-            /// </summary>
-            /// <param name="level">The level.</param>
-            /// <param name="type">The block type.</param>
-            public LevelTypePair( float level, BlockType type )
-            {
-                Level = level;
-                Type = type;
-            }
-        }
-
-        private List<LevelTypePair> _levels;
+        private List<BlockType> _types;
+        private List<float> _levels;
         private float _waterLevel;
 
         /// <summary>
@@ -59,7 +33,8 @@ namespace Kyoob.Terrain
         /// </summary>
         public TerrainLevels()
         {
-            _levels = new List<LevelTypePair>();
+            _levels = new List<float>();
+            _types = new List<BlockType>();
         }
 
         /// <summary>
@@ -69,64 +44,77 @@ namespace Kyoob.Terrain
         /// <param name="type">The block type.</param>
         public void AddLevel( float level, BlockType type )
         {
-            LevelTypePair pair = new LevelTypePair( level, type );
+            // make sure the level isn't registered
+            if ( _levels.IndexOf( level ) != -1 )
+            {
+                string message = string.Format( "A block at level {0} already exists.", level );
+                throw new ArgumentException( message );
+            }
 
-            // get the index of the data pair that lies above this new pair
+            // make sure the block isn't already registered
+            if ( _types.IndexOf( type ) != -1 )
+            {
+                string message = string.Format( "A block with the type {0} already exists.", type );
+                throw new ArgumentException( message );
+            }
+
+            // find the index we need to insert at
             int index;
             for ( index = 0; index < _levels.Count; ++index )
             {
-                if ( _levels[ index ].Level > pair.Level )
+                if ( level < _levels[ index ] )
                 {
                     break;
                 }
-
-                // we can't have two block types at the same exact level
-                if ( _levels[ index ].Level == pair.Level )
-                {
-                    throw new ArgumentException( "Only one block type per exact level can be stored." );
-                }
             }
 
-            _levels.Insert( index, pair );
+            _types.Insert( index, type );
+            _levels.Insert( index, level );
         }
 
         /// <summary>
-        /// Gets the maximum level for the given block type.
+        /// Gets the list of registered block types.
         /// </summary>
-        /// <param name="type">The type to get the level for.</param>
         /// <returns></returns>
-        public float GetLevel( BlockType type )
+        public List<BlockType> GetTypes()
         {
-            int index = 0;
-            while ( type != _levels[ index ].Type )
-            {
-                ++index;
-                if ( index == _levels.Count - 1 )
-                {
-                    break;
-                }
-            }
-            return _levels[ index ].Level;
+            return _types;
         }
 
         /// <summary>
-        /// Gets the highest level allowed.
+        /// Gets the highest level.
         /// </summary>
         /// <returns></returns>
         public float GetHighestLevel()
         {
-            return _levels[ _levels.Count - 1 ].Level;
+            return _levels[ _levels.Count - 1 ];
         }
 
         /// <summary>
-        /// Gets the block type for the given height.
+        /// Gets the level for the given block type.
         /// </summary>
-        /// <param name="height">The height to get the block data for.</param>
+        /// <param name="type">The block type.</param>
         /// <returns></returns>
-        public BlockType GetBlockType( float height )
+        public float GetLevelForType( BlockType type )
+        {
+            int index = _types.IndexOf( type );
+            if ( index == -1 )
+            {
+                return -1.0f;
+            }
+
+            return _levels[ index ];
+        }
+
+        /// <summary>
+        /// Gets the block type for the given level.
+        /// </summary>
+        /// <param name="level">The level.</param>
+        /// <returns></returns>
+        public BlockType GetTypeForLevel( float level )
         {
             int index = 0;
-            while ( height > _levels[ index ].Level )
+            while ( level > _levels[ index ] )
             {
                 ++index;
                 if ( index == _levels.Count - 1 )
@@ -134,24 +122,7 @@ namespace Kyoob.Terrain
                     break;
                 }
             }
-            return _levels[ index ].Type;
-
-            /*
-            int index;
-            for ( index = 0; index < _levels.Count; ++index )
-            {
-                if ( height <= _levels[ index ].Level )
-                {
-                    break;
-                }
-            }
-
-            if ( index == _levels.Count )
-            {
-                --index;
-            }
-            return _levels[ index ].Type;
-            */
+            return _types[ index ];
         }
     }
 }

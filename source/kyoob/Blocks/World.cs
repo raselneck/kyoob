@@ -9,6 +9,8 @@ using Kyoob.Debug;
 using Kyoob.Effects;
 using Kyoob.Terrain;
 
+#pragma warning disable 1587 // disable "invalid XML comment placement"
+
 #warning TODO : When chunks are unloaded, their data should be saved to a file somehow so that block data can be retrieved in case a chunk was modified.
 
 namespace Kyoob.Blocks
@@ -223,8 +225,8 @@ namespace Kyoob.Blocks
                 return;
             }
 
-            // if the y is out of bounds, no need to create an empty chunk.
-            if ( y < 0 || y > _terrain.Levels.GetLevel( BlockType.Air ) )
+            // if the y is out of bounds, no need to create an empty chunk
+            if ( y < 0 || y > _terrain.Levels.GetHighestLevel() )
             {
                 return;
             }
@@ -257,7 +259,7 @@ namespace Kyoob.Blocks
         /// </summary>
         private void ChunkManagementCallback()
         {
-            Index3D temp, index;
+            Index3D index;
             HashSet<Index3D> indices = new HashSet<Index3D>();
             int maxHeight = (int)Math.Ceiling( _terrain.Levels.GetHighestLevel() / Chunk.Size );
 
