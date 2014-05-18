@@ -9,6 +9,12 @@ float3    _lightPosition    = float3( 0.0, 0.0, 0.0 );
 float     _lightAttenuation = 10.0;
 float     _lightFalloff     = 4.0;
 
+float     _fogStart;
+float     _fogEnd;
+float3    _fogColor;
+
+float3    _cameraPosition;
+
 // point clamp the textures for the good ol' blocky style
 texture2D _texture;
 sampler2D _textureSampler : register(s0) = sampler_state
@@ -45,8 +51,8 @@ VSOutput VSFunc( VSInput input )
 
     // transform input position
     float4 worldPosition = mul( input.Position, _world );
-        float4 viewPosition  = mul( worldPosition, _view );
-        output.Position      = mul( viewPosition, _projection );
+    float4 viewPosition  = mul( worldPosition, _view );
+    output.Position      = mul( viewPosition, _projection );
 
     // send input data to pixel shader
     output.UV            = input.UV;
@@ -67,11 +73,10 @@ float4 PSFunc( VSOutput input ) : COLOR0
     float  diffuse  = saturate( dot( normalize( input.Normal ), lightDir ) );
     float  dist     = distance( _lightPosition, input.WorldPos );
     float  att      = 1 - pow( clamp( dist / _lightAttenuation, 0.0, 1.0 ), _lightFalloff );
+    float3 output   = ( _ambientColor + diffuse * att * _lightColor ) * diffuseColor;
 
-    float3 light    = _ambientColor + diffuse * att * _lightColor;
-    return float4( diffuseColor * light, texColor.a );
+    return float4( output, texColor.a );
 }
-
 
 technique MainTechnique
 {

@@ -81,14 +81,12 @@ namespace Kyoob
 
 
             // create a perlin terrain generator (needs work)
-            PerlinTerrain terrain = new PerlinTerrain( 0 );
-            terrain.Seed = 114;
-            terrain.HorizontalBias = 1 / 101.0f;
-            terrain.VerticalBias = 24.0f;
-            terrain.Levels.WaterLevel = 8.0f;
-            terrain.Levels.AddLevel( 6.00f, BlockType.Stone );
-            terrain.Levels.AddLevel( 12.00f, BlockType.Sand );
-            terrain.Levels.AddLevel( 24.0f, BlockType.Dirt );
+            PerlinTerrain terrain  = new PerlinTerrain( 114 );
+            terrain.VerticalBias   = 1.0f / 36;
+            terrain.HorizontalBias = 1.0f / 57;
+            terrain.Levels.SetBounds( BlockType.Stone, 0.000f, 0.250f );
+            terrain.Levels.SetBounds( BlockType.Sand,  0.250f, 0.625f );
+            terrain.Levels.SetBounds( BlockType.Dirt,  0.625f, 1.000f );
 
 
             // create the camera

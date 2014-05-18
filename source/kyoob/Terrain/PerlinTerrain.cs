@@ -10,8 +10,6 @@ namespace Kyoob.Terrain
     public class PerlinTerrain : TerrainGenerator
     {
         private LibNoise.Perlin _noise;
-        private TerrainPlane _plane;
-        private float[ , ] _heightMap;
         private float _hBias;
         private float _vBias;
 
@@ -71,10 +69,8 @@ namespace Kyoob.Terrain
             _noise = new LibNoise.Perlin();
             _noise.Seed = seed;
 
-            _plane = new TerrainPlane( _noise );
-
-            _hBias = 17.0f; // prime numbers work best
-            _vBias = 10.0f;
+            _hBias = 1.0f / 57; // prime numbers work best
+            _vBias = 1.0f / 24;
 
             ChunkChanged += OnChunkChanged;
         }
@@ -85,15 +81,7 @@ namespace Kyoob.Terrain
         /// <param name="chunk">The new chunk.</param>
         protected virtual void OnChunkChanged( Chunk chunk )
         {
-            // need to grow these by 1 for when the chunk checks just outside its bounds
-            Vector3 position = chunk.Center;
-            float lowerX = ( position.X - Chunk.Size / 2 - 1 ) * _hBias;
-            float upperX = ( position.X + Chunk.Size / 2 + 1 ) * _hBias;
-            float lowerZ = ( position.Z - Chunk.Size / 2 - 1 ) * _hBias;
-            float upperZ = ( position.Z + Chunk.Size / 2 + 1 ) * _hBias;
 
-            _plane.SetBounds( lowerX, upperX, lowerZ, upperZ );
-            _heightMap = _plane.GenerateHeightMap( Chunk.Size + 2, Chunk.Size + 2 );
         }
 
         /// <summary>
@@ -104,36 +92,35 @@ namespace Kyoob.Terrain
         /// <param name="z">The local Z coordinate.</param>
         public override BlockType GetBlockType( int x, int y, int z )
         {
-            // get the local coordinates and then get the designated height value
+            // convert local coordinates to world coordinates
             Vector3 world = CurrentChunk.World.LocalToWorld( CurrentChunk.Center, x, y, z );
-            float value = _heightMap[ x + 1, z + 1 ];
-            value = MathHelper.Clamp( value, -1.0f, 1.0f ) / 2.0f + 0.5f; // value will now be in [0,1] range
-            value *= _vBias;
-            // value *= _vBias / ( position.Y / _vBias );
 
-            // get the actual block type
-            BlockType type = BlockType.Air;
-            if ( world.Y == 0 )
+            // we don't want any "destructible" blocks at or below 0
+            if ( world.Y == 0.0f )
             {
-                // we want bedrock to pad the bottom of the world
-                type = BlockType.Bedrock;
+                return BlockType.Bedrock;
             }
-            // y = 0 is the absolute minimum (which is bedrock), so we need to check above it
-            else if ( world.Y > 0 )
+            else if ( world.Y < 0.0f )
             {
-                // only change the type if the world height is less than the noise height
-                if ( world.Y < value )
-                {
-                    type = Levels.GetTypeForLevel( world.Y );
-                }
+                return BlockType.Air;
+            }
 
-                // if the type should still be air and we're below the water level, then the type should be water
-                if ( type == BlockType.Air && world.Y <= Levels.WaterLevel )
-                {
-                    type = BlockType.Water;
-                }
+            // modify world coordinates
+            world.X *= _hBias;
+            world.Y *= _vBias;
+            world.Z *= _hBias;
+
+            // get noise value
+            float noise = (float)_noise.GetValue( world.X, world.Y, world.Z );
+            noise = MathHelper.Clamp( noise, -1.0f, 1.0f ) / 2.0f + 0.5f;
+            noise = 1.0f - Math.Abs( noise );
+
+            // tbh not entirely sure why this works
+            if ( world.Y <= noise )
+            {
+                return Levels.GetType( world.Y );
             }
-            return type;
+            return BlockType.Air;
         }
     }
 }

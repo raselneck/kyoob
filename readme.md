@@ -4,11 +4,6 @@ Kyoob - XNA Voxel Engine
 For some reason I've always wanted to make a voxel engine, so I decided that
 I was going to finally start writing one. This is the result.
 
-Also, I apologize for the diff being so large after the initial terrain
-commit. I like to keep my code super organized, so I pretty much just moved
-everything that was in `source/` to `source/kyoob/` so that I could keep
-the code for my partial NoiseUtils port in `source/` as well.
-
 Dependencies
 ------------
 
@@ -50,8 +45,6 @@ Some built-in methods:
 * `camera.getpos` prints out the camera's position.
 * `camera.setpos X Y Z` sets the camera's position.
 * `camera.index` prints the camera's world index.
-* `terrain.hbias VALUE` sets the terrain generator's horizontal bias.
-* `terrain.vbias VALUE` sets the terrain generator's vertical bias.
 * `world.reload` reloads the current world.
 
 License
@@ -89,42 +82,45 @@ None currently known.
 Change Log
 ----------
 
-May 16, 2014
+**May 17, 2014**
+* Started messing with cooler terrain
+
+**May 16, 2014**
 * Added VertexBuffer for drawing bounding boxes
 * Fixed terrain so that it is actually what it should be at height levels
 * Changed "SkySphere" to "SkyBox"
 * Used [SkyGen](http://www.nutty.ca/?p=381) for realistic sky box
 
-May 15, 2014
+**May 15, 2014**
 * Remove NoiseUtil port dependency (no more LGPL :D)
 
-May 13, 2014
+**May 13, 2014**
 * Added some terminal commands for modifying terrain
 * Implemented infinite world generation
 * Fixed crash when the window closes
 * Formatted some code
 
-May 12, 2014
+**May 12, 2014**
 * Added terminal commands
 * Implemented semi-transparent water
 * Formatted some code
 
-May 11, 2014
+**May 11, 2014**
 * Implemented terrain
 
-May 10, 2014
+**May 10, 2014**
 * Improved threading
 
-May 09, 2014
+**May 09, 2014**
 * Started threading
 * Implemented ability to load/save chunks/worlds
 * Implemented hidden face exclusion
 * Implemented actual voxels
 
-May 07, 2014
+**May 07, 2014**
 * Lots of speed increases
 * Implemented point light for camera
 
-May 06, 2014
+**May 06, 2014**
 * Implemented effect wrappers
 * Initial commit (draws a bunch of cubes)

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Kyoob.Blocks;
 
+#warning TODO : Gradient level collision checking.
+
 namespace Kyoob.Terrain
 {
     /// <summary>
@@ -9,8 +11,28 @@ namespace Kyoob.Terrain
     /// </summary>
     public sealed class TerrainLevels
     {
-        private List<BlockType> _types;
-        private List<float> _levels;
+        /// <summary>
+        /// A structure containing terrain gradient information.
+        /// </summary>
+        private struct TerrainGradient
+        {
+            /// <summary>
+            /// The lower bound of this type's gradient section.
+            /// </summary>
+            public float LowerBound;
+
+            /// <summary>
+            /// The upper bound of this type's gradient section.
+            /// </summary>
+            public float UpperBound;
+
+            /// <summary>
+            /// The type.
+            /// </summary>
+            public BlockType Type;
+        }
+
+        private List<TerrainGradient> _values;
         private float _waterLevel;
 
         /// <summary>
@@ -33,96 +55,51 @@ namespace Kyoob.Terrain
         /// </summary>
         public TerrainLevels()
         {
-            _levels = new List<float>();
-            _types = new List<BlockType>();
+            _values = new List<TerrainGradient>();
         }
 
         /// <summary>
-        /// Adds new block type level data.
+        /// Sets a block type's bounds for terrain levels.
         /// </summary>
-        /// <param name="level">The height level.</param>
         /// <param name="type">The block type.</param>
-        public void AddLevel( float level, BlockType type )
+        /// <param name="lower">The lower bounds.</param>
+        /// <param name="upper">The upper bounds.</param>
+        public void SetBounds( BlockType type, float lower, float upper )
         {
-            // make sure the level isn't registered
-            if ( _levels.IndexOf( level ) != -1 )
+            // create the gradient
+            TerrainGradient grad = new TerrainGradient()
             {
-                string message = string.Format( "A block at level {0} already exists.", level );
-                throw new ArgumentException( message );
-            }
+                LowerBound = lower,
+                UpperBound = upper,
+                Type = type
+            };
+            _values.Add( grad );
+        }
 
-            // make sure the block isn't already registered
-            if ( _types.IndexOf( type ) != -1 )
+        /// <summary>
+        /// Gets the block type for the given noise value.
+        /// </summary>
+        /// <param name="value">The noise value.</param>
+        /// <returns></returns>
+        public BlockType GetType( float value )
+        {
+            // find the index of the gradient entry that the given value belongs to
+            int index = -1;
+            for ( int i = 0; i < _values.Count; ++i )
             {
-                string message = string.Format( "A block with the type {0} already exists.", type );
-                throw new ArgumentException( message );
-            }
-
-            // find the index we need to insert at
-            int index;
-            for ( index = 0; index < _levels.Count; ++index )
-            {
-                if ( level < _levels[ index ] )
+                if ( value >= _values[ i ].LowerBound && value <= _values[ i ].UpperBound )
                 {
+                    index = i;
                     break;
                 }
             }
 
-            _types.Insert( index, type );
-            _levels.Insert( index, level );
-        }
-
-        /// <summary>
-        /// Gets the list of registered block types.
-        /// </summary>
-        /// <returns></returns>
-        public List<BlockType> GetTypes()
-        {
-            return _types;
-        }
-
-        /// <summary>
-        /// Gets the highest level.
-        /// </summary>
-        /// <returns></returns>
-        public float GetHighestLevel()
-        {
-            return _levels[ _levels.Count - 1 ];
-        }
-
-        /// <summary>
-        /// Gets the level for the given block type.
-        /// </summary>
-        /// <param name="type">The block type.</param>
-        /// <returns></returns>
-        public float GetLevelForType( BlockType type )
-        {
-            int index = _types.IndexOf( type );
+            // if the index wasn't found, let's return bedrock so we'll know we fucked up
             if ( index == -1 )
             {
-                return -1.0f;
+                return BlockType.Bedrock;
             }
-
-            return _levels[ index ];
-        }
-
-        /// <summary>
-        /// Gets the block type for the given level.
-        /// </summary>
-        /// <param name="level">The level.</param>
-        /// <returns></returns>
-        public BlockType GetTypeForLevel( float level )
-        {
-            int index = 0;
-            while ( level > _levels[ index ] )
-            {
-                ++index;
-                if ( index == _levels.Count - 1 )
-                {
-                    break;
-                }
-            }
-            return _types[ index ];
+            return _values[ index ].Type;
         }
     }
 }

@@ -167,47 +167,19 @@ namespace Kyoob.Blocks
             // world.reload
             Terminal.AddCommand( "world", "reload", ( string[] param ) =>
             {
-                lock ( _chunks )
+                lock ( _createList )
                 {
-                    foreach ( Chunk chunk in _chunks.Values )
-                    {
-                        chunk.Dispose();
-                    }
-                    _chunks.Clear();
-                    Terminal.WriteLine( Color.White, 3.0, "Cleared all chunks." );
+                    _createList.Clear();
                 }
-            } );
-
-            // terrain.vbias
-            Terminal.AddCommand( "terrain", "vbias", ( string[] param ) =>
-            {
-                if ( param.Length < 1 )
+                lock ( _unloadList )
                 {
-                    Terminal.WriteLine( Color.Red, 3.0, "Not enough parameters." );
-                    return;
+                    _unloadList.Clear();
                 }
-
-                if ( _terrain is PerlinTerrain )
+                lock ( _renderQueue )
                 {
-                    float vbias = float.Parse( param[ 0 ] );
-                    ( (PerlinTerrain)_terrain ).VerticalBias = vbias;
+                    _renderQueue.Clear();
                 }
-            } );
-
-            // terrain.hbias
-            Terminal.AddCommand( "terrain", "hbias", ( string[] param ) =>
-            {
-                if ( param.Length < 1 )
-                {
-                    Terminal.WriteLine( Color.Red, 3.0, "Not enough parameters." );
-                    return;
-                }
-
-                if ( _terrain is PerlinTerrain )
-                {
-                    float hbias = float.Parse( param[ 0 ] );
-                    ( (PerlinTerrain)_terrain ).HorizontalBias = hbias;
-                }
+                Terminal.WriteLine( Color.White, 3.0, "Cleared all chunks." );
             } );
         }
 
@@ -226,7 +198,7 @@ namespace Kyoob.Blocks
             }
 
             // if the y is out of bounds, no need to create an empty chunk
-            if ( y < 0 || y > _terrain.Levels.GetHighestLevel() )
+            if ( y < 0 )
             {
                 return;
             }
@@ -261,19 +233,18 @@ namespace Kyoob.Blocks
         {
             Index3D index;
             HashSet<Index3D> indices = new HashSet<Index3D>();
-            int maxHeight = (int)Math.Ceiling( _terrain.Levels.GetHighestLevel() / Chunk.Size );
 
             while ( !_isDisposed )
             {
                 index = PositionToIndex( _currentViewPosition );
-                int maxDist = (int)( _currentViewDistance * 1.5f / Chunk.Size );
+                int maxDist = (int)( _currentViewDistance * 1.5f / Chunk.Size ) / 2;
                 
                 // create a list of all of the indices to check
                 for ( int x = 0; x < maxDist; ++x )
                 {
                     for ( int z = 0; z < maxDist; ++z )
                     {
-                        for ( int y = maxHeight; y >= 0; --y )
+                        for ( int y = maxDist; y >= 0; --y )
                         {
                             indices.Add( new Index3D( index.X + x, y, index.Z + z ) );
                             indices.Add( new Index3D( index.X + x, y, index.Z - z ) );
@@ -283,7 +254,7 @@ namespace Kyoob.Blocks
                     }
                 }
 
-                // create a copy of the current vertices
+                // create a copy of the current loaded indices
                 HashSet<Index3D> copy = new HashSet<Index3D>( _indices );
 
                 // now check all of the "local" indices
@@ -311,11 +282,8 @@ namespace Kyoob.Blocks
                     }
                 }
 
-                lock ( _chunks )
-                {
-                    UnloadChunks();
-                    CreateChunks();
-                }
+                UnloadChunks();
+                CreateChunks();
 
                 lock ( _renderQueue )
                 {
@@ -324,7 +292,7 @@ namespace Kyoob.Blocks
                 }
 
                 // tell the garbage collector to collect shit
-                Thread.Sleep( 256 );
+                Thread.Sleep( 128 );
             }
         }
 
@@ -333,29 +301,26 @@ namespace Kyoob.Blocks
         /// </summary>
         private void CreateChunks()
         {
-            lock ( _createList )
+            if ( _createList.Count > 0 )
             {
-                if ( _createList.Count > 0 )
-                {
-                    Terminal.WriteLine( Color.White, 3.0, "Creating {0} chunks...", _createList.Count );
-                }
-                for ( int i = 0; i < _createList.Count; ++i )
-                {
-                    Index3D idx = _createList[ i ];
-                    CreateChunk( idx.X, idx.Y, idx.Z );
+                Terminal.WriteLine( Color.White, 3.0, "Creating {0} chunks...", _createList.Count );
+            }
+            for ( int i = 0; i < _createList.Count; ++i )
+            {
+                Index3D idx = _createList[ i ];
+                CreateChunk( idx.X, idx.Y, idx.Z );
 
-                    // let's update the render queue just in case we have a lot of chunks to create
-                    if ( i > 0 && i % 48 == 0 )
+                // let's update the render queue just in case we have a lot of chunks to create
+                if ( i > 0 && i % 16 == 0 )
+                {
+                    lock ( _renderQueue )
                     {
-                        lock ( _renderQueue )
-                        {
-                            _renderQueue.Clear();
-                            _renderQueue.AddRange( _chunks.Values );
-                        }
+                        _renderQueue.Clear();
+                        _renderQueue.AddRange( _chunks.Values );
                     }
                 }
-                _createList.Clear();
             }
+            _createList.Clear();
         }
 
         /// <summary>
@@ -363,20 +328,17 @@ namespace Kyoob.Blocks
         /// </summary>
         private void UnloadChunks()
         {
-            lock ( _unloadList )
+            if ( _unloadList.Count > 0 )
             {
-                if ( _unloadList.Count > 0 )
-                {
-                    Terminal.WriteLine( Color.White, 3.0, "Unloading {0} chunks...", _unloadList.Count );
-                }
-                for ( int i = 0; i < _unloadList.Count; ++i )
-                {
-                    Index3D idx = _unloadList[ i ];
-                    _chunks[ idx ].Unload();
-                    _chunks.Remove( idx );
-                }
-                _unloadList.Clear();
+                Terminal.WriteLine( Color.White, 3.0, "Unloading {0} chunks...", _unloadList.Count );
             }
+            for ( int i = 0; i < _unloadList.Count; ++i )
+            {
+                Index3D idx = _unloadList[ i ];
+                _chunks[ idx ].Unload();
+                _chunks.Remove( idx );
+            }
+            _unloadList.Clear();
         }
 
 

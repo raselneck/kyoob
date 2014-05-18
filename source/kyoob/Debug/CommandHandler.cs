@@ -116,12 +116,25 @@ namespace Kyoob.Debug
                 var functions = _callbacks[ obj ];
                 if ( functions.ContainsKey( func ) )
                 {
+                    // get the callback
+                    CommandCallback callback = functions[ func ];
+
                     // ayy, lmao
-                    if ( functions[ func ] != null )
+                    if ( callback != null )
                     {
+                        // get parameters to pass in then execute the callback
                         start = index + 1;
                         string[] param = command.Substring( start, command.Length - start ).Split( ' ' );
-                        functions[ func ]( param );
+                        
+                        // we'll handle exceptions for the callback
+                        try
+                        {
+                            callback( param );
+                        }
+                        catch ( Exception ex )
+                        {
+                            Terminal.WriteLine( Color.Red, 3.0, ex.Message );
+                        }
                     }
                     else
                     {

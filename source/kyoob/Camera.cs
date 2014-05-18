@@ -113,6 +113,17 @@ namespace Kyoob
         }
 
         /// <summary>
+        /// Gets the camera's settings.
+        /// </summary>
+        public CameraSettings Settings
+        {
+            get
+            {
+                return _settings;
+            }
+        }
+
+        /// <summary>
         /// Creates a new camera.
         /// </summary>
         /// <param name="settings">The camera settings to use.</param>
