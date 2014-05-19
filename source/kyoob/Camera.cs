@@ -149,24 +149,18 @@ namespace Kyoob
         /// </summary>
         private void SetTerminalCommands()
         {
-            // don't need to re-bind commands
-            if ( Terminal.Commands.HasObject( "camera" ) )
-            {
-                return;
-            }
-
             // get position
-            Terminal.AddCommand( "camera", "getpos", ( string[] param ) =>
+            Terminal.AddCommand( "camera", "pos", ( string[] param ) =>
             {
-                Terminal.WriteLine( Color.White, 3.0, "[{0:0.00},{1:0.00},{2:0.00}]", _position.X, _position.Y, _position.Z );
+                Terminal.WriteLine( "[{0:0.00},{1:0.00},{2:0.00}]", _position.X, _position.Y, _position.Z );
             } );
 
             // set position
-            Terminal.AddCommand( "camera", "setpos", ( string[] param ) =>
+            Terminal.AddCommand( "camera", "move", ( string[] param ) =>
             {
                 if ( param.Length < 3 )
                 {
-                    Terminal.WriteLine( Color.Red, 3.0, "Not enough parameters." );
+                    Terminal.WriteError( "Not enough parameters." );
                     return;
                 }
 
@@ -272,15 +266,6 @@ namespace Kyoob
             MouseState mouse = Mouse.GetState();
             KeyboardState keyboard = Keyboard.GetState();
             float units = (float)gameTime.ElapsedGameTime.TotalSeconds * 6.0f;
-
-
-            // if we right click, print the position
-            if ( mouse.RightButton == ButtonState.Released && _lastMouse.RightButton == ButtonState.Pressed )
-            {
-                Terminal.WriteLine( Color.White, 3.0, "[{0:0.00},{1:0.00},{2:0.00}]",
-                    _position.X, _position.Y, _position.Z );
-            }
-
 
             // check if "sprinting"
             if ( keyboard.IsKeyDown( Keys.LeftShift ) )

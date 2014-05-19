@@ -2,6 +2,8 @@
 using Microsoft.Xna.Framework;
 using Kyoob.Blocks;
 
+#warning TODO : Make block type shifts not so abrupt.
+
 namespace Kyoob.Terrain
 {
     /// <summary>
@@ -93,7 +95,7 @@ namespace Kyoob.Terrain
         public override BlockType GetBlockType( int x, int y, int z )
         {
             // convert local coordinates to world coordinates
-            Vector3 world = CurrentChunk.World.LocalToWorld( CurrentChunk.Center, x, y, z );
+            Vector3 world = CurrentChunk.LocalToWorld( x, y, z );
 
             // we don't want any "destructible" blocks at or below 0
             if ( world.Y == 0.0f )
@@ -113,12 +115,16 @@ namespace Kyoob.Terrain
             // get noise value
             float noise = (float)_noise.GetValue( world.X, world.Y, world.Z );
             noise = MathHelper.Clamp( noise, -1.0f, 1.0f ) / 2.0f + 0.5f;
-            noise = 1.0f - Math.Abs( noise );
+            noise = 1.0f - noise;
 
             // tbh not entirely sure why this works
             if ( world.Y <= noise )
             {
                 return Levels.GetType( world.Y );
+            }
+            if ( world.Y <= Levels.WaterLevel )
+            {
+                return BlockType.Water;
             }
             return BlockType.Air;
         }

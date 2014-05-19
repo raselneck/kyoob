@@ -22,29 +22,26 @@ The Terminal
 ------------
 
 The terminal is the equivalent of every other game's console, except I couldn't
-call it "Console" because of `System.Console`. Currently it automatically prints
-out the current FPS and the average number of chunks drawn in one second as well
-as the average amount of time it took to draw said chunks.
+call it "Console" because of `System.Console`.
 
-You can also enter commands into the console by pressing the tilde (~) key while
-running the engine, and you can bind commands using `Terminal.AddCommand`. All
-you need to do is give it an object name, a function name, and a callback (which
-is any method that returns nothing and takes in an array of strings as the only
-parameter).
+You can enter commands into the console by pressing the tilde (~) key while running,
+and you can bind commands using `Terminal.AddCommand`. All you need to do is give it
+an object name, a function name, and a callback (which is any method that returns nothing
+and takes in an array of strings as the only parameter).
 
 Currently, commands are parsed in the following format:
 ```
 OBJECT.FUNCTION PARAM [PARAM ...]
 ```
-Where each parameter is separated by a space. (Strings are not yet supported.)
+Where each parameter is separated by a space. ("Strings" are not yet supported.)
 
 Some built-in methods:
-* `terminal.hide` hides the terminal's output, but still allows commands to be
-  entered.
+* `terminal.hide` hides the terminal's output.
 * `terminal.show` shows the terminal's output.
-* `camera.getpos` prints out the camera's position.
-* `camera.setpos X Y Z` sets the camera's position.
-* `camera.index` prints the camera's world index.
+* `camera.pos` prints out the camera's position.
+* `camera.move X Y Z` moves the camera to [X,Y,Z].
+* `world.seed` gets the world's seed.
+* `world.reseed VALUE` sets the world's seed.
 * `world.reload` reloads the current world.
 
 License
@@ -53,26 +50,15 @@ License
 All of the code in the repo, unless otherwise stated below, is licensed under the
 MIT license. See the `licenses` folder for full license texts.
 
-* Sky box/sphere model and HLSL code taken from [Creating a SkySphere](http://msdn.microsoft.com/en-us/library/bb464016.aspx),
+* Sky box/sphere model and HLSL code adapted from [Creating a SkySphere](http://msdn.microsoft.com/en-us/library/bb464016.aspx),
   which is released under the Microsoft Permissive License (Ms-PL).
 
-Images are (currently) taken from Minecraft and are used for educational purposes
-only. Nothing malicious was intended.
+Acknowledgments
+---------------
 
-Skybox generated with [SkyGen](http://www.nutty.ca/?p=381), and the resulting
-images were exported from Photoshop with NVIDIA's Photoshop Plugins.
-
-To-do
------
-
-I keep a better list in the code (`#warning TODO : ...` because C# doesn't have C++'s
-`#pragma message( ... )`), but I'll try to keep this one up to date.
-
-* Make cube size based off of a constant (maybe entirely modifiable?)
-* Terrain smoothing. Or better yet, actual terrain generation.
-* Improve terminal input.
-* Add some more effects (fog, shadows, motion blur, etc.)
-* Implement physics for actually playing in the world.
+* Skybox generated with [SkyGen](http://www.nutty.ca/?p=381), and the resulting
+  images were exported from Photoshop with NVIDIA's Photoshop Plugins.
+* Special thanks to [Sam Willis](https://github.com/Swillis57) for help with terrain.
 
 Bugs
 ----
@@ -81,6 +67,11 @@ None currently known.
 
 Change Log
 ----------
+
+**May 19, 2014**
+* Removed Minecraft textures
+* Minor speed increases
+* Temporarily fixed weird texture glitch
 
 **May 17, 2014**
 * Started messing with cooler terrain

@@ -15,6 +15,7 @@ using Kyoob.Terrain;
 #warning TODO : Add some more lighting stuff, maybe shadows.
 #warning TODO : Motion blur. (?)
 #warning TODO : Physics.
+#warning TODO : Get anti-aliasing to work. (?)
 
 namespace Kyoob
 {
@@ -49,7 +50,8 @@ namespace Kyoob
         {
             _graphics.PreferredBackBufferWidth = 1280;
             _graphics.PreferredBackBufferHeight = 768;
-            _graphics.PreferMultiSampling = true;
+            _graphics.PreferMultiSampling = false;
+            _graphics.SynchronizeWithVerticalRetrace = true;
             _graphics.ApplyChanges();
 
             // IsMouseVisible = true;
@@ -81,9 +83,10 @@ namespace Kyoob
 
 
             // create a perlin terrain generator (needs work)
-            PerlinTerrain terrain  = new PerlinTerrain( 114 );
+            PerlinTerrain terrain  = new PerlinTerrain( (int)DateTime.Now.Ticks );
             terrain.VerticalBias   = 1.0f / 36;
             terrain.HorizontalBias = 1.0f / 57;
+            terrain.Levels.WaterLevel = 0.500f;
             terrain.Levels.SetBounds( BlockType.Stone, 0.000f, 0.250f );
             terrain.Levels.SetBounds( BlockType.Sand,  0.250f, 0.625f );
             terrain.Levels.SetBounds( BlockType.Dirt,  0.625f, 1.000f );
@@ -91,7 +94,7 @@ namespace Kyoob
 
             // create the camera
             CameraSettings settings = new CameraSettings( _device );
-            settings.InitialPosition = new Vector3( 0.0f, 16.0f, 0.0f );
+            settings.InitialPosition = new Vector3( 0.0f, 1.0f / terrain.VerticalBias, 0.0f );
             _camera = new Camera( settings );
 
 
@@ -128,13 +131,13 @@ namespace Kyoob
                 }
                 if ( _world != null )
                 {
-                    Terminal.WriteLine( Color.Cyan, 3.0, "Loaded world from file." );
+                    Terminal.WriteInfo( "Loaded world from file." );
                 }
             }
             if ( _world == null )
             {
                 _world = new World( _renderer, _spriteSheet, terrain );
-                Terminal.WriteLine( Color.Cyan, 3.0, "Creating new world..." );
+                Terminal.WriteInfo( "Creating new world..." );
             }
         }
 

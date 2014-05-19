@@ -13,20 +13,35 @@ samplerCUBE _cubeMapSampler = sampler_state
     AddressV  = Clamp;
 };
 
-// vertex shader
-void VSFunc( float3 pos : POSITION0,
-         out float4 skyPos : POSITION0,
-         out float3 skyCoord : TEXCOORD0 )
+// vertex shader input
+struct VSInput
 {
-    float3 rotated = mul( pos, _view );
-    skyPos = mul( float4( rotated, 1.0 ), _projection ).xyww;
-    skyCoord = pos;
+    float3 Position    : POSITION0;
+};
+
+// vertex shader output
+struct VSOutput
+{
+    float4 SkyPosition : POSITION0;
+    float3 SkyCoords   : TEXCOORD0;
+};
+
+// vertex shader
+VSOutput VSFunc( VSInput input )
+{
+    VSOutput output;
+
+    float3 rotated = mul( input.Position, _view );
+    output.SkyPosition = mul( float4( rotated, 1.0 ), _projection ).xyww;
+    output.SkyCoords = input.Position;
+
+    return output;
 }
 
 // pixel shader
-float4 PSFunc( float3 skyCoord : TEXCOORD0 ) : COLOR
+float4 PSFunc( VSOutput input ) : COLOR0
 {
-    return texCUBE( _cubeMapSampler, skyCoord );
+    return texCUBE( _cubeMapSampler, input.SkyCoords );
 }
 
 technique MainTechnique

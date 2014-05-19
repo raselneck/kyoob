@@ -282,5 +282,45 @@ namespace Kyoob.Debug
                 }
             }
         }
+
+        /// <summary>
+        /// Writes a normal message to the terminal.
+        /// </summary>
+        /// <param name="message">The string message.</param>
+        /// <param name="options">The formatting options.</param>
+        public static void WriteLine( string message, params object[] options )
+        {
+            WriteLine( Color.White, 5.0, message, options );
+        }
+
+        /// <summary>
+        /// Writes an information message to the terminal.
+        /// </summary>
+        /// <param name="message">The string message.</param>
+        /// <param name="options">The formatting options.</param>
+        public static void WriteInfo( string message, params object[] options )
+        {
+            WriteLine( Color.Cyan, 5.0, message, options );
+        }
+
+        /// <summary>
+        /// Writes an error message to the terminal.
+        /// </summary>
+        /// <param name="message">The string message.</param>
+        /// <param name="options">The formatting options.</param>
+        public static void WriteError( string message, params object[] options )
+        {
+            WriteLine( Color.Red, 5.0, message, options );
+        }
+
+        /// <summary>
+        /// Writes a warning message to the terminal.
+        /// </summary>
+        /// <param name="message">The string message.</param>
+        /// <param name="options">The formatting options.</param>
+        public static void WriteWarning( string message, params object[] options )
+        {
+            WriteLine( Color.Cyan, 5.0, message, options );
+        }
     }
 }

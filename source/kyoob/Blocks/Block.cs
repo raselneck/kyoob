@@ -88,8 +88,11 @@ namespace Kyoob.Blocks
         {
             _position = position;
             _type = type;
+
+            // basically this block is active if it's not air
             _isActive = !IsEmpty;
 
+            // set the bounds of this block
             _bounds = new BoundingBox(
                 new Vector3(
                     _position.X - 0.5f,

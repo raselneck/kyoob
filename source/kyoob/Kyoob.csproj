@@ -104,7 +104,6 @@
     <Compile Include="Terrain\PerlinTerrain.cs" />
     <Compile Include="Terrain\TerrainGenerator.cs" />
     <Compile Include="Terrain\TerrainLevels.cs" />
-    <Compile Include="Terrain\TerrainPlane.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="KyoobIcon.ico" />

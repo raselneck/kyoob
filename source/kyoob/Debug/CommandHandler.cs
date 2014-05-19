@@ -92,7 +92,7 @@ namespace Kyoob.Debug
             int index = command.IndexOf( '.' );
             if ( index == -1 )
             {
-                Terminal.WriteLine( Color.Red, 3.0, "Could not find object in command '{0}'", command );
+                Terminal.WriteError( "Could not find object in command '{0}'", command );
                 return;
             }
             string obj = command.Substring( 0, index );
@@ -133,22 +133,22 @@ namespace Kyoob.Debug
                         }
                         catch ( Exception ex )
                         {
-                            Terminal.WriteLine( Color.Red, 3.0, ex.Message );
+                            Terminal.WriteError( ex.Message );
                         }
                     }
                     else
                     {
-                        Terminal.WriteLine( Color.Red, 3.0, "'{0}.{1}' is registered, but unbound", obj, func );
+                        Terminal.WriteError( "'{0}.{1}' is registered, but unbound", obj, func );
                     }
                 }
                 else
                 {
-                    Terminal.WriteLine( Color.Red, 3.0, "Could not find function '{0}.{1}'", obj, func );
+                    Terminal.WriteError( "Could not find function '{0}.{1}'", obj, func );
                 }
             }
             else
             {
-                Terminal.WriteLine( Color.Red, 3.0, "Could not find object '{0}'", obj );
+                Terminal.WriteError( "Could not find object '{0}'", obj );
             }
         }
     }

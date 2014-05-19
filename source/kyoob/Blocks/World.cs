@@ -12,6 +12,7 @@ using Kyoob.Terrain;
 #pragma warning disable 1587 // disable "invalid XML comment placement"
 
 #warning TODO : When chunks are unloaded, their data should be saved to a file somehow so that block data can be retrieved in case a chunk was modified.
+#warning TODO : Split loading/unloading into two separate threads.
 
 namespace Kyoob.Blocks
 {
@@ -36,7 +37,7 @@ namespace Kyoob.Blocks
         private List<Index3D> _unloadList;
         private Vector3 _currentViewPosition;
         private float _currentViewDistance;
-        private bool _isDisposed;
+        private volatile bool _isDisposed;
 
         private int _drawCount;
         private int _frameCount;
@@ -152,9 +153,21 @@ namespace Kyoob.Blocks
         /// </summary>
         private void StartChunkManagement()
         {
-            // start the chunk creation thread
+            // create the chunk creation thread
+            _chunkCreationThread = new Thread( new ThreadStart( ChunkCreationCallback ) );
+            _chunkCreationThread.Name = "kyoob - Chunk Creation";
+            _chunkCreationThread.IsBackground = true;
+            // _chunkCreationThread.Start(); // DON'T FORGET TO JOIN
+
+            // create the chunk unloading thread
+            _chunkUnloadingThread = new Thread( new ThreadStart( ChunkUnloadingCallback ) );
+            _chunkUnloadingThread.Name = "kyoob - Chunk Creation";
+            _chunkUnloadingThread.IsBackground = true;
+            // _chunkUnloadingThread.Start(); // DON'T FORGET TO JOIN
+
+            // start the chunk management thread
             _chunkManagementThread = new Thread( new ThreadStart( ChunkManagementCallback ) );
-            _chunkManagementThread.Name = "Chunk Management";
+            _chunkManagementThread.Name = "kyoob - Chunk Management";
             _chunkManagementThread.IsBackground = true;
             _chunkManagementThread.Start();
         }
@@ -179,7 +192,20 @@ namespace Kyoob.Blocks
                 {
                     _renderQueue.Clear();
                 }
-                Terminal.WriteLine( Color.White, 3.0, "Cleared all chunks." );
+                Terminal.WriteInfo( "Cleared all chunks." );
+            } );
+
+            // world.seed
+            Terminal.AddCommand( "world", "seed", ( string[] param ) =>
+            {
+                Terminal.WriteInfo( "Seed: {0}", _terrain.Seed );
+            } );
+
+            // world.reseed
+            Terminal.AddCommand( "world", "reseed", ( string[] param ) =>
+            {
+                int seed = int.Parse( param[ 0 ] );
+                _terrain.Seed = seed;
             } );
         }
 
@@ -225,6 +251,8 @@ namespace Kyoob.Blocks
 
 
         private Thread _chunkManagementThread;
+        private Thread _chunkCreationThread;
+        private Thread _chunkUnloadingThread;
 
         /// <summary>
         /// The callback for the chunk management thread.
@@ -233,6 +261,7 @@ namespace Kyoob.Blocks
         {
             Index3D index;
             HashSet<Index3D> indices = new HashSet<Index3D>();
+            HashSet<Index3D> copy;
 
             while ( !_isDisposed )
             {
@@ -255,7 +284,10 @@ namespace Kyoob.Blocks
                 }
 
                 // create a copy of the current loaded indices
-                HashSet<Index3D> copy = new HashSet<Index3D>( _indices );
+                lock ( _indices )
+                {
+                    copy = new HashSet<Index3D>( _indices );
+                }
 
                 // now check all of the "local" indices
                 foreach ( Index3D idx in indices )
@@ -273,38 +305,36 @@ namespace Kyoob.Blocks
                 }
                 indices.Clear();
 
+                ChunkCreationCallback();
+                ChunkUnloadingCallback();
+
                 // check if which chunks we need to remove
                 foreach ( Index3D idx in copy )
                 {
                     if ( _chunks.ContainsKey( idx ) )
                     {
                         _unloadList.Add( idx );
+                        _createList.Remove( idx );
                     }
                 }
 
-                UnloadChunks();
-                CreateChunks();
-
+                // update the render queue
                 lock ( _renderQueue )
                 {
                     _renderQueue.Clear();
                     _renderQueue.AddRange( _chunks.Values );
                 }
 
-                // tell the garbage collector to collect shit
+                // wait a bit
                 Thread.Sleep( 128 );
             }
         }
 
         /// <summary>
-        /// Creates all of the chunks in the create list.
+        /// Callback for the chunk creaton thread.
         /// </summary>
-        private void CreateChunks()
+        private void ChunkCreationCallback()
         {
-            if ( _createList.Count > 0 )
-            {
-                Terminal.WriteLine( Color.White, 3.0, "Creating {0} chunks...", _createList.Count );
-            }
             for ( int i = 0; i < _createList.Count; ++i )
             {
                 Index3D idx = _createList[ i ];
@@ -324,14 +354,10 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Unloads all of the chunks in the unload list.
+        /// Callback for the chunk unloading thread.
         /// </summary>
-        private void UnloadChunks()
+        private void ChunkUnloadingCallback()
         {
-            if ( _unloadList.Count > 0 )
-            {
-                Terminal.WriteLine( Color.White, 3.0, "Unloading {0} chunks...", _unloadList.Count );
-            }
             for ( int i = 0; i < _unloadList.Count; ++i )
             {
                 Index3D idx = _unloadList[ i ];
@@ -351,8 +377,10 @@ namespace Kyoob.Blocks
         {
             _isDisposed = true;
 
-            // join the thread
+            // join the threads
             _chunkManagementThread.Join( 100 );
+            // _chunkCreationThread.Join( 100 );
+            // _chunkUnloadingThread.Join( 100 );
 
             // dispose of all chunks
             lock ( _chunks )
@@ -442,14 +470,15 @@ namespace Kyoob.Blocks
         /// <param name="skyBox">The sky box to draw.</param>
         public void Draw( GameTime gameTime, Camera camera, SkyBox skyBox )
         {
-            // time how long it takes to draw our chunks
-            int count = 0;
             lock ( _renderQueue )
             {
-                _watch = Stopwatch.StartNew();
-
                 foreach ( Chunk chunk in _renderQueue )
                 {
+                    if ( chunk == null )
+                    {
+                        continue;
+                    }
+
                     // only draw the chunk if we can see it
                     if ( !camera.CanSee( chunk.Bounds ) )
                     {
@@ -457,35 +486,12 @@ namespace Kyoob.Blocks
                     }
 
                     chunk.Draw( _renderer );
-                    ++count;
                 }
-
-                _watch.Stop();
             }
 
             _renderer.GraphicsDevice.Clear( _renderer.ClearColor );
             skyBox.Draw( camera );
             _renderer.Render();
-
-
-            // update our average chunk drawing information
-            ++_frameCount;
-            _drawCount += count;
-            _tickCount += gameTime.ElapsedGameTime.TotalSeconds;
-            _timeCount += _watch.Elapsed.TotalMilliseconds;
-            if ( _tickCount >= 1.0 )
-            {
-                Terminal.WriteLine( Color.Yellow, 0.95,
-                    "{0:0.00} chunks in {1:0.00}ms",
-                    (float)_drawCount / _frameCount,
-                           _timeCount / _frameCount
-                );
-
-                _frameCount = 0;
-                _tickCount -= 1.0;
-                _timeCount = 0.0;
-                _drawCount = 0;
-            }
         }
 
         /// <summary>
@@ -526,7 +532,7 @@ namespace Kyoob.Blocks
             BinaryReader bin = new BinaryReader( stream );
             if ( bin.ReadInt32() != MagicNumber )
             {
-                Terminal.WriteLine( Color.Red, 3.0, "Encountered invalid world in stream." );
+                Terminal.WriteError( "Encountered invalid world in stream." );
                 return null;
             }
 
@@ -538,9 +544,9 @@ namespace Kyoob.Blocks
             }
             catch ( Exception ex )
             {
-                Terminal.WriteLine( Color.Red, 3.0, "Failed to load world." );
-                Terminal.WriteLine( Color.Red, 3.0, "-- {0}", ex.Message );
-                // Terminal.WriteLine( ex.StackTrace );
+                Terminal.WriteError( "Failed to load world." );
+                Terminal.WriteError( "-- {0}", ex.Message );
+                Terminal.WriteError( ex.StackTrace );
 
                 return null;
             }

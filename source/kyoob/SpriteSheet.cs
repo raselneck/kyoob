@@ -12,17 +12,12 @@ namespace Kyoob
     public sealed class SpriteSheet
     {
         /// <summary>
-        /// The number of expected sprites in the X direction.
+        /// The number of expected sprites in the X and Y directions.
         /// </summary>
-        private const int NumberOfSpritesX = 4;
-
-        /// <summary>
-        /// The number of expected sprites in the Y direction.
-        /// </summary>
-        private const int NumberOfSpritesY = 4;
+        private const int NumberOfSprites = 4;
 
         private Texture2D _texture;
-
+        
         /// <summary>
         /// Gets the texture.
         /// </summary>
@@ -63,7 +58,7 @@ namespace Kyoob
         {
             get
             {
-                return _texture.Width / NumberOfSpritesX;
+                return _texture.Width / NumberOfSprites;
             }
         }
 
@@ -74,7 +69,7 @@ namespace Kyoob
         {
             get
             {
-                return _texture.Height / NumberOfSpritesY;
+                return _texture.Height / NumberOfSprites;
             }
         }
 

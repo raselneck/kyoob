@@ -29,6 +29,17 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Checks to see if this voxel buffer is empty.
+        /// </summary>
+        public bool IsEmpty
+        {
+            get
+            {
+                return _vertices == null || _triangleCount == 0;
+            }
+        }
+
+        /// <summary>
         /// Creates a new voxel buffer.
         /// </summary>
         public VoxelBuffer()

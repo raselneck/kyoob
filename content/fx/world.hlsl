@@ -22,7 +22,7 @@ sampler2D _textureSampler : register(s0) = sampler_state
     texture   = <_texture>;
     MinFilter = Point;
     MagFilter = Point;
-    MipFilter = Point;
+    MipFilter = None;
     AddressU  = Clamp;
     AddressV  = Clamp;
 };

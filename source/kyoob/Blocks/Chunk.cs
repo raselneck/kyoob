@@ -16,7 +16,7 @@ namespace Kyoob.Blocks
     public sealed class Chunk : IDisposable
     {
         /// <summary>
-        /// The size of each chunk. (Where each chunk is Size x Size x Size.)
+        /// The size of each chunk. (Where each chunk is Size*Size*Size.)
         /// </summary>
         public const int Size = 16;
 
@@ -52,17 +52,6 @@ namespace Kyoob.Blocks
             get
             {
                 return _position;
-            }
-        }
-
-        /// <summary>
-        /// Gets the world this chunk is in.
-        /// </summary>
-        public World World
-        {
-            get
-            {
-                return _world;
             }
         }
 
@@ -247,21 +236,7 @@ namespace Kyoob.Blocks
                         // only do the tops of water
                         if ( block.Type == BlockType.Water && type == BlockType.Air )
                         {
-                            // add the regular face
                             _waterBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
-
-                            // now add the reverse face so that we can see the water from below
-                            //VertexPositionNormalTexture[] data = Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type );
-                            //int i = 0, j = data.Length - 1;
-                            //while ( i < j )
-                            //{
-                            //    var temp = data[ i ];
-                            //    data[ i ] = data[ j ];
-                            //    data[ j ] = temp;
-                            //    ++i;
-                            //    --j;
-                            //}
-                            //_waterBuff.AddFaceData( data );
                         }
 
                         // check below
@@ -331,12 +306,30 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Converts coordinates local to this chunk into world coordinates.
+        /// </summary>
+        /// <param name="x">The X coordinate.</param>
+        /// <param name="y">The Y coordinate.</param>
+        /// <param name="z">The Z coordinate.</param>
+        /// <returns></returns>
+        public Vector3 LocalToWorld( int x, int y, int z )
+        {
+            return _world.LocalToWorld( Center, x, y, z );
+        }
+
+        /// <summary>
         /// Disposes of this chunk.
         /// </summary>
         public void Dispose()
         {
-            _terrainBuff.Dispose();
-            _waterBuff.Dispose();
+            lock ( _terrainBuff )
+            {
+                _terrainBuff.Dispose();
+            }
+            lock ( _waterBuff )
+            {
+                _waterBuff.Dispose();
+            }
         }
 
         /// <summary>
@@ -396,8 +389,14 @@ namespace Kyoob.Blocks
         /// <param name="renderer">The renderer to draw with.</param>
         public void Draw( EffectRenderer renderer )
         {
-            renderer.QueueSolid( _terrainBuff );
-            renderer.QueueAlpha( _waterBuff );
+            if ( !_terrainBuff.IsEmpty )
+            {
+                renderer.QueueSolid( _terrainBuff );
+            }
+            if ( !_waterBuff.IsEmpty )
+            {
+                renderer.QueueAlpha( _waterBuff );
+            }
         }
 
         /// <summary>
@@ -441,7 +440,7 @@ namespace Kyoob.Blocks
             BinaryReader bin = new BinaryReader( stream );
             if ( bin.ReadInt32() != MagicNumber )
             {
-                Terminal.WriteLine( Color.Red, 3.0, "Encountered invalid chunk in stream." );
+                Terminal.WriteError( "Encountered invalid chunk in stream." );
                 return null;
             }
 
@@ -453,9 +452,9 @@ namespace Kyoob.Blocks
             }
             catch ( Exception ex )
             {
-                Terminal.WriteLine( Color.Red, 3.0, "Failed to load chunk." );
-                Terminal.WriteLine( Color.Red, 3.0, "-- {0}", ex.Message );
-                // Terminal.WriteLine( ex.StackTrace );
+                Terminal.WriteError( "Failed to load chunk." );
+                Terminal.WriteError( "-- {0}", ex.Message );
+                Terminal.WriteError( ex.StackTrace );
 
                 return null;
             }
