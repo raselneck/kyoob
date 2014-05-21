@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
+using XnaGame = Microsoft.Xna.Framework.Game;
+
 namespace Kyoob.Debug
 {
     /// <summary>
@@ -160,7 +162,7 @@ namespace Kyoob.Debug
         /// Initializes the terminal to work with a game.
         /// </summary>
         /// <param name="game">The game.</param>
-        public static void Initialize( Game game )
+        public static void Initialize( XnaGame game )
         {
             _device = game.GraphicsDevice;
             _depthState = _device.DepthStencilState;
@@ -310,7 +312,8 @@ namespace Kyoob.Debug
         /// <param name="options">The formatting options.</param>
         public static void WriteError( string message, params object[] options )
         {
-            WriteLine( Color.Red, 5.0, message, options );
+            Color lightRed = Color.Lerp( Color.Red, Color.White, 0.3f );
+            WriteLine( lightRed, 5.0, message, options );
         }
 
         /// <summary>

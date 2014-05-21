@@ -2,8 +2,9 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Effects;
+using Kyoob.Game;
 
-namespace Kyoob
+namespace Kyoob.Graphics
 {
     /// <summary>
     /// An implementation of a sky box.

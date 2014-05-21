@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Kyoob
+namespace Kyoob.Game
 {
     /// <summary>
     /// A class containing some camera settings.

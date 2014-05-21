@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Debug;
 using Kyoob.Effects;
+using Kyoob.Graphics;
 
 #pragma warning disable 1587 // disable "invalid XML comment placement"
 

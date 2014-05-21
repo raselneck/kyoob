@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using Kyoob.Blocks;
 
-#warning TODO : Gradient level collision checking.
-
 namespace Kyoob.Terrain
 {
     /// <summary>
@@ -66,13 +64,24 @@ namespace Kyoob.Terrain
         /// <param name="upper">The upper bounds.</param>
         public void SetBounds( BlockType type, float lower, float upper )
         {
-            // create the gradient
+            // create the gradient item
             TerrainGradient grad = new TerrainGradient()
             {
                 LowerBound = lower,
                 UpperBound = upper,
                 Type = type
             };
+
+            // now we need to check if there is any overlap
+            for ( int i = 0; i < _values.Count; ++i )
+            {
+                if ( ( lower >= _values[ i ].LowerBound && lower < _values[ i ].UpperBound ) ||
+                     ( upper > _values[ i ].LowerBound && upper <= _values[ i ].UpperBound ) )
+                {
+                    throw new ArgumentException( "The given bounds intersect another type's bounds." );
+                }
+            }
+
             _values.Add( grad );
         }
 

@@ -1,8 +1,7 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
-#warning TODO : Make the cube's size variable.
+using Kyoob.Graphics;
 
 namespace Kyoob.Blocks
 {

@@ -88,6 +88,12 @@ namespace Kyoob.Debug
         /// <param name="command">The command.</param>
         public void ParseCommand( string command )
         {
+            // don't even bother with the command if there is none
+            if ( string.IsNullOrEmpty( command ) )
+            {
+                return;
+            }
+
             // try to get the object
             int index = command.IndexOf( '.' );
             if ( index == -1 )

@@ -7,11 +7,14 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Debug;
 using Kyoob.Effects;
+using Kyoob.Game;
+using Kyoob.Graphics;
 using Kyoob.Terrain;
 
 #pragma warning disable 1587 // disable "invalid XML comment placement"
 
 #warning TODO : When chunks are unloaded, their data should be saved to a file somehow so that block data can be retrieved in case a chunk was modified.
+#warning TODO : Create ChunkManager. (?)
 #warning TODO : Split loading/unloading into two separate threads.
 
 namespace Kyoob.Blocks
@@ -26,7 +29,6 @@ namespace Kyoob.Blocks
         /// </summary>
         private const int MagicNumber = 0x444C5257;
 
-        private Stopwatch _watch;
         private EffectRenderer _renderer;
         private SpriteSheet _spriteSheet;
         private Dictionary<Index3D, Chunk> _chunks;
@@ -38,11 +40,6 @@ namespace Kyoob.Blocks
         private Vector3 _currentViewPosition;
         private float _currentViewDistance;
         private volatile bool _isDisposed;
-
-        private int _drawCount;
-        private int _frameCount;
-        private double _timeCount;
-        private double _tickCount;
 
         /// <summary>
         /// Gets the graphics device this world is on.
@@ -89,20 +86,14 @@ namespace Kyoob.Blocks
             _renderer = renderer;
             _spriteSheet = spriteSheet;
             _chunks = new Dictionary<Index3D, Chunk>();
-            _renderQueue = new List<Chunk>();
+            _renderQueue = new List<Chunk>( 2048 );
             _indices = new HashSet<Index3D>();
             _terrain = terrain;
             _isDisposed = false;
 
-            // set our debuggin variables
-            _drawCount = 0;
-            _frameCount = 0;
-            _timeCount = 0.0;
-            _tickCount = 0.0;
-
             // create our management lists
-            _createList = new List<Index3D>();
-            _unloadList = new List<Index3D>();
+            _createList = new List<Index3D>( 4096 );
+            _unloadList = new List<Index3D>( 4096 );
 
             StartChunkManagement();
             SetTerminalCommands();
@@ -212,10 +203,8 @@ namespace Kyoob.Blocks
         /// <summary>
         /// Creates a chunk with the given indices.
         /// </summary>
-        /// <param name="x">The X index.</param>
-        /// <param name="y">The Y index.</param>
-        /// <param name="z">The Z index.</param>
-        private void CreateChunk( int x, int y, int z )
+        /// <param name="index">The 3D index.</param>
+        private void CreateChunk( Index3D index )
         {
             // if we're disposed, then there's no sense in creating a chunk
             if ( _isDisposed )
@@ -224,7 +213,7 @@ namespace Kyoob.Blocks
             }
 
             // if the y is out of bounds, no need to create an empty chunk
-            if ( y < 0 )
+            if ( index.Y < 0 )
             {
                 return;
             }
@@ -233,9 +222,6 @@ namespace Kyoob.Blocks
              * We're going to ASSUME that the calling thread already has an exclusive lock
              * on the chunk collection.
              */
-
-            // create the chunk index
-            Index3D index = new Index3D( x, y, z );
 
             // make sure we don't already have that chunk created
             if ( !_chunks.ContainsKey( index ) )
@@ -249,74 +235,117 @@ namespace Kyoob.Blocks
 
 
 
-
         private Thread _chunkManagementThread;
         private Thread _chunkCreationThread;
         private Thread _chunkUnloadingThread;
+
+        /// <summary>
+        /// gets the distance between two 3D indices.
+        /// </summary>
+        /// <param name="a">The first index.</param>
+        /// <param name="b">The second index.</param>
+        /// <returns></returns>
+        private float GetDistanceBetween( Index3D a, Index3D b )
+        {
+            Vector3 av = new Vector3(
+                a.X * Chunk.Size,
+                a.Y * Chunk.Size,
+                a.Z * Chunk.Size
+            );
+            Vector3 bv = new Vector3(
+                b.X * Chunk.Size,
+                b.Y * Chunk.Size,
+                b.Z * Chunk.Size
+            );
+            return Vector3.Distance( av, bv );
+        }
 
         /// <summary>
         /// The callback for the chunk management thread.
         /// </summary>
         private void ChunkManagementCallback()
         {
-            Index3D index;
             HashSet<Index3D> indices = new HashSet<Index3D>();
-            HashSet<Index3D> copy;
+            Index3D index;
+            int maxDist;
+            float viewDistance;
+            int maxHeight = (int)( ( 1.0f / ( _terrain as PerlinTerrain ).VerticalBias ) / Chunk.Size ) + 1;
 
             while ( !_isDisposed )
             {
                 index = PositionToIndex( _currentViewPosition );
-                int maxDist = (int)( _currentViewDistance * 1.5f / Chunk.Size ) / 2;
+                viewDistance = _currentViewDistance * 2.0f;
+                maxDist = (int)( viewDistance / Chunk.Size );
                 
                 // create a list of all of the indices to check
+                indices.Clear();
                 for ( int x = 0; x < maxDist; ++x )
                 {
                     for ( int z = 0; z < maxDist; ++z )
                     {
-                        for ( int y = maxDist; y >= 0; --y )
+                        for ( int y = maxHeight; y >= 0; --y )
                         {
-                            indices.Add( new Index3D( index.X + x, y, index.Z + z ) );
-                            indices.Add( new Index3D( index.X + x, y, index.Z - z ) );
-                            indices.Add( new Index3D( index.X - x, y, index.Z + z ) );
-                            indices.Add( new Index3D( index.X - x, y, index.Z - z ) );
+                            // check [+x,y,+z]
+                            Index3D temp = new Index3D( index.X + x, y, index.Z + z );
+                            if ( GetDistanceBetween( index, temp ) <= viewDistance )
+                            {
+                                indices.Add( temp );
+                            }
+
+                            // check [+x,y,-z]
+                            temp = new Index3D( index.X + x, y, index.Z - z );
+                            if ( GetDistanceBetween( index, temp ) <= viewDistance )
+                            {
+                                indices.Add( temp );
+                            }
+
+                            // check [-x,y,+z]
+                            temp = new Index3D( index.X - x, y, index.Z + z );
+                            if ( GetDistanceBetween( index, temp ) <= viewDistance )
+                            {
+                                indices.Add( temp );
+                            }
+
+                            // check [-x,y,-z]
+                            temp = new Index3D( index.X - x, y, index.Z - z );
+                            if ( GetDistanceBetween( index, temp ) <= viewDistance )
+                            {
+                                indices.Add( temp );
+                            }
                         }
                     }
                 }
 
-                // create a copy of the current loaded indices
-                lock ( _indices )
+                // put ALL chunks on the chopping block
+                _unloadList.AddRange( _chunks.Keys );
+                for ( int i = 0; i < _unloadList.Count; ++i )
                 {
-                    copy = new HashSet<Index3D>( _indices );
-                }
-
-                // now check all of the "local" indices
-                foreach ( Index3D idx in indices )
-                {
-                    // if we have a chunk at the index, it doesn't need to be unloaded
-                    if ( _chunks.ContainsKey( idx ) )
+                    // check if we can still see the chunk
+                    Vector3 pos = IndexToPosition( _unloadList[ i ] );
+                    if ( Vector3.Distance( _currentViewPosition, pos ) <= viewDistance )
                     {
-                        copy.Remove( idx );
+                        // if we can, remove it from the unload list
+                        _unloadList.RemoveAt( i );
+                        --i;
                     }
-                    // create the chunk if we need to
                     else
                     {
-                        _createList.Add( idx );
+                        // if we can't see it, we need to make sure it's not slated to be created
+                        if ( indices.Contains( _unloadList[ i ] ) )
+                        {
+                            indices.Remove( _unloadList[ i ] );
+                        }
                     }
                 }
-                indices.Clear();
 
-                ChunkCreationCallback();
+
+                // whatever's left in indices is what needs to be created
+                _createList.AddRange( indices );
+
+
                 ChunkUnloadingCallback();
+                ChunkCreationCallback();
 
-                // check if which chunks we need to remove
-                foreach ( Index3D idx in copy )
-                {
-                    if ( _chunks.ContainsKey( idx ) )
-                    {
-                        _unloadList.Add( idx );
-                        _createList.Remove( idx );
-                    }
-                }
 
                 // update the render queue
                 lock ( _renderQueue )
@@ -324,9 +353,6 @@ namespace Kyoob.Blocks
                     _renderQueue.Clear();
                     _renderQueue.AddRange( _chunks.Values );
                 }
-
-                // wait a bit
-                Thread.Sleep( 128 );
             }
         }
 
@@ -335,13 +361,20 @@ namespace Kyoob.Blocks
         /// </summary>
         private void ChunkCreationCallback()
         {
+            Index3D current = PositionToIndex( _currentViewPosition );
+            int count = 0;
+
             for ( int i = 0; i < _createList.Count; ++i )
             {
                 Index3D idx = _createList[ i ];
-                CreateChunk( idx.X, idx.Y, idx.Z );
+                if ( GetDistanceBetween( current, idx ) > _currentViewDistance )
+                {
+                    continue;
+                }
+                CreateChunk( idx );
 
-                // let's update the render queue just in case we have a lot of chunks to create
-                if ( i > 0 && i % 16 == 0 )
+                ++count;
+                if ( count % 16 == 0 )
                 {
                     lock ( _renderQueue )
                     {

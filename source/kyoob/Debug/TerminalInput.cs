@@ -4,8 +4,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-#warning TODO : Add a navigable history. (I.e. use arrows to navigate previous commands.)
-
 namespace Kyoob.Debug
 {
     /// <summary>
@@ -19,6 +17,8 @@ namespace Kyoob.Debug
         private bool _hasControl;
         private string _text;
         private CommandHandler _commands;
+        private List<string> _history;
+        private int _historyIndex;
 
         /// <summary>
         /// The event that is called when the input requests control of user input.
@@ -88,6 +88,8 @@ namespace Kyoob.Debug
             _oldKeys = Keyboard.GetState();
             _hasControl = false;
             _commands = new CommandHandler();
+            _history = new List<string>();
+            _historyIndex = 0;
         }
 
         /// <summary>
@@ -267,17 +269,46 @@ namespace Kyoob.Debug
             if ( _hasControl )
             {
                 UpdateText();
-            }
 
-            // if enter was pressed, parse the command
-            if ( _newKeys.IsKeyUp( Keys.Enter ) && _oldKeys.IsKeyDown( Keys.Enter ) )
-            {
-                _commands.ParseCommand( _text );
-                _text = "";
-                _hasControl = false;
-                if ( ReleaseControl != null )
+                // if up or down was pressed, navigate the history
+                if ( WasPressed( Keys.Up ) )
                 {
-                    ReleaseControl( this, new EventArgs() );
+                    if ( _history.Count > 0 )
+                    {
+                        --_historyIndex;
+                        if ( _historyIndex < 0 )
+                        {
+                            _historyIndex = _history.Count - 1;
+                        }
+                        _text = _history[ _historyIndex ];
+                    }
+                }
+                else if ( WasPressed( Keys.Down ) )
+                {
+                    if ( _history.Count > 0 )
+                    {
+                        ++_historyIndex;
+                        if ( _historyIndex >= _history.Count )
+                        {
+                            _historyIndex = 0;
+                        }
+                        _text = _history[ _historyIndex ];
+                    }
+                }
+
+                // if enter was pressed, parse the command
+                if ( WasPressed( Keys.Enter ) )
+                {
+                    _history.Add( _text );
+                    _historyIndex = _history.Count;
+                    _commands.ParseCommand( _text );
+                    _text = "";
+                    
+                    _hasControl = false;
+                    if ( ReleaseControl != null )
+                    {
+                        ReleaseControl( this, new EventArgs() );
+                    }
                 }
             }
 

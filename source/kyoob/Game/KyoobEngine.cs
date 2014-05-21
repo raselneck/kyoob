@@ -9,20 +9,17 @@ using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
 using Kyoob.Debug;
 using Kyoob.Effects;
+using Kyoob.Graphics;
 using Kyoob.Terrain;
 
-#warning TODO : Input manager. (?)
-#warning TODO : Add some more lighting stuff, maybe shadows.
-#warning TODO : Motion blur. (?)
-#warning TODO : Physics.
-#warning TODO : Get anti-aliasing to work. (?)
+using XnaGame = Microsoft.Xna.Framework.Game;
 
-namespace Kyoob
+namespace Kyoob.Game
 {
     /// <summary>
     /// The main Kyoob engine.
     /// </summary>
-    public class KyoobEngine : Microsoft.Xna.Framework.Game
+    public class KyoobEngine : XnaGame
     {
         private GraphicsDeviceManager _graphics;
         private GraphicsDevice _device;
@@ -84,7 +81,7 @@ namespace Kyoob
 
             // create a perlin terrain generator (needs work)
             PerlinTerrain terrain  = new PerlinTerrain( (int)DateTime.Now.Ticks );
-            terrain.VerticalBias   = 1.0f / 36;
+            terrain.VerticalBias   = 1.0f / 49;
             terrain.HorizontalBias = 1.0f / 57;
             terrain.Levels.WaterLevel = 0.500f;
             terrain.Levels.SetBounds( BlockType.Stone, 0.000f, 0.250f );

@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
 using Kyoob.Debug;
 
-namespace Kyoob
+namespace Kyoob.Game
 {
     /// <summary>
     /// An implementation of a free-moving camera.

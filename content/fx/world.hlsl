@@ -9,10 +9,6 @@ float3    _lightPosition    = float3( 0.0, 0.0, 0.0 );
 float     _lightAttenuation = 10.0;
 float     _lightFalloff     = 4.0;
 
-float     _fogStart;
-float     _fogEnd;
-float3    _fogColor;
-
 float3    _cameraPosition;
 
 // point clamp the textures for the good ol' blocky style

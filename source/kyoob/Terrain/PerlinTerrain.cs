@@ -2,8 +2,6 @@
 using Microsoft.Xna.Framework;
 using Kyoob.Blocks;
 
-#warning TODO : Make block type shifts not so abrupt.
-
 namespace Kyoob.Terrain
 {
     /// <summary>

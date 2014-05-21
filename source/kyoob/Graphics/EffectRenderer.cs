@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Blocks;
+using Kyoob.Effects;
+using Kyoob.Game;
 
-namespace Kyoob.Effects
+namespace Kyoob.Graphics
 {
     /// <summary>
     /// A simple effect renderer / manager.
