@@ -80,7 +80,6 @@
     <Compile Include="Blocks\Index3D.cs" />
     <Compile Include="Blocks\Octree.cs" />
     <Compile Include="Debug\CommandHandler.cs" />
-    <Compile Include="Effects\ColoredEffect.cs" />
     <Compile Include="Game\Camera.cs" />
     <Compile Include="Game\Entities\Entity.cs" />
     <Compile Include="Game\Entities\Player.cs" />

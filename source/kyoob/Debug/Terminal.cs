@@ -260,28 +260,25 @@ namespace Kyoob.Debug
         /// <param name="options">The formatting options.</param>
         public static void WriteLine( Color color, double time, string message, params object[] options )
         {
-            lock ( _messages )
-            {
-                // format the message
-                message = string.Format( message, options );
+            // format the message
+            message = string.Format( message, options );
 
-                // if there are any new lines, then we need to split them up
-                if ( message.Contains( "\n" ) )
+            // if there are any new lines, then we need to split them up
+            if ( message.Contains( "\n" ) )
+            {
+                string[] parts = message.Split( '\n' );
+                for ( int i = 0; i < parts.Length; ++i )
                 {
-                    string[] parts = message.Split( '\n' );
-                    for ( int i = 0; i < parts.Length; ++i )
+                    if ( !string.IsNullOrEmpty( parts[ i ] ) )
                     {
-                        if ( !string.IsNullOrEmpty( parts[ i ] ) )
-                        {
-                            _messages.Add( new TerminalMessage( color, time, message ) );
-                        }
+                        _messages.Add( new TerminalMessage( color, time, message ) );
                     }
                 }
-                // otherwise we just add the message
-                else
-                {
-                    _messages.Add( new TerminalMessage( color, time, message ) );
-                }
+            }
+            // otherwise we just add the message
+            else
+            {
+                _messages.Add( new TerminalMessage( color, time, message ) );
             }
         }
 

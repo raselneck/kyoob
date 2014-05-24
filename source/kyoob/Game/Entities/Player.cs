@@ -96,6 +96,10 @@ namespace Kyoob.Game.Entities
             Vector3 forward = GetMovementVector( Vector3.Forward, units );
             Vector3 up      = GetMovementVector( Vector3.Up, units );
             Vector3 right   = GetMovementVector( Vector3.Right, units );
+            if ( _camera.Pitch >= MathHelper.PiOver4 )
+            {
+                up = -up;
+            }
 
             // check if we need to strafe forward
             if ( _currKeys.IsKeyDown( Keys.W ) )
@@ -185,6 +189,24 @@ namespace Kyoob.Game.Entities
         }
 
         /// <summary>
+        /// Checks physics in the XZ direction.
+        /// </summary>
+        /// <param name="chunks">The list of chunks to query.</param>
+        /// <param name="ray">The ray.</param>
+        /// <param name="value">The value to modify.</param>
+        private void CheckPhysicsXZ( List<Chunk> chunks, Ray ray, ref float value )
+        {
+            foreach ( Block block in QueryChunks( chunks, ray ) )
+            {
+                float dist = block.GetInstersectionDistance( ray ).Value - CollisionDistanceBuffer;
+                if ( Math.Abs( value ) > dist )
+                {
+                    value = dist * Math.Sign( value );
+                }
+            }
+        }
+
+        /// <summary>
         /// Applies collision and gravity physics to the player.
         /// </summary>
         /// <param name="time">The time since the last frame update.</param>
@@ -193,7 +215,7 @@ namespace Kyoob.Game.Entities
             // "jump" if we pressed space
             if ( _currKeys.IsKeyUp( Keys.Space ) && _prevKeys.IsKeyDown( Keys.Space ) )
             {
-                _velocityY += 20.0f * time;
+                _velocityY += 16.0f * time;
             }
 
             // apply some falling physics
@@ -211,108 +233,35 @@ namespace Kyoob.Game.Entities
                 return;
             }
 
-            // create our rays
-            Ray rayForward  = new Ray( Position, Vector3.Forward );
-            Ray rayBackward = new Ray( Position, Vector3.Backward );
-            Ray rayRight    = new Ray( Position, Vector3.Right );
-            Ray rayLeft     = new Ray( Position, Vector3.Left );
-            Ray rayUp       = new Ray( Position, Vector3.Up );
-            Ray rayDown     = new Ray( Position, Vector3.Down );
-
             // Z direction
             if ( _translation.Z < 0.0f )
             {
-                // forward [0,0,-1] checking
-                foreach ( Block block in QueryChunks( surrounding, rayForward ) )
-                {
-                    // don't care about water
-                    if ( block.Type == BlockType.Water )
-                    {
-                        continue;
-                    }
-
-                    // dist will be positive, translation will be negative
-                    float dist = block.GetInstersectionDistance( rayForward ).Value - CollisionDistanceBuffer;
-                    if ( Math.Abs( _translation.Z ) > dist )
-                    {
-                        _translation.Z = dist * Math.Sign( _translation.Z );
-                    }
-                }
+                CheckPhysicsXZ( surrounding, new Ray( Position, Vector3.Forward ), ref _translation.Z );
             }
             else if ( _translation.Z > 0.0f )
             {
-                // backward [0,0,1] checking
-                foreach ( Block block in QueryChunks( surrounding, rayBackward ) )
-                {
-                    // don't care about water
-                    if ( block.Type == BlockType.Water )
-                    {
-                        continue;
-                    }
-
-                    // dist will be positive, translation will be positive
-                    float dist = block.GetInstersectionDistance( rayBackward ).Value - CollisionDistanceBuffer;
-                    if ( Math.Abs( _translation.Z ) > dist )
-                    {
-                        _translation.Z = dist * Math.Sign( _translation.Z );
-                    }
-                }
+                CheckPhysicsXZ( surrounding, new Ray( Position, Vector3.Backward ), ref _translation.Z );
             }
 
             // X direction
             if ( _translation.X < 0.0f )
             {
-                // left [-1,0,0] checking
-                foreach ( Block block in QueryChunks( surrounding, rayLeft ) )
-                {
-                    // don't care about water
-                    if ( block.Type == BlockType.Water )
-                    {
-                        continue;
-                    }
-
-                    // dist will be positive, translation will be negative
-                    float dist = block.GetInstersectionDistance( rayLeft ).Value - CollisionDistanceBuffer;
-                    if ( Math.Abs( _translation.X ) > dist )
-                    {
-                        _translation.X = dist * Math.Sign( _translation.Z );
-                    }
-                }
+                CheckPhysicsXZ( surrounding, new Ray( Position, Vector3.Left ), ref _translation.X );
             }
             else if ( _translation.X > 0.0f )
             {
-                // right [1,0,0] checking
-                foreach ( Block block in QueryChunks( surrounding, rayRight ) )
-                {
-                    // don't care about water
-                    if ( block.Type == BlockType.Water )
-                    {
-                        continue;
-                    }
-
-                    // dist will be positive, translation will be positive
-                    float dist = block.GetInstersectionDistance( rayRight ).Value - CollisionDistanceBuffer;
-                    if ( Math.Abs( _translation.X ) > dist )
-                    {
-                        _translation.X = dist * Math.Sign( _translation.Z );
-                    }
-                }
+                CheckPhysicsXZ( surrounding, new Ray( Position, Vector3.Right ), ref _translation.X );
             }
 
             // Y direction
             if ( _translation.Y < 0.0f )
             {
                 // downward [0,1,0] checking
-                foreach ( Block block in QueryChunks( surrounding, rayDown ) )
+                Ray ray = new Ray( Position, Vector3.Down );
+                foreach ( Block block in QueryChunks( surrounding, ray ) )
                 {
-                    // don't care about water
-                    if ( block.Type == BlockType.Water )
-                    {
-                        continue;
-                    }
-
                     // dist will be positive, translation will be negative
-                    float dist = block.GetInstersectionDistance( rayDown ).Value - CollisionDistanceBuffer - Size.Y * 1.75f;
+                    float dist = block.GetInstersectionDistance( ray ).Value - CollisionDistanceBuffer - Size.Y * 0.75f;
                     if ( Math.Abs( _translation.Y ) > dist )
                     {
                         _translation.Y = dist * Math.Sign( _translation.Y );
@@ -323,16 +272,11 @@ namespace Kyoob.Game.Entities
             else if ( _translation.Y > 0.0f )
             {
                 // upward [0,1,0] checking
-                foreach ( Block block in QueryChunks( surrounding, rayUp ) )
+                Ray ray = new Ray( Position, Vector3.Up );
+                foreach ( Block block in QueryChunks( surrounding, new Ray( Position, Vector3.Up ) ) )
                 {
-                    // don't care about water
-                    if ( block.Type == BlockType.Water )
-                    {
-                        continue;
-                    }
-
                     // dist will be positive, translation will be positive
-                    float dist = block.GetInstersectionDistance( rayUp ).Value - CollisionDistanceBuffer - Size.Y * 0.25f;
+                    float dist = block.GetInstersectionDistance( ray ).Value - CollisionDistanceBuffer - Size.Y * 0.25f;
                     if ( Math.Abs( _translation.Y ) > dist )
                     {
                         _translation.Y = dist * Math.Sign( _translation.Y );
@@ -355,8 +299,11 @@ namespace Kyoob.Game.Entities
             if ( _world != null )
             {
                 float time = (float)gameTime.ElapsedGameTime.TotalSeconds;
-                CheckUserInput( time );
-                ApplyPhysics( time );
+                if ( _camera.HasControl )
+                {
+                    CheckUserInput( time );
+                    ApplyPhysics( time );
+                }
 
                 // move the player and reset out translation vector
                 Move( _translation );
@@ -373,12 +320,12 @@ namespace Kyoob.Game.Entities
         /// <param name="effect">The effect to use when drawing.</param>
         public override void Draw( GameTime gameTime, BaseEffect effect )
         {
-            Chunk current = _world.GetChunk( Position );
-            if ( current != null )
-            {
-                current.Bounds.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
-                current.Octree.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
-            }
+            //Chunk current = _world.GetChunk( Position );
+            //if ( current != null )
+            //{
+            //    current.Bounds.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
+            //    current.Octree.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
+            //}
         }
     }
 }

@@ -31,6 +31,7 @@ namespace Kyoob.Game.Entities
         {
             get
             {
+                // position is also the center of the size
                 return _position;
             }
         }
@@ -74,8 +75,6 @@ namespace Kyoob.Game.Entities
         /// <param name="zmod">The position Z modifier.</param>
         protected virtual BoundingBox GetBounds( float xmod, float ymod, float zmod )
         {
-            // we'll use this.Position as the center of a 1x2x1 bounding box
-
             Vector3 min = new Vector3(
                 ( Position.X + xmod ) - ( Size.X / 2.0f ),
                 ( Position.Y + ymod ) - ( Size.Y / 2.0f ),

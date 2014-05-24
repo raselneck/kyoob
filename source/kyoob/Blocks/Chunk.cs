@@ -98,14 +98,14 @@ namespace Kyoob.Blocks
             _position = position;
             _bounds = new BoundingBox(
                 new Vector3(
-                    _position.X - Size / 2.0f + Cube.Size / 2.0f,
-                    _position.Y - Size / 2.0f + Cube.Size / 2.0f,
-                    _position.Z - Size / 2.0f + Cube.Size / 2.0f
+                    _position.X - Size / 2 - Cube.Size / 2,
+                    _position.Y - Size / 2 - Cube.Size / 2,
+                    _position.Z - Size / 2 - Cube.Size / 2
                 ),
                 new Vector3(
-                    _position.X + Size / 2.0f - Cube.Size / 2.0f,
-                    _position.Y + Size / 2.0f - Cube.Size / 2.0f,
-                    _position.Z + Size / 2.0f - Cube.Size / 2.0f
+                    _position.X + Size / 2 - Cube.Size / 2,
+                    _position.Y + Size / 2 - Cube.Size / 2,
+                    _position.Z + Size / 2 - Cube.Size / 2
                 )
             );
             _octree = new Octree<Block>( _bounds );
@@ -226,8 +226,11 @@ namespace Kyoob.Blocks
                             continue;
                         }
 
-                        // add the block to the octree because it's active
-                        _octree.Add( block );
+                        // add the block to the octree if it's not an empty type
+                        if ( !IsEmptyBlockType( block.Type ) )
+                        {
+                            _octree.Add( block );
+                        }
 
                         // if the type is dirt and there's nothing on top, then the block should be grass.
                         if ( block.Type == BlockType.Dirt && GetBlockType( x, y + 1, z ) == BlockType.Air )

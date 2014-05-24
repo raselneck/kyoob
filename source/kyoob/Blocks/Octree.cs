@@ -147,7 +147,7 @@ namespace Kyoob.Blocks
         {
             ContainmentType type = _bounds.Contains( box );
             return type == ContainmentType.Contains
-                ; // || type == ContainmentType.Intersects;
+                || type == ContainmentType.Intersects;
         }
 
         /// <summary>

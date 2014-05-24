@@ -46,6 +46,39 @@ namespace Kyoob.Game.Entities
         }
 
         /// <summary>
+        /// Gets the camera's yaw.
+        /// </summary>
+        public float Yaw
+        {
+            get
+            {
+                return _yaw;
+            }
+        }
+
+        /// <summary>
+        /// Gets the camera's pitch.
+        /// </summary>
+        public float Pitch
+        {
+            get
+            {
+                return _pitch;
+            }
+        }
+
+        /// <summary>
+        /// Gets whether or not the camera has control.
+        /// </summary>
+        public bool HasControl
+        {
+            get
+            {
+                return _hasControl;
+            }
+        }
+
+        /// <summary>
         /// Creates a new player camera.
         /// </summary>
         /// <param name="settings">The camera settings to use.</param>
@@ -70,6 +103,21 @@ namespace Kyoob.Game.Entities
             {
                 _hasControl = true;
             };
+
+            SetTerminalCommands();
+        }
+
+        /// <summary>
+        /// Sets the terminal commands.
+        /// </summary>
+        private void SetTerminalCommands()
+        {
+            // camera.pos
+            Terminal.AddCommand( "camera", "pos", ( string[] param ) =>
+            {
+                Vector3 pos = Position;
+                Terminal.WriteInfo( "[{0:0.00},{1:0.00},{2:0.00}]", pos.X, pos.Y, pos.Z );
+            } );
         }
 
         /// <summary>
@@ -94,11 +142,11 @@ namespace Kyoob.Game.Entities
             _pitch     += 0.0025f * dPitch;
 
             // clamp pitch
-            if ( _pitch >= MathHelper.PiOver2 )
+            if ( _pitch > MathHelper.PiOver2 )
             {
                 _pitch = MathHelper.PiOver2;
             }
-            if ( _pitch <= -MathHelper.PiOver2 )
+            if ( _pitch < -MathHelper.PiOver2 )
             {
                 _pitch = -MathHelper.PiOver2;
             }
@@ -138,19 +186,16 @@ namespace Kyoob.Game.Entities
         /// <param name="gameTime">Frame time information.</param>
         public override void Update( GameTime gameTime )
         {
-            // get the new mouse state
             _currMouse = Mouse.GetState();
 
-
-            Rotate();
-            ApplyTransformations();
-
-
-            // update our previous mouse state
+            // update based on whether or not we have control
             if ( _hasControl )
             {
+                Rotate();
                 CenterMouse();
             }
+            ApplyTransformations();
+
             _prevMouse = Mouse.GetState();
         }
     }
