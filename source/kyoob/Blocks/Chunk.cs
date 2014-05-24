@@ -75,6 +75,17 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Gets this chunk's octree.
+        /// </summary>
+        public Octree<Block> Octree
+        {
+            get
+            {
+                return _octree;
+            }
+        }
+
+        /// <summary>
         /// Creates a new chunk.
         /// </summary>
         /// <param name="world">The world this chunk is in.</param>
@@ -87,14 +98,14 @@ namespace Kyoob.Blocks
             _position = position;
             _bounds = new BoundingBox(
                 new Vector3(
-                    _position.X - Size / 2.0f,
-                    _position.Y - Size / 2.0f,
-                    _position.Z - Size / 2.0f
+                    _position.X - Size / 2.0f + Cube.Size / 2.0f,
+                    _position.Y - Size / 2.0f + Cube.Size / 2.0f,
+                    _position.Z - Size / 2.0f + Cube.Size / 2.0f
                 ),
                 new Vector3(
-                    _position.X + Size / 2.0f,
-                    _position.Y + Size / 2.0f,
-                    _position.Z + Size / 2.0f
+                    _position.X + Size / 2.0f - Cube.Size / 2.0f,
+                    _position.Y + Size / 2.0f - Cube.Size / 2.0f,
+                    _position.Z + Size / 2.0f - Cube.Size / 2.0f
                 )
             );
             _octree = new Octree<Block>( _bounds );
@@ -340,6 +351,26 @@ namespace Kyoob.Blocks
         public bool Collides( BoundingBox box )
         {
             return _octree.Collides( box );
+        }
+
+        /// <summary>
+        /// Checks to see if a ray intersects this chunk.
+        /// </summary>
+        /// <param name="ray">The ray.</param>
+        /// <returns></returns>
+        public bool Intersects( Ray ray )
+        {
+            return _octree.Intersects( ray );
+        }
+
+        /// <summary>
+        /// Gets the list of blocks that a ray intersects.
+        /// </summary>
+        /// <param name="ray">The ray.</param>
+        /// <returns></returns>
+        public List<Block> GetIntersections( Ray ray )
+        {
+            return _octree.GetIntersections( ray );
         }
 
         /// <summary>

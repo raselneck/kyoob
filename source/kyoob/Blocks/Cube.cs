@@ -21,6 +21,11 @@ namespace Kyoob.Blocks
         public const int VerticesPerFace = 6;
 
         /// <summary>
+        /// The size of a cube.
+        /// </summary>
+        public const float Size = 1.0f;
+
+        /// <summary>
         /// Creates data for a single cube face.
         /// </summary>
         /// <param name="center">The center of the cube.</param>

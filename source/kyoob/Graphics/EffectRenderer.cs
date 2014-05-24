@@ -19,6 +19,7 @@ namespace Kyoob.Graphics
         private List<VoxelBuffer> _solidQueue;
         private List<VoxelBuffer> _alphaQueue;
         private Color _clearColor;
+        private SkyBox _skybox;
 
         /// <summary>
         /// Gets the graphics device this renderer uses.
@@ -43,6 +44,21 @@ namespace Kyoob.Graphics
             set
             {
                 _clearColor = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the renderer's skybox.
+        /// </summary>
+        public SkyBox SkyBox
+        {
+            get
+            {
+                return _skybox;
+            }
+            set
+            {
+                _skybox = value;
             }
         }
 
@@ -83,8 +99,15 @@ namespace Kyoob.Graphics
         /// <summary>
         /// Renders everything to the screen.
         /// </summary>
-        public void Render()
+        /// <param name="camera">The camera to use for skybox projections.</param>
+        public void Render( Camera camera )
         {
+            _device.Clear( _clearColor );
+            if ( _skybox != null )
+            {
+                _skybox.Draw( camera );
+            }
+
             // draw solid shit
             _effect.SetTechnique( "MainTechnique" );
             for ( int i = 0; i < _solidQueue.Count; ++i )

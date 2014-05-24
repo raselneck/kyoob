@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
 using Kyoob.Debug;
 using Kyoob.Effects;
+using Kyoob.Game.Entities;
 using Kyoob.Graphics;
 using Kyoob.Terrain;
 
@@ -25,11 +26,10 @@ namespace Kyoob.Game
         private GraphicsDevice _device;
 
         private SpriteSheet _spriteSheet;
-        private Camera _camera;
-        private SkyBox _skyBox;
         private EffectRenderer _renderer;
         private PointLightEffect _effect;
         private World _world;
+        private Player _player;
 
         /// <summary>
         /// Creates a new Kyoob engine.
@@ -63,48 +63,37 @@ namespace Kyoob.Game
         {
             _device = GraphicsDevice;
 
-
             // initialize the terminal
             Terminal.Initialize( this );
             Terminal.Font = Content.Load<SpriteFont>( "font/arial" );
             Terminal.RequestControl += ( sender, args ) =>
             {
-                _camera.ReleaseControl();
                 IsMouseVisible = true;
             };
             Terminal.ReleaseControl += ( sender, args ) =>
             {
-                _camera.TakeControl();
                 IsMouseVisible = false;
             };
 
 
             // create a perlin terrain generator (needs work)
-            PerlinTerrain terrain  = new PerlinTerrain( (int)DateTime.Now.Ticks );
+            // PerlinTerrain terrain  = new PerlinTerrain( (int)DateTime.Now.Ticks );
+            PerlinTerrain terrain  = new PerlinTerrain( 103695625 );
             terrain.VerticalBias   = 1.0f / 49;
-            terrain.HorizontalBias = 1.0f / 57;
+            terrain.HorizontalBias = 1.0f / 79;
             terrain.Levels.WaterLevel = 0.500f;
             terrain.Levels.SetBounds( BlockType.Stone, 0.000f, 0.250f );
             terrain.Levels.SetBounds( BlockType.Sand,  0.250f, 0.625f );
             terrain.Levels.SetBounds( BlockType.Dirt,  0.625f, 1.000f );
 
 
-            // create the camera
+            // create the player
             CameraSettings settings = new CameraSettings( _device );
             settings.InitialPosition = new Vector3( 0.0f, 1.0f / terrain.VerticalBias, 0.0f );
-            _camera = new Camera( settings );
+            _player = new Player( _device, settings );
 
 
-            // load the sky box
-            _skyBox = new SkyBox(
-                Content.Load<Model>( "model/skybox" ),
-                _device,
-                new SkyBoxEffect( Content.Load<Effect>( "fx/skybox" ) ),
-                Content.Load<TextureCube>( "tex/skybox-512" )
-            );
-
-
-            // load the textures
+            // load the sprite sheet and set the bounding box effect
             _spriteSheet = new SpriteSheet( Content.Load<Texture2D>( "tex/spritesheet" ) );
 
 
@@ -115,7 +104,13 @@ namespace Kyoob.Game
 
 
             // create the renderer
-            _renderer = new EffectRenderer( _device, _effect, _camera );
+            _renderer = new EffectRenderer( _device, _effect, _player.Camera );
+            _renderer.SkyBox = new SkyBox(
+                Content.Load<Model>( "model/skybox" ),
+                _device,
+                new SkyBoxEffect( Content.Load<Effect>( "fx/skybox" ) ),
+                Content.Load<TextureCube>( "tex/skybox-512" )
+            );
 
 
             // create the world if we can't find the file
@@ -136,6 +131,9 @@ namespace Kyoob.Game
                 _world = new World( _renderer, _spriteSheet, terrain );
                 Terminal.WriteInfo( "Creating new world..." );
             }
+
+            // set the player's world
+            _player.World = _world;
         }
 
         /// <summary>
@@ -172,9 +170,9 @@ namespace Kyoob.Game
 
 
             Terminal.Update( gameTime );
-            _camera.Update( gameTime, _world );
-            _effect.LightPosition = _camera.Position;
-            _world.Update( gameTime, _camera );
+            _player.Update( gameTime );
+            _effect.LightPosition = _player.Camera.Position;
+            _world.Update( gameTime, _player.Camera );
 
 
             base.Update( gameTime );
@@ -189,10 +187,13 @@ namespace Kyoob.Game
             // clear based on ambient color if we can
             _renderer.ClearColor = new Color( _effect.AmbientColor );
 
+
             // draw the world and the terminal
-            _effect.Projection = _camera.Projection;
-            _effect.View = _camera.View;
-            _world.Draw( gameTime, _camera, _skyBox );
+            _effect.Projection = _player.Camera.Projection;
+            _effect.View = _player.Camera.View;
+            _renderer.GraphicsDevice.Clear( _renderer.ClearColor );
+            _world.Draw( gameTime, _player.Camera );
+            _player.Draw( gameTime, _effect );
             Terminal.Draw( gameTime );
 
 

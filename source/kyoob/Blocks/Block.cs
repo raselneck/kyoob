@@ -95,16 +95,36 @@ namespace Kyoob.Blocks
             // set the bounds of this block
             _bounds = new BoundingBox(
                 new Vector3(
-                    _position.X - 0.5f,
-                    _position.Y - 0.5f,
-                    _position.Z - 0.5f
+                    _position.X - Cube.Size / 2.0f,
+                    _position.Y - Cube.Size / 2.0f,
+                    _position.Z - Cube.Size / 2.0f
                 ),
                 new Vector3(
-                    _position.X + 0.5f,
-                    _position.Y + 0.5f,
-                    _position.Z + 0.5f
+                    _position.X + Cube.Size / 2.0f,
+                    _position.Y + Cube.Size / 2.0f,
+                    _position.Z + Cube.Size / 2.0f
                 )
             );
+        }
+
+        /// <summary>
+        /// Checks to see if this block intersects a ray.
+        /// </summary>
+        /// <param name="ray"></param>
+        /// <returns></returns>
+        public bool Intersects( Ray ray )
+        {
+            return _bounds.Intersects( ray ).HasValue;
+        }
+
+        /// <summary>
+        /// Gets the intersection distance.
+        /// </summary>
+        /// <param name="ray"></param>
+        /// <returns></returns>
+        public float? GetInstersectionDistance( Ray ray )
+        {
+            return _bounds.Intersects( ray );
         }
     }
 }

@@ -65,8 +65,8 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="tex\spritesheet-d.png">
-      <Name>spritesheet-d</Name>
+    <Compile Include="tex\spritesheet-flat.png">
+      <Name>spritesheet-flat</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>

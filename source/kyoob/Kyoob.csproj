@@ -80,10 +80,15 @@
     <Compile Include="Blocks\Index3D.cs" />
     <Compile Include="Blocks\Octree.cs" />
     <Compile Include="Debug\CommandHandler.cs" />
+    <Compile Include="Effects\ColoredEffect.cs" />
+    <Compile Include="Game\Camera.cs" />
+    <Compile Include="Game\Entities\Entity.cs" />
+    <Compile Include="Game\Entities\Player.cs" />
+    <Compile Include="Game\Entities\PlayerCamera.cs" />
     <Compile Include="Graphics\SpriteSheet.cs" />
     <Compile Include="Blocks\VoxelBuffer.cs" />
     <Compile Include="Blocks\World.cs" />
-    <Compile Include="Game\Camera.cs" />
+    <Compile Include="Game\FreeCamera.cs" />
     <Compile Include="Blocks\Block.cs" />
     <Compile Include="Blocks\Chunk.cs" />
     <Compile Include="Blocks\Cube.cs" />

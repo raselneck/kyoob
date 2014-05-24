@@ -289,31 +289,92 @@ namespace Kyoob.Blocks
             return false;
         }
 
+        /// <summary>
+        /// Checks to see if a ray intersects this octree.
+        /// </summary>
+        /// <param name="ray">The ray.</param>
+        /// <returns></returns>
+        public bool Intersects( Ray ray )
+        {
+            // if we've divided, check our children first
+            if ( HasDivided )
+            {
+                foreach ( Octree<T> child in _children )
+                {
+                    if ( child.Intersects( ray ) )
+                    {
+                        return true;
+                    }
+                }
+            }
 
+            // now check our objects
+            foreach ( T obj in _objects )
+            {
+                if ( obj.Bounds.Intersects( ray ).HasValue )
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the list of blocks that a ray intersects in this octree.
+        /// </summary>
+        /// <param name="ray">The ray.</param>
+        /// <returns></returns>
+        public List<T> GetIntersections( Ray ray )
+        {
+            List<T> intersections = new List<T>();
+
+            // if we've divided, check our children first
+            if ( HasDivided )
+            {
+                foreach ( Octree<T> child in _children )
+                {
+                    intersections.AddRange( child.GetIntersections( ray ) );
+                }
+            }
+
+            // now check our objects
+            foreach ( T obj in _objects )
+            {
+                if ( obj.Bounds.Intersects( ray ).HasValue )
+                {
+                    intersections.Add( obj ); ;
+                }
+            }
+
+            return intersections;
+        }
+
+#if DEBUG
 
         /// <summary>
         /// Draws the bounds of every object within the octree for debugging purposes.
         /// </summary>
         /// <param name="device">The graphics device to draw to.</param>
-        /// <param name="effect">The effect to draw with.</param>
-        public void DebugDraw( GraphicsDevice device, BaseEffect effect )
+        /// <param name="view">The current view matrix.</param>
+        /// <param name="proj">The current projection matrix.</param>
+        /// <param name="color">The color to draw.</param>
+        public void Draw( GraphicsDevice device, Matrix view, Matrix proj, Color color )
         {
-#if DEBUG
-
             // draw bounds of all objects
             foreach ( T obj in _objects )
             {
-                obj.Bounds.Draw( device, effect );
+                obj.Bounds.Draw( device, view, proj, color );
             }
             if ( HasDivided )
             {
                 for ( int i = 0; i < 8; ++i )
                 {
-                    _children[ i ].DebugDraw( device, effect );
+                    _children[ i ].Draw( device, view, proj, color );
                 }
             }
+        }
 
 #endif
-        }
     }
 }

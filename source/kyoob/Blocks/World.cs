@@ -371,7 +371,12 @@ namespace Kyoob.Blocks
                 {
                     continue;
                 }
-                CreateChunk( idx );
+
+                // create the chunk
+                lock ( _chunks )
+                {
+                    CreateChunk( idx );
+                }
 
                 ++count;
                 if ( count % 16 == 0 )
@@ -464,9 +469,9 @@ namespace Kyoob.Blocks
         public Index3D PositionToIndex( Vector3 position )
         {
             return new Index3D(
-                (int)position.X / Chunk.Size,
-                (int)position.Y / Chunk.Size,
-                (int)position.Z / Chunk.Size
+                (int)Math.Round( position.X / Chunk.Size ),
+                (int)Math.Round( position.Y / Chunk.Size ),
+                (int)Math.Round( position.Z / Chunk.Size )
             );
         }
 
@@ -485,13 +490,35 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Gets the chunk that contains the given world position.
+        /// </summary>
+        /// <param name="position">The position.</param>
+        /// <returns></returns>
+        public Chunk GetChunk( Vector3 position )
+        {
+            return GetChunk( PositionToIndex( position ) );
+        }
+
+        /// <summary>
+        /// Gets the chunk at the given index.
+        /// </summary>
+        /// <param name="index">The index.</param>
+        /// <returns></returns>
+        public Chunk GetChunk( Index3D index )
+        {
+            Chunk chunk = null;
+            _chunks.TryGetValue( index, out chunk );
+            return chunk;
+        }
+
+        /// <summary>
         /// Updates the world.
         /// </summary>
         /// <param name="gameTime">Frame time information.</param>
         /// <param name="camera">The current camera.</param>
         public void Update( GameTime gameTime, Camera camera )
         {
-            _currentViewDistance = camera.ViewDistance;
+            _currentViewDistance = camera.GetSettings().ClipFar;
             _currentViewPosition = camera.Position;
         }
 
@@ -500,8 +527,7 @@ namespace Kyoob.Blocks
         /// </summary>
         /// <param name="gameTime">Frame time information.</param>
         /// <param name="camera">The current camera to use for getting visible tiles.</param>
-        /// <param name="skyBox">The sky box to draw.</param>
-        public void Draw( GameTime gameTime, Camera camera, SkyBox skyBox )
+        public void Draw( GameTime gameTime, Camera camera )
         {
             lock ( _renderQueue )
             {
@@ -522,9 +548,7 @@ namespace Kyoob.Blocks
                 }
             }
 
-            _renderer.GraphicsDevice.Clear( _renderer.ClearColor );
-            skyBox.Draw( camera );
-            _renderer.Render();
+            _renderer.Render( camera );
         }
 
         /// <summary>

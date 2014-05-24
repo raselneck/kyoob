@@ -1,7 +1,6 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Kyoob.Effects;
 
 namespace Kyoob
 {
@@ -10,22 +9,30 @@ namespace Kyoob
     /// </summary>
     internal static class Extensions
     {
-        private static ushort[] BoundingBoxIndexData;
-        private static IndexBuffer BoundingBoxIndices;
-        private static VertexBuffer BoundingBoxBuffer;
+        private static BasicEffect _bboxEffect;
 
         /// <summary>
         /// Static initialization of extensions.
         /// </summary>
         static Extensions()
         {
-            BoundingBoxBuffer = null;
-            BoundingBoxIndices = null;
-            BoundingBoxIndexData = new ushort[] {
-                0, 1, 1, 2, 2, 3, 3, 0,
-                4, 5, 5, 6, 6, 7, 7, 4,
-                0, 4, 1, 5, 2, 6, 3, 7
-            };
+        }
+
+        /// <summary>
+        /// Gets the center coordinates of this bounding box.
+        /// </summary>
+        /// <param name="box">The bounding box.</param>
+        /// <returns></returns>
+        public static Vector3 GetCenter( this BoundingBox box )
+        {
+            float width = box.Max.X - box.Min.X;
+            float height = box.Max.Y - box.Min.Y;
+            float depth = box.Max.Z - box.Min.Z;
+            return new Vector3(
+                box.Min.X + width / 2.0f,
+                box.Min.Y + height / 2.0f,
+                box.Min.Z + depth / 2.0f
+            );
         }
 
 #if DEBUG
@@ -35,36 +42,45 @@ namespace Kyoob
         /// </summary>
         /// <param name="box">The bounding box to draw.</param>
         /// <param name="device">The graphics device to draw to.</param>
-        /// <param name="effect">The effect to draw with.</param>
-        public static void Draw( this BoundingBox box, GraphicsDevice device, BaseEffect effect )
+        /// <param name="view">The current view matrix.</param>
+        /// <param name="proj">The current projection matrix.</param>
+        /// <param name="color">The color to draw with.</param>
+        public static void Draw( this BoundingBox box, GraphicsDevice device, Matrix view, Matrix proj, Color color )
         {
-            // create the buffers
-            if ( BoundingBoxBuffer == null || BoundingBoxIndices == null )
+            // create the basic effect if we need to
+            if ( _bboxEffect == null )
             {
-                BoundingBoxIndices = new IndexBuffer( device, IndexElementSize.SixteenBits, BoundingBoxIndexData.Length, BufferUsage.None );
-                BoundingBoxIndices.SetData<ushort>( BoundingBoxIndexData );
-                BoundingBoxBuffer = new VertexBuffer( device, VertexPositionNormalTexture.VertexDeclaration, 8, BufferUsage.None );
+                _bboxEffect = new BasicEffect( device );
+                _bboxEffect.TextureEnabled = false;
+                _bboxEffect.VertexColorEnabled = true;
             }
 
-            // create the buffer data
+            short[] indices = {
+                0, 1, 1, 2, 2, 3, 3, 0,
+                4, 5, 5, 6, 6, 7, 7, 4,
+                0, 4, 1, 5, 2, 6, 3, 7
+            };
+
             Vector3[] corners = box.GetCorners();
-            VertexPositionNormalTexture[] primitives = new VertexPositionNormalTexture[ corners.Length ];
-            for ( int i = 0; i < corners.Length; ++i )
-            {
-                primitives[ i ] = new VertexPositionNormalTexture( corners[ i ], Vector3.Zero, Vector2.Zero );
-            }
-            BoundingBoxBuffer.SetData<VertexPositionNormalTexture>( primitives );
+            VertexPositionColor[] primitiveList = new VertexPositionColor[ corners.Length ];
 
-            // set world matrix and draw lines connecting corners
-            effect.World = Matrix.Identity;
-            device.Indices = BoundingBoxIndices;
-            device.SetVertexBuffer( BoundingBoxBuffer );
-            foreach ( EffectPass pass in effect.Effect.CurrentTechnique.Passes )
+            // assign the 8 box vertices
+            for ( int i = 0; i < corners.Length; i++ )
+            {
+                primitiveList[ i ] = new VertexPositionColor( corners[ i ], color );
+            }
+
+            // set the effect parameters and draw the box
+            _bboxEffect.World = Matrix.Identity;
+            _bboxEffect.View = view;
+            _bboxEffect.Projection = proj;
+            foreach ( EffectPass pass in _bboxEffect.CurrentTechnique.Passes )
             {
                 pass.Apply();
-                device.DrawPrimitives( PrimitiveType.TriangleList, 0, 12 );
+                device.DrawUserIndexedPrimitives(
+                    PrimitiveType.LineList, primitiveList, 0, 8,
+                    indices, 0, 12 );
             }
-            device.SetVertexBuffer( null );
         }
 
 #endif
