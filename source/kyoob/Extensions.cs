@@ -9,7 +9,7 @@ namespace Kyoob
     /// </summary>
     internal static class Extensions
     {
-        private static BasicEffect _bboxEffect;
+        private static BasicEffect _effect;
 
         /// <summary>
         /// Static initialization of extensions.
@@ -38,6 +38,41 @@ namespace Kyoob
 #if DEBUG
 
         /// <summary>
+        /// Draws the ray.
+        /// </summary>
+        /// <param name="ray">The ray.</param>
+        /// <param name="device">The graphics device to draw to.</param>
+        /// <param name="view">The current view matrix.</param>
+        /// <param name="proj">The current projection matrix.</param>
+        /// <param name="color">The color to draw with.</param>
+        public static void Draw( this Ray ray, GraphicsDevice device, Matrix view, Matrix proj, Color color )
+        {
+            // create the basic effect if we need to
+            if ( _effect == null )
+            {
+                _effect = new BasicEffect( device );
+                _effect.TextureEnabled = false;
+                _effect.VertexColorEnabled = true;
+            }
+
+            VertexPositionColor[] points = {
+                new VertexPositionColor( ray.Position, color ),
+                new VertexPositionColor( ray.Position + ray.Direction, color )
+            };
+            short[] indices = { 0, 1, 1, 0 };
+
+            // set the effect parameters and draw the box
+            _effect.World = Matrix.Identity;
+            _effect.View = view;
+            _effect.Projection = proj;
+            foreach ( EffectPass pass in _effect.CurrentTechnique.Passes )
+            {
+                pass.Apply();
+                device.DrawUserIndexedPrimitives( PrimitiveType.LineList, points, 0, 4, indices, 0, 2 );
+            }
+        }
+
+        /// <summary>
         /// Draws the bounds of a bounding box.
         /// </summary>
         /// <param name="box">The bounding box to draw.</param>
@@ -48,11 +83,11 @@ namespace Kyoob
         public static void Draw( this BoundingBox box, GraphicsDevice device, Matrix view, Matrix proj, Color color )
         {
             // create the basic effect if we need to
-            if ( _bboxEffect == null )
+            if ( _effect == null )
             {
-                _bboxEffect = new BasicEffect( device );
-                _bboxEffect.TextureEnabled = false;
-                _bboxEffect.VertexColorEnabled = true;
+                _effect = new BasicEffect( device );
+                _effect.TextureEnabled = false;
+                _effect.VertexColorEnabled = true;
             }
 
             short[] indices = {
@@ -71,10 +106,10 @@ namespace Kyoob
             }
 
             // set the effect parameters and draw the box
-            _bboxEffect.World = Matrix.Identity;
-            _bboxEffect.View = view;
-            _bboxEffect.Projection = proj;
-            foreach ( EffectPass pass in _bboxEffect.CurrentTechnique.Passes )
+            _effect.World = Matrix.Identity;
+            _effect.View = view;
+            _effect.Projection = proj;
+            foreach ( EffectPass pass in _effect.CurrentTechnique.Passes )
             {
                 pass.Apply();
                 device.DrawUserIndexedPrimitives(

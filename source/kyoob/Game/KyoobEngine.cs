@@ -15,6 +15,9 @@ using Kyoob.Terrain;
 
 using XnaGame = Microsoft.Xna.Framework.Game;
 
+#warning TODO : Kyoob.Lua
+#warning TODO : Look into Lindgren.Network
+
 namespace Kyoob.Game
 {
     /// <summary>
@@ -89,7 +92,8 @@ namespace Kyoob.Game
 
             // create the player
             CameraSettings settings = new CameraSettings( _device );
-            settings.InitialPosition = new Vector3( 0.0f, 1.0f / terrain.VerticalBias, 0.0f );
+            // settings.InitialPosition = new Vector3( 288.0f, 1.0f / terrain.VerticalBias, -212.0f );
+            settings.InitialPosition = new Vector3( -64.0f, 1.0f / terrain.VerticalBias, -64.0f );
             _player = new Player( _device, settings );
 
 
@@ -132,8 +136,9 @@ namespace Kyoob.Game
                 Terminal.WriteInfo( "Creating new world..." );
             }
 
-            // set the player's world
+            // set the player's world and start chunk management
             _player.World = _world;
+            _world.StartChunkManagement( _player.Position, settings.ClipFar );
         }
 
         /// <summary>

@@ -53,16 +53,24 @@ namespace Kyoob.Blocks
         /// <param name="bounds">The octree's bounds.</param>
         public Octree( BoundingBox bounds )
         {
-            _objects = new List<T>();
+            _objects  = new List<T>( MaxItemCount );
             _children = new Octree<T>[ 8 ];
 
             // set bounds and calculate dimensions and center
             _bounds = bounds;
-            float width = Math.Abs( _bounds.Max.X - _bounds.Min.X );
+            float width  = Math.Abs( _bounds.Max.X - _bounds.Min.X );
             float height = Math.Abs( _bounds.Max.Y - _bounds.Min.Y );
-            float depth = Math.Abs( _bounds.Max.Z - _bounds.Min.Z );
-            _dimensions = new Vector3( width, height, depth );
-            _center = new Vector3( _bounds.Min.X + width / 2, _bounds.Min.Y + height / 2, _bounds.Min.Z + depth / 2 );
+            float depth  = Math.Abs( _bounds.Max.Z - _bounds.Min.Z );
+            _dimensions  = new Vector3(
+                width,
+                height,
+                depth
+            );
+            _center      = new Vector3(
+                _bounds.Min.X + width / 2,
+                _bounds.Min.Y + height / 2,
+                _bounds.Min.Z + depth / 2
+            );
         }
 
         /// <summary>
@@ -73,16 +81,8 @@ namespace Kyoob.Blocks
         private BoundingBox MakeBoundingBox( Vector3 center, Vector3 dim )
         {
             return new BoundingBox(
-                new Vector3(
-                    center.X - dim.X / 2,
-                    center.Y - dim.Y / 2,
-                    center.Z - dim.Z / 2
-                ),
-                new Vector3(
-                    center.X + dim.X / 2,
-                    center.Y + dim.Y / 2,
-                    center.Z + dim.Z / 2
-                )
+                center - dim / 2.0f,
+                center + dim / 2.0f              
             );
         }
 
@@ -98,17 +98,17 @@ namespace Kyoob.Blocks
             }
 
             // get half dimensions
-            Vector3 hdim = new Vector3( _dimensions.X / 2, _dimensions.Y / 2, _dimensions.Z / 2 );
+            Vector3 hdim = _dimensions / 2.0f;
 
             // get child centers
-            Vector3 tlb = new Vector3( _center.X - hdim.X, _center.Y + hdim.Y, _center.Z + hdim.Z );
-            Vector3 tlf = new Vector3( _center.X - hdim.X, _center.Y + hdim.Y, _center.Z - hdim.Z );
-            Vector3 trb = new Vector3( _center.X + hdim.X, _center.Y + hdim.Y, _center.Z + hdim.Z );
-            Vector3 trf = new Vector3( _center.X + hdim.X, _center.Y + hdim.Y, _center.Z - hdim.Z );
-            Vector3 blb = new Vector3( _center.X - hdim.X, _center.Y - hdim.Y, _center.Z + hdim.Z );
-            Vector3 blf = new Vector3( _center.X - hdim.X, _center.Y - hdim.Y, _center.Z - hdim.Z );
-            Vector3 brb = new Vector3( _center.X + hdim.X, _center.Y - hdim.Y, _center.Z + hdim.Z );
-            Vector3 brf = new Vector3( _center.X + hdim.X, _center.Y - hdim.Y, _center.Z - hdim.Z );
+            Vector3 trb = new Vector3( _center.X + hdim.X / 2.0f, _center.Y + hdim.Y / 2.0f, _center.Z + hdim.Z / 2.0f );
+            Vector3 trf = new Vector3( _center.X + hdim.X / 2.0f, _center.Y + hdim.Y / 2.0f, _center.Z - hdim.Z / 2.0f );
+            Vector3 brb = new Vector3( _center.X + hdim.X / 2.0f, _center.Y - hdim.Y / 2.0f, _center.Z + hdim.Z / 2.0f );
+            Vector3 brf = new Vector3( _center.X + hdim.X / 2.0f, _center.Y - hdim.Y / 2.0f, _center.Z - hdim.Z / 2.0f );
+            Vector3 tlb = new Vector3( _center.X - hdim.X / 2.0f, _center.Y + hdim.Y / 2.0f, _center.Z + hdim.Z / 2.0f );
+            Vector3 tlf = new Vector3( _center.X - hdim.X / 2.0f, _center.Y + hdim.Y / 2.0f, _center.Z - hdim.Z / 2.0f );
+            Vector3 blb = new Vector3( _center.X - hdim.X / 2.0f, _center.Y - hdim.Y / 2.0f, _center.Z + hdim.Z / 2.0f );
+            Vector3 blf = new Vector3( _center.X - hdim.X / 2.0f, _center.Y - hdim.Y / 2.0f, _center.Z - hdim.Z / 2.0f );
 
             // create children
             _children[ 0 ] = new Octree<T>( MakeBoundingBox( tlb, hdim ) ); // top left back
@@ -123,13 +123,11 @@ namespace Kyoob.Blocks
             // go through our items and try to move them into children
             for ( int i = 0; i < _objects.Count; ++i )
             {
-                T obj = _objects[ i ];
                 foreach ( Octree<T> child in _children )
                 {
-                    if ( child.Contains( obj.Bounds ) )
+                    if ( child.Add( _objects[ i ] ) )
                     {
                         // move the object from this tree to the child
-                        child.Add( obj );
                         _objects.RemoveAt( i );
                         --i;
                         break;
@@ -178,27 +176,17 @@ namespace Kyoob.Blocks
                 }
 
                 // try to get the child octree that contains the object
-                Octree<T> tree = null;
                 for ( int i = 0; i < 8; ++i )
                 {
-                    if ( _children[ i ].Contains( obj.Bounds ) )
+                    if ( _children[ i ].Add( obj ) )
                     {
-                        tree = _children[ i ];
-                        break;
+                        return true;
                     }
                 }
 
-                // check if we need to add to the child or this
-                if ( tree == null )
-                {
-                    // maybe don't ???
-                    _objects.Add( obj );
-                    return true;
-                }
-                else
-                {
-                    return tree.Add( obj );
-                }
+                // honestly, we shouldn't get here
+                _objects.Add( obj );
+                return true;
             }
         }
 
@@ -252,75 +240,6 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Checks to see if a bounding box collides with this octree.
-        /// </summary>
-        /// <param name="box">The bounding box.</param>
-        /// <returns></returns>
-        public bool Collides( BoundingBox box )
-        {
-            // make sure the bounds contains the box
-            ContainmentType type = _bounds.Contains( box );
-            if ( type != ContainmentType.Contains )
-            {
-                return false;
-            }
-
-            // check children first
-            if ( HasDivided )
-            {
-                for ( int i = 0; i < 8; ++i )
-                {
-                    if ( _children[ i ].Collides( box ) )
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            // now check all objects
-            foreach ( T obj in _objects )
-            {
-                if ( obj.Bounds.Intersects( box ) )
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks to see if a ray intersects this octree.
-        /// </summary>
-        /// <param name="ray">The ray.</param>
-        /// <returns></returns>
-        public bool Intersects( Ray ray )
-        {
-            // if we've divided, check our children first
-            if ( HasDivided )
-            {
-                foreach ( Octree<T> child in _children )
-                {
-                    if ( child.Intersects( ray ) )
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            // now check our objects
-            foreach ( T obj in _objects )
-            {
-                if ( obj.Bounds.Intersects( ray ).HasValue )
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
         /// Gets the list of blocks that a ray intersects in this octree.
         /// </summary>
         /// <param name="ray">The ray.</param>
@@ -362,10 +281,11 @@ namespace Kyoob.Blocks
         public void Draw( GraphicsDevice device, Matrix view, Matrix proj, Color color )
         {
             // draw bounds of all objects
-            foreach ( T obj in _objects )
-            {
-                obj.Bounds.Draw( device, view, proj, color );
-            }
+            //foreach ( T obj in _objects )
+            //{
+            //    obj.Bounds.Draw( device, view, proj, color );
+            //}
+            _bounds.Draw( device, view, proj, color );
             if ( HasDivided )
             {
                 for ( int i = 0; i < 8; ++i )

@@ -126,5 +126,14 @@ namespace Kyoob.Blocks
         {
             return _bounds.Intersects( ray );
         }
+
+        /// <summary>
+        /// Gets a textual representation of this block.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return string.Format( "{0}, [{1},{2},{3}]", _type, _position.X, _position.Y, _position.Z );
+        }
     }
 }

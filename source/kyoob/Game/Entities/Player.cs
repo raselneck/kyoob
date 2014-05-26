@@ -1,10 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
+using Kyoob.Debug;
 using Kyoob.Effects;
+
+#warning TODO : Currently only uses rays. Combine rays and BoundingBoxes for collision
+//              Use rays to get closest blocks?
+//              Use Vector3.DistanceSquared because it's faster
 
 namespace Kyoob.Game.Entities
 {
@@ -14,7 +20,7 @@ namespace Kyoob.Game.Entities
     public class Player : Entity
     {
         private const float VelocityDueToGravity    = -0.50f;
-        private const float TerminalVelocity        = -2.00f;
+        private const float TerminalVelocity        = -1.50f;
         private const float CollisionDistanceBuffer =  0.10f;
 
         private World _world;
@@ -146,24 +152,20 @@ namespace Kyoob.Game.Entities
         {
             List<Chunk> chunks = new List<Chunk>();
 
-            for ( int x = -1; x <= 1; ++x )
+            chunks.Add( _world.GetChunk( Position ) );
+            chunks.Add( _world.GetChunk( new Vector3( Position.X + Chunk.Size, Position.Y + 0         , Position.Z + 0          ) ) );
+            chunks.Add( _world.GetChunk( new Vector3( Position.X - Chunk.Size, Position.Y - 0         , Position.Z - 0          ) ) );
+            chunks.Add( _world.GetChunk( new Vector3( Position.X + 0,          Position.Y + Chunk.Size, Position.Z + 0          ) ) );
+            chunks.Add( _world.GetChunk( new Vector3( Position.X - 0,          Position.Y - Chunk.Size, Position.Z - 0          ) ) );
+            chunks.Add( _world.GetChunk( new Vector3( Position.X + 0,          Position.Y + 0         , Position.Z + Chunk.Size ) ) );
+            chunks.Add( _world.GetChunk( new Vector3( Position.X - 0,          Position.Y - 0         , Position.Z - Chunk.Size ) ) );
+
+            for ( int i = 0; i < chunks.Count; ++i )
             {
-                for ( int y = -1; y <= 1; ++y )
+                if ( chunks[ i ] == null )
                 {
-                    for ( int z = -1; z <= 1; ++z )
-                    {
-                        Chunk chunk = _world.GetChunk(
-                            new Vector3(
-                                Position.X + x * Chunk.Size,
-                                Position.Y + y * Chunk.Size,
-                                Position.Z + z * Chunk.Size
-                            )
-                        );
-                        if ( chunk != null )
-                        {
-                            chunks.Add( chunk );
-                        }
-                    }
+                    chunks.RemoveAt( i );
+                    --i;
                 }
             }
 
@@ -206,6 +208,13 @@ namespace Kyoob.Game.Entities
             }
         }
 
+
+        float TICK_COUNT;
+        int FRAME_COUNT;
+        float TIME_XZ;
+        float TIME_Y;
+
+
         /// <summary>
         /// Applies collision and gravity physics to the player.
         /// </summary>
@@ -233,6 +242,10 @@ namespace Kyoob.Game.Entities
                 return;
             }
 
+
+            Stopwatch watch = Stopwatch.StartNew();
+
+
             // Z direction
             if ( _translation.Z < 0.0f )
             {
@@ -253,18 +266,22 @@ namespace Kyoob.Game.Entities
                 CheckPhysicsXZ( surrounding, new Ray( Position, Vector3.Right ), ref _translation.X );
             }
 
+
+            TIME_XZ += (float)watch.Elapsed.TotalMilliseconds;
+            watch = Stopwatch.StartNew();
+
+
             // Y direction
             if ( _translation.Y < 0.0f )
             {
-                // downward [0,1,0] checking
+                // downward [0,-1,0] checking
                 Ray ray = new Ray( Position, Vector3.Down );
                 foreach ( Block block in QueryChunks( surrounding, ray ) )
                 {
-                    // dist will be positive, translation will be negative
                     float dist = block.GetInstersectionDistance( ray ).Value - CollisionDistanceBuffer - Size.Y * 0.75f;
-                    if ( Math.Abs( _translation.Y ) > dist )
+                    if ( _translation.Y < -dist )
                     {
-                        _translation.Y = dist * Math.Sign( _translation.Y );
+                        _translation.Y = -dist;
                         _velocityY = 0.0f;
                     }
                 }
@@ -275,15 +292,16 @@ namespace Kyoob.Game.Entities
                 Ray ray = new Ray( Position, Vector3.Up );
                 foreach ( Block block in QueryChunks( surrounding, new Ray( Position, Vector3.Up ) ) )
                 {
-                    // dist will be positive, translation will be positive
                     float dist = block.GetInstersectionDistance( ray ).Value - CollisionDistanceBuffer - Size.Y * 0.25f;
-                    if ( Math.Abs( _translation.Y ) > dist )
+                    if ( _translation.Y > dist )
                     {
-                        _translation.Y = dist * Math.Sign( _translation.Y );
+                        _translation.Y = dist;
                         _velocityY = 0.0f;
                     }
                 }
             }
+
+            TIME_Y += (float)watch.Elapsed.TotalMilliseconds;
         }
 
         /// <summary>
@@ -311,6 +329,19 @@ namespace Kyoob.Game.Entities
             }
 
             _prevKeys = _currKeys;
+
+
+            TICK_COUNT += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            ++FRAME_COUNT;
+            if ( TICK_COUNT >= 1.0f )
+            {
+                TICK_COUNT -= 1.0f;
+                Terminal.WriteLine( Color.White, 1.0f, "XZ physics: {0:0.00}ms", TIME_XZ / FRAME_COUNT );
+                Terminal.WriteLine( Color.White, 1.0f, "Y  physics: {0:0.00}ms", TIME_Y / FRAME_COUNT );
+                TIME_Y = 0.0f;
+                TIME_XZ = 0.0f;
+                FRAME_COUNT = 0;
+            }
         }
 
         /// <summary>
@@ -320,12 +351,14 @@ namespace Kyoob.Game.Entities
         /// <param name="effect">The effect to use when drawing.</param>
         public override void Draw( GameTime gameTime, BaseEffect effect )
         {
-            //Chunk current = _world.GetChunk( Position );
-            //if ( current != null )
-            //{
-            //    current.Bounds.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
-            //    current.Octree.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
-            //}
+#if DEBUG
+            Chunk current = _world.GetChunk( Position );
+            if ( current != null )
+            {
+                current.Octree.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
+                // current.Bounds.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Black );
+            }
+#endif
         }
     }
 }

@@ -92,25 +92,7 @@ namespace Kyoob.Blocks
         /// <param name="position">The chunk's position (the center of the chunk).</param>
         public Chunk( World world, Vector3 position )
         {
-            // initialize our data
-            _world = world;
-            _blocks = new Block[ Size, Size, Size ];
-            _position = position;
-            _bounds = new BoundingBox(
-                new Vector3(
-                    _position.X - Size / 2 - Cube.Size / 2,
-                    _position.Y - Size / 2 - Cube.Size / 2,
-                    _position.Z - Size / 2 - Cube.Size / 2
-                ),
-                new Vector3(
-                    _position.X + Size / 2 - Cube.Size / 2,
-                    _position.Y + Size / 2 - Cube.Size / 2,
-                    _position.Z + Size / 2 - Cube.Size / 2
-                )
-            );
-            _octree = new Octree<Block>( _bounds );
-            _terrainBuff = new VoxelBuffer();
-            _waterBuff = new VoxelBuffer();
+            CommonInitialization( world, position );
 
             // tell the terrain generator to generate data for this chunk
             _world.TerrainGenerator.CurrentChunk = this;
@@ -141,33 +123,14 @@ namespace Kyoob.Blocks
         /// <param name="world">The world this chunk belongs in.</param>
         private Chunk( BinaryReader bin, World world )
         {
-            // set world and create blocks
-            _world = world;
-            _blocks = new Block[ Size, Size, Size ];
-            _terrainBuff = new VoxelBuffer();
-            _waterBuff = new VoxelBuffer();
-
             // read position
-            _position = new Vector3(
+            Vector3 position = new Vector3(
                 bin.ReadSingle(),
                 bin.ReadSingle(),
                 bin.ReadSingle()
             );
 
-            // create bounds and octree
-            _bounds = new BoundingBox(
-                new Vector3(
-                    _position.X - Size / 2.0f,
-                    _position.Y - Size / 2.0f,
-                    _position.Z - Size / 2.0f
-                ),
-                new Vector3(
-                    _position.X + Size / 2.0f,
-                    _position.Y + Size / 2.0f,
-                    _position.Z + Size / 2.0f
-                )
-            );
-            _octree = new Octree<Block>( _bounds );
+            CommonInitialization( world, position );
 
             // load each block
             for ( int x = 0; x < Size; ++x )
@@ -190,6 +153,33 @@ namespace Kyoob.Blocks
 
             // finally, build our buffer and octree
             BuildVoxelBuffers();
+        }
+
+        /// <summary>
+        /// Performs common chunk initialization.
+        /// </summary>
+        /// <param name="world">The chunk's world.</param>
+        /// <param name="position">The chunk's position.</param>
+        private void CommonInitialization( World world, Vector3 position )
+        {
+            _world = world;
+            _blocks = new Block[ Size, Size, Size ];
+            _position = position;
+            _bounds = new BoundingBox(
+                new Vector3(
+                    _position.X - Size / 2 - Cube.Size / 2,
+                    _position.Y - Size / 2 - Cube.Size / 2,
+                    _position.Z - Size / 2 - Cube.Size / 2
+                ),
+                new Vector3(
+                    _position.X + Size / 2 - Cube.Size / 2,
+                    _position.Y + Size / 2 - Cube.Size / 2,
+                    _position.Z + Size / 2 - Cube.Size / 2
+                )
+            );
+            _octree = new Octree<Block>( _bounds );
+            _terrainBuff = new VoxelBuffer();
+            _waterBuff = new VoxelBuffer();
         }
 
         /// <summary>
@@ -345,25 +335,6 @@ namespace Kyoob.Blocks
             {
                 _waterBuff.Dispose();
             }
-        }
-
-        /// <summary>
-        /// Checks to see if a bounding box collides with this chunk.
-        /// </summary>
-        /// <param name="box">The bounding box.</param>
-        public bool Collides( BoundingBox box )
-        {
-            return _octree.Collides( box );
-        }
-
-        /// <summary>
-        /// Checks to see if a ray intersects this chunk.
-        /// </summary>
-        /// <param name="ray">The ray.</param>
-        /// <returns></returns>
-        public bool Intersects( Ray ray )
-        {
-            return _octree.Intersects( ray );
         }
 
         /// <summary>

@@ -59,6 +59,17 @@ namespace Kyoob.Game.Entities
         }
 
         /// <summary>
+        /// Gets this entity's bounds.
+        /// </summary>
+        public BoundingBox Bounds
+        {
+            get
+            {
+                return GetBounds( 0.0f, 0.0f, 0.0f );
+            }
+        }
+
+        /// <summary>
         /// Creates a new entity.
         /// </summary>
         /// <param name="device">The graphics device to create the entity on.</param>

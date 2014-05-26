@@ -95,7 +95,6 @@ namespace Kyoob.Blocks
             _createList = new List<Index3D>( 4096 );
             _unloadList = new List<Index3D>( 4096 );
 
-            StartChunkManagement();
             SetTerminalCommands();
         }
 
@@ -135,32 +134,7 @@ namespace Kyoob.Blocks
             _createList = new List<Index3D>();
             _unloadList = new List<Index3D>();
 
-            StartChunkManagement();
             SetTerminalCommands();
-        }
-
-        /// <summary>
-        /// Starts the chunk management thread.
-        /// </summary>
-        private void StartChunkManagement()
-        {
-            // create the chunk creation thread
-            _chunkCreationThread = new Thread( new ThreadStart( ChunkCreationCallback ) );
-            _chunkCreationThread.Name = "kyoob - Chunk Creation";
-            _chunkCreationThread.IsBackground = true;
-            // _chunkCreationThread.Start(); // DON'T FORGET TO JOIN
-
-            // create the chunk unloading thread
-            _chunkUnloadingThread = new Thread( new ThreadStart( ChunkUnloadingCallback ) );
-            _chunkUnloadingThread.Name = "kyoob - Chunk Creation";
-            _chunkUnloadingThread.IsBackground = true;
-            // _chunkUnloadingThread.Start(); // DON'T FORGET TO JOIN
-
-            // start the chunk management thread
-            _chunkManagementThread = new Thread( new ThreadStart( ChunkManagementCallback ) );
-            _chunkManagementThread.Name = "kyoob - Chunk Management";
-            _chunkManagementThread.IsBackground = true;
-            _chunkManagementThread.Start();
         }
 
         /// <summary>
@@ -431,6 +405,35 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Starts the chunk management threads.
+        /// </summary>
+        /// <param name="position">The position to start at.</param>
+        /// <param name="distance">The view distance.</param>
+        public void StartChunkManagement( Vector3 position, float distance )
+        {
+            _currentViewPosition = position;
+            _currentViewDistance = distance;
+
+            // create the chunk creation thread
+            _chunkCreationThread = new Thread( new ThreadStart( ChunkCreationCallback ) );
+            _chunkCreationThread.Name = "kyoob - Chunk Creation";
+            _chunkCreationThread.IsBackground = true;
+            // _chunkCreationThread.Start(); // DON'T FORGET TO JOIN
+
+            // create the chunk unloading thread
+            _chunkUnloadingThread = new Thread( new ThreadStart( ChunkUnloadingCallback ) );
+            _chunkUnloadingThread.Name = "kyoob - Chunk Creation";
+            _chunkUnloadingThread.IsBackground = true;
+            // _chunkUnloadingThread.Start(); // DON'T FORGET TO JOIN
+
+            // start the chunk management thread
+            _chunkManagementThread = new Thread( new ThreadStart( ChunkManagementCallback ) );
+            _chunkManagementThread.Name = "kyoob - Chunk Management";
+            _chunkManagementThread.IsBackground = true;
+            _chunkManagementThread.Start();
+        }
+
+        /// <summary>
         /// Converts a chunk's local coordinates to world coordinates.
         /// </summary>
         /// <param name="center">The center of the chunk.</param>
@@ -522,6 +525,12 @@ namespace Kyoob.Blocks
             _currentViewPosition = camera.Position;
         }
 
+
+        float TICK_COUNT;
+        int FRAME_COUNT;
+        float TIME_COUNT;
+        int CHUNK_COUNT;
+
         /// <summary>
         /// Draws the world.
         /// </summary>
@@ -529,10 +538,13 @@ namespace Kyoob.Blocks
         /// <param name="camera">The current camera to use for getting visible tiles.</param>
         public void Draw( GameTime gameTime, Camera camera )
         {
+            Stopwatch watch = Stopwatch.StartNew();
+
             lock ( _renderQueue )
             {
                 foreach ( Chunk chunk in _renderQueue )
                 {
+                    // if the chunk is non-existant, skip it
                     if ( chunk == null )
                     {
                         continue;
@@ -545,10 +557,23 @@ namespace Kyoob.Blocks
                     }
 
                     chunk.Draw( _renderer );
+                    ++CHUNK_COUNT;
                 }
             }
 
             _renderer.Render( camera );
+
+            TICK_COUNT += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            TIME_COUNT += (float)watch.Elapsed.TotalMilliseconds;
+            ++FRAME_COUNT;
+            if ( TICK_COUNT >= 1.0f )
+            {
+                TICK_COUNT -= 1.0f;
+                Terminal.WriteLine( Color.White, 1.0f, "{0} chunks / {1:0.00}ms", CHUNK_COUNT / FRAME_COUNT, TIME_COUNT / FRAME_COUNT );
+                FRAME_COUNT = 0;
+                TIME_COUNT = 0.0f;
+                CHUNK_COUNT = 0;
+            }
         }
 
         /// <summary>
