@@ -58,6 +58,7 @@ Change Log
 * Much better physics
 * Finally updated screenshot and readme
 * A bunch of small fixes
+* Moved physics from `Player` to `Entity`
 
 **May 26, 2014**
 * Some minor improvements
