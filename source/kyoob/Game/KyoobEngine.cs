@@ -15,6 +15,7 @@ using Kyoob.Terrain;
 
 using XnaGame = Microsoft.Xna.Framework.Game;
 
+#warning TODO : Create 2D drawing utility
 #warning TODO : Kyoob.Lua
 #warning TODO : Look into Lindgren.Network
 
@@ -79,7 +80,7 @@ namespace Kyoob.Game
             };
 
 
-            // create a perlin terrain generator (needs work)
+            // create a perlin terrain generator
             // PerlinTerrain terrain  = new PerlinTerrain( (int)DateTime.Now.Ticks );
             PerlinTerrain terrain  = new PerlinTerrain( 103695625 );
             terrain.VerticalBias   = 1.0f / 49;
@@ -92,8 +93,10 @@ namespace Kyoob.Game
 
             // create the player
             CameraSettings settings = new CameraSettings( _device );
-            // settings.InitialPosition = new Vector3( 288.0f, 1.0f / terrain.VerticalBias, -212.0f );
-            settings.InitialPosition = new Vector3( -64.0f, 1.0f / terrain.VerticalBias, -64.0f );
+            // settings.InitialPosition = new Vector3( 288.0f, 1.5f / terrain.VerticalBias, -212.0f );  // cool overhang
+               settings.InitialPosition = new Vector3( -64.0f, 1.5f / terrain.VerticalBias, -64.0f );   // cool, big platform
+            // settings.InitialPosition = new Vector3( -759.0f, 1.5f / terrain.VerticalBias, -429.0f ); // cool open/disjoint area
+            // settings.InitialPosition = new Vector3( -33.0f, 1.5f / terrain.VerticalBias, -294.0f );  // cool, small platform
             _player = new Player( _device, settings );
 
 
@@ -176,7 +179,7 @@ namespace Kyoob.Game
 
             Terminal.Update( gameTime );
             _player.Update( gameTime );
-            _effect.LightPosition = _player.Camera.Position;
+            _effect.LightPosition = _player.Position;
             _world.Update( gameTime, _player.Camera );
 
 

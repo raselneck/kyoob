@@ -9,20 +9,9 @@ namespace Kyoob.Terrain
     /// </summary>
     public abstract class TerrainGenerator
     {
-        /// <summary>
-        /// The delegate callback for when the current chunk is changed.
-        /// </summary>
-        /// <param name="chunk">The new chunk.</param>
-        protected delegate void ChunkChangedDelegate( Chunk chunk );
-
         private int _seed;
-        private Chunk _chunk;
         private TerrainLevels _levels;
-
-        /// <summary>
-        /// The event that gets called when the chunk is changed.
-        /// </summary>
-        protected event ChunkChangedDelegate ChunkChanged;
+        private World _world;
 
         /// <summary>
         /// Gets or sets the seed for the seed for the terrain generator.
@@ -40,28 +29,6 @@ namespace Kyoob.Terrain
         }
 
         /// <summary>
-        /// Gets or sets the current chunk.
-        /// </summary>
-        public Chunk CurrentChunk
-        {
-            get
-            {
-                return _chunk;
-            }
-            set
-            {
-                if ( _chunk != value )
-                {
-                    _chunk = value;
-                    if ( ChunkChanged != null )
-                    {
-                        ChunkChanged( _chunk );
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// Gets the terrain level data used by this terrain generator.
         /// </summary>
         public TerrainLevels Levels
@@ -69,6 +36,21 @@ namespace Kyoob.Terrain
             get
             {
                 return _levels;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the world this terrain generator is for.
+        /// </summary>
+        public World World
+        {
+            get
+            {
+                return _world;
+            }
+            set
+            {
+                _world = value;
             }
         }
 
@@ -83,11 +65,39 @@ namespace Kyoob.Terrain
         }
 
         /// <summary>
+        /// Generates chunk block data that is Chunk.Size + 2 in each direction.
+        /// </summary>
+        /// <param name="chunk">The chunk to generate data for.</param>
+        /// <returns></returns>
+        public virtual BlockType[,,] GenerateChunkData( Chunk chunk )
+        {
+            // make sure we have a world
+            if ( _world == null )
+            {
+                throw new NullReferenceException( "The world must be set." );
+            }
+
+            BlockType[,,] blocks = new BlockType[ Chunk.Size, Chunk.Size, Chunk.Size ];
+
+            for ( int x = 0; x < Chunk.Size; ++x )
+            {
+                for ( int y = 0; y < Chunk.Size; ++y )
+                {
+                    for ( int z = 0; z < Chunk.Size; ++z )
+                    {
+                        Vector3 world = _world.LocalToWorld( chunk.Center, x, y, z );
+                        blocks[ x, y, z ] = GetBlockType( world );
+                    }
+                }
+            }
+
+            return blocks;
+        }
+
+        /// <summary>
         /// Gets the block type for the given position.
         /// </summary>
-        /// <param name="x">The local X coordinate.</param>
-        /// <param name="y">The local Y coordinate.</param>
-        /// <param name="z">The local Z coordinate.</param>
-        public abstract BlockType GetBlockType( int x, int y, int z );
+        /// <param name="world">The world coordinates of the block type.</param>
+        public abstract BlockType GetBlockType( Vector3 world );
     }
 }

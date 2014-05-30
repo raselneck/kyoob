@@ -62,7 +62,7 @@ namespace Kyoob.Terrain
         /// <summary>
         /// Creates a new Perlin terrain generator.
         /// </summary>
-        /// <param name="seed"></param>
+        /// <param name="seed">The Perlin terrain generator's seed.</param>
         public PerlinTerrain( int seed )
             : base( seed )
         {
@@ -71,30 +71,14 @@ namespace Kyoob.Terrain
 
             _hBias = 1.0f / 57; // prime numbers work best
             _vBias = 1.0f / 24;
-
-            ChunkChanged += OnChunkChanged;
-        }
-
-        /// <summary>
-        /// Handles when the chunk is changed.
-        /// </summary>
-        /// <param name="chunk">The new chunk.</param>
-        protected virtual void OnChunkChanged( Chunk chunk )
-        {
-
         }
 
         /// <summary>
         /// Gets the block type for the given world coordinates.
         /// </summary>
-        /// <param name="x">The local X coordinate.</param>
-        /// <param name="y">The local Y coordinate.</param>
-        /// <param name="z">The local Z coordinate.</param>
-        public override BlockType GetBlockType( int x, int y, int z )
+        /// <param name="world">The world coordinates of the block type.</param>
+        public override BlockType GetBlockType( Vector3 world )
         {
-            // convert local coordinates to world coordinates
-            Vector3 world = CurrentChunk.LocalToWorld( x, y, z );
-
             // we don't want any "destructible" blocks at or below 0
             if ( world.Y == 0.0f )
             {
@@ -120,6 +104,7 @@ namespace Kyoob.Terrain
             {
                 return Levels.GetType( world.Y );
             }
+
             if ( world.Y <= Levels.WaterLevel )
             {
                 return BlockType.Water;

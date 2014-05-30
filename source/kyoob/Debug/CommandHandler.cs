@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
+#warning TODO : Add ability to do just singular commands. (I.e. no object.)
+
 namespace Kyoob.Debug
 {
     /// <summary>

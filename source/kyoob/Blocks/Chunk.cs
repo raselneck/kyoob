@@ -75,6 +75,17 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Gets this chunk's blocks.
+        /// </summary>
+        public Block[,,] Blocks
+        {
+            get
+            {
+                return _blocks;
+            }
+        }
+
+        /// <summary>
         /// Gets this chunk's octree.
         /// </summary>
         public Octree<Block> Octree
@@ -95,7 +106,7 @@ namespace Kyoob.Blocks
             CommonInitialization( world, position );
 
             // tell the terrain generator to generate data for this chunk
-            _world.TerrainGenerator.CurrentChunk = this;
+            BlockType[,,] types = _world.TerrainGenerator.GenerateChunkData( this );
 
             // create blocks
             for ( int x = 0; x < Size; ++x )
@@ -106,7 +117,7 @@ namespace Kyoob.Blocks
                     {
                         // get block data
                         Vector3 coords = _world.LocalToWorld( _position, x, y, z );
-                        BlockType type = _world.TerrainGenerator.GetBlockType( x, y, z );
+                        BlockType type = types[ x, y, z ];
                         _blocks[ x, y, z ] = new Block( coords, type );
                     }
                 }
@@ -198,9 +209,6 @@ namespace Kyoob.Blocks
             _waterBuff.Clear();
             _octree.Clear();
 
-            // tell the terrain generator to generate data for this chunk
-            _world.TerrainGenerator.CurrentChunk = this;
-
             // begin block iteration
             for ( int x = 0; x < Size; ++x )
             {
@@ -216,12 +224,6 @@ namespace Kyoob.Blocks
                             continue;
                         }
 
-                        // add the block to the octree if it's not an empty type
-                        if ( !IsEmptyBlockType( block.Type ) )
-                        {
-                            _octree.Add( block );
-                        }
-
                         // if the type is dirt and there's nothing on top, then the block should be grass.
                         if ( block.Type == BlockType.Dirt && GetBlockType( x, y + 1, z ) == BlockType.Air )
                         {
@@ -232,11 +234,14 @@ namespace Kyoob.Blocks
                          * Now we need to check which directions are empty for the block.
                          */
 
+                        bool exposed = false;
+
                         // check above
                         BlockType type = GetBlockType( x, y + 1, z );
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
+                            exposed = true;
                         }
                         // only do the tops of water
                         if ( block.Type == BlockType.Water && type == BlockType.Air )
@@ -249,6 +254,7 @@ namespace Kyoob.Blocks
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Bottom, _world.SpriteSheet, block.Type ) );
+                            exposed = true;
                         }
 
                         // check to the left
@@ -256,6 +262,7 @@ namespace Kyoob.Blocks
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Left, _world.SpriteSheet, block.Type ) );
+                            exposed = true;
                         }
 
                         // check to the right
@@ -263,6 +270,7 @@ namespace Kyoob.Blocks
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Right, _world.SpriteSheet, block.Type ) );
+                            exposed = true;
                         }
 
                         // check in front
@@ -270,6 +278,7 @@ namespace Kyoob.Blocks
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Front, _world.SpriteSheet, block.Type ) );
+                            exposed = true;
                         }
 
                         // check in back
@@ -277,6 +286,13 @@ namespace Kyoob.Blocks
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
                             _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Back, _world.SpriteSheet, block.Type ) );
+                            exposed = true;
+                        }
+
+                        // add the block to the octree if it's not an empty type and it's exposed
+                        if ( !IsEmptyBlockType( block.Type ) && exposed )
+                        {
+                            _octree.Add( block );
                         }
                     }
                 }
@@ -306,20 +322,8 @@ namespace Kyoob.Blocks
         /// <param name="z">The Z index of the block to check.</param>
         private BlockType GetBlockType( int x, int y, int z )
         {
-            // get the world block type
-            return _world.TerrainGenerator.GetBlockType( x, y, z );
-        }
-
-        /// <summary>
-        /// Converts coordinates local to this chunk into world coordinates.
-        /// </summary>
-        /// <param name="x">The X coordinate.</param>
-        /// <param name="y">The Y coordinate.</param>
-        /// <param name="z">The Z coordinate.</param>
-        /// <returns></returns>
-        public Vector3 LocalToWorld( int x, int y, int z )
-        {
-            return _world.LocalToWorld( Center, x, y, z );
+            Vector3 pos = _world.LocalToWorld( _position, x, y, z );
+            return _world.GetBlockType( pos );
         }
 
         /// <summary>
@@ -338,11 +342,42 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Checks to see if the given bounding box collides with this chunk.
+        /// </summary>
+        /// <param name="box">The bounding box.</param>
+        /// <returns></returns>
+        public bool Collides( BoundingBox box )
+        {
+            return _octree.Collides( box );
+        }
+
+        /// <summary>
+        /// Checks to see if the given bounding box collides with this chunk.
+        /// </summary>
+        /// <param name="box">The bounding box.</param>
+        /// <param name="collisions">The list of bounding boxes that the given box collides with.</param>
+        /// <returns></returns>
+        public bool Collides( BoundingBox box, out List<BoundingBox> collisions )
+        {
+            return _octree.Collides( box, out collisions );
+        }
+
+        /// <summary>
+        /// Gets the list of blocks that the given bounding box collides with.
+        /// </summary>
+        /// <param name="box">The bounding box.</param>
+        /// <returns></returns>
+        public List<Block> GetCollisions( BoundingBox box )
+        {
+            return _octree.GetCollisions( box );
+        }
+
+        /// <summary>
         /// Gets the list of blocks that a ray intersects.
         /// </summary>
         /// <param name="ray">The ray.</param>
         /// <returns></returns>
-        public List<Block> GetIntersections( Ray ray )
+        public Dictionary<Block, float?> GetIntersections( Ray ray )
         {
             return _octree.GetIntersections( ray );
         }

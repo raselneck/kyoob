@@ -16,6 +16,8 @@ using Kyoob.Terrain;
 #warning TODO : When chunks are unloaded, their data should be saved to a file somehow so that block data can be retrieved in case a chunk was modified.
 #warning TODO : Create ChunkManager. (?)
 #warning TODO : Split loading/unloading into two separate threads.
+#warning TODO : Create some kind of utilities class to help remove circular dependencies. (I.e. World<->TerrainGenerator)
+#warning TODO : Create CommonInitialization or whatever like in Chunk
 
 namespace Kyoob.Blocks
 {
@@ -89,6 +91,7 @@ namespace Kyoob.Blocks
             _renderQueue = new List<Chunk>( 2048 );
             _indices = new HashSet<Index3D>();
             _terrain = terrain;
+            _terrain.World = this;
             _isDisposed = false;
 
             // create our management lists
@@ -114,6 +117,7 @@ namespace Kyoob.Blocks
             _renderQueue = new List<Chunk>();
             _indices = new HashSet<Index3D>();
             _terrain = terrain;
+            _terrain.World = this;
             _isDisposed = false;
 
             // load the seed (and terrain) and chunks
@@ -434,6 +438,68 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Gets the block at the given location.
+        /// </summary>
+        /// <param name="loc">The world location.</param>
+        /// <returns></returns>
+        public BlockType GetBlockType( Vector3 loc )
+        {
+            loc.X = (float)Math.Round( loc.X );
+            loc.Y = (float)Math.Round( loc.Y );
+            loc.Z = (float)Math.Round( loc.Z );
+
+            Index3D index;
+            Vector3 local = WorldToLocal( loc, out index );
+
+            // make sure we're in the bounds (X)
+            while ( local.X >= Chunk.Size )
+            {
+                local.X -= Chunk.Size;
+                ++index.X;
+            }
+            while ( local.X < 0 )
+            {
+                local.X += Chunk.Size;
+                --index.X;
+            }
+
+            // make sure we're in the bounds (Y)
+            while ( local.Y >= Chunk.Size )
+            {
+                local.Y -= Chunk.Size;
+                ++index.Y;
+            }
+            while ( local.Y < 0 )
+            {
+                local.Y += Chunk.Size;
+                --index.Y;
+            }
+
+            // make sure we're in the bounds (Z)
+            while ( local.Z >= Chunk.Size )
+            {
+                local.Z -= Chunk.Size;
+                ++index.Z;
+            }
+            while ( local.Z < 0 )
+            {
+                local.Z += Chunk.Size;
+                --index.Z;
+            }
+
+            // get the block type
+            Chunk chunk = GetChunk( index );
+            if ( chunk == null )
+            {
+                return _terrain.GetBlockType( loc );
+            }
+            else
+            {
+                return chunk.Blocks[ (int)local.X, (int)local.Y, (int)local.Z ].Type;
+            }
+        }
+
+        /// <summary>
         /// Converts a chunk's local coordinates to world coordinates.
         /// </summary>
         /// <param name="center">The center of the chunk.</param>
@@ -462,6 +528,18 @@ namespace Kyoob.Blocks
                 world.Y - center.Y + Chunk.Size / 2.0f,
                 world.Z - center.Z + Chunk.Size / 2.0f
             );
+        }
+
+        /// <summary>
+        /// [EXPERIMENTAL] Converts world coordinates to local coordinates.
+        /// </summary>
+        /// <param name="world">The world coordinates.</param>
+        /// <param name="index">The index variable to populate.</param>
+        public Vector3 WorldToLocal( Vector3 world, out Index3D index )
+        {
+            index = PositionToIndex( world );
+            Vector3 center = IndexToPosition( index );
+            return WorldToLocal( center, world );
         }
 
         /// <summary>

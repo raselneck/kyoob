@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Kyoob.Debug;
 
+#warning TODO : Figure out how to push the camera view position forward a bit based on rotation so its closer to the bound edge.
+
 namespace Kyoob.Game.Entities
 {
     /// <summary>
@@ -17,6 +19,7 @@ namespace Kyoob.Game.Entities
         private Matrix _rotation;
         private float _yaw;
         private float _pitch;
+        private float _eyeHeight;
         private bool _hasControl;
 
         /// <summary>
@@ -68,6 +71,21 @@ namespace Kyoob.Game.Entities
         }
 
         /// <summary>
+        /// Gets or sets the height that the eyes lie at based off of the position's Y value.
+        /// </summary>
+        public float EyeHeight
+        {
+            get
+            {
+                return _eyeHeight;
+            }
+            set
+            {
+                _eyeHeight = value;
+            }
+        }
+
+        /// <summary>
         /// Gets whether or not the camera has control.
         /// </summary>
         public bool HasControl
@@ -92,6 +110,7 @@ namespace Kyoob.Game.Entities
             _player.MoveTo( settings.InitialPosition );
             _yaw = settings.InitialYaw;
             _pitch = settings.InitialPitch;
+            _eyeHeight = _player.Size.Y / 4.0f;
 
             // set our control data
             _hasControl = true;
@@ -112,12 +131,7 @@ namespace Kyoob.Game.Entities
         /// </summary>
         private void SetTerminalCommands()
         {
-            // camera.pos
-            Terminal.AddCommand( "camera", "pos", ( string[] param ) =>
-            {
-                Vector3 pos = Position;
-                Terminal.WriteInfo( "[{0:0.00},{1:0.00},{2:0.00}]", pos.X, pos.Y, pos.Z );
-            } );
+            // none yet
         }
 
         /// <summary>
@@ -170,11 +184,11 @@ namespace Kyoob.Game.Entities
             // calculate camera's rotation
             _rotation = Matrix.CreateFromYawPitchRoll( _yaw, _pitch, 0.0f ); ;
 
-            // get new target and up vectors
-            Vector3 forward = Vector3.Transform( Vector3.Forward, _rotation );
-            Vector3 target = Position + forward;
-            Vector3 up = Vector3.Transform( Vector3.Up, _rotation );
-
+            // get new vectors
+            Vector3 forward  = Vector3.Transform( Vector3.Forward, _rotation );
+            Vector3 target   = Position + forward;
+            Vector3 up       = Vector3.Transform( Vector3.Up, _rotation );
+            
             // update view matrix and bounding frustum
             View = Matrix.CreateLookAt( Position, target, up );
             Frustum = new BoundingFrustum( View * Projection );

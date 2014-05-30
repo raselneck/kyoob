@@ -17,7 +17,7 @@ namespace Kyoob.Blocks
         /// <summary>
         /// The maximum number of elements we can have before we need to subdivide.
         /// </summary>
-        private const int MaxItemCount = 64;
+        private const int MaxItemCount = 48;
 
         private Vector3 _center;
         private Vector3 _dimensions;
@@ -137,13 +137,25 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Checks to see if this octree contains another bounding box.
+        /// Checks to see if this octree's bounds contains or intersects another bounding box.
         /// </summary>
         /// <param name="box">The bounding box.</param>
         /// <returns></returns>
         public bool Contains( BoundingBox box )
         {
             ContainmentType type = _bounds.Contains( box );
+            return type == ContainmentType.Contains
+                || type == ContainmentType.Intersects;
+        }
+
+        /// <summary>
+        /// Checks to see if this octree's bounds contains or intersects a point.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <returns></returns>
+        public bool Contains( Vector3 point )
+        {
+            ContainmentType type = _bounds.Contains( point );
             return type == ContainmentType.Contains
                 || type == ContainmentType.Intersects;
         }
@@ -240,29 +252,141 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Gets the list of blocks that a ray intersects in this octree.
+        /// Checks to see if the given bounding box collides with this octree.
         /// </summary>
-        /// <param name="ray">The ray.</param>
+        /// <param name="box">The bounds to check.</param>
         /// <returns></returns>
-        public List<T> GetIntersections( Ray ray )
+        public bool Collides( BoundingBox box )
         {
-            List<T> intersections = new List<T>();
+            // make sure we at least contain the given bounding box.
+            //if ( !Contains( box ) )
+            //{
+            //    return false;
+            //}
 
-            // if we've divided, check our children first
+            // check children
             if ( HasDivided )
             {
                 foreach ( Octree<T> child in _children )
                 {
-                    intersections.AddRange( child.GetIntersections( ray ) );
+                    if ( child.Collides( box ) )
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            // check our blocks
+            foreach ( T obj in _objects )
+            {
+                ContainmentType type = obj.Bounds.Contains(box);
+                if ( type == ContainmentType.Contains || type == ContainmentType.Intersects )
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks to see if the given bounding box collides with this octree.
+        /// </summary>
+        /// <param name="box">The bounds to check.</param>
+        /// <param name="collisions">The list of bounding boxes that the given box collides with.</param>
+        /// <returns></returns>
+        public bool Collides( BoundingBox box, out List<BoundingBox> collisions )
+        {
+            collisions = new List<BoundingBox>();
+
+            // make sure we at least contain the given bounding box.
+            if ( !Contains( box ) )
+            {
+                return false;
+            }
+
+            // check children
+            if ( HasDivided )
+            {
+                List<BoundingBox> other = new List<BoundingBox>();
+                foreach ( Octree<T> child in _children )
+                {
+                    if ( child.Collides( box, out other ) )
+                    {
+                        collisions.AddRange( other );
+                    }
+                }
+            }
+
+            // check our blocks
+            foreach ( T obj in _objects )
+            {
+                ContainmentType type = obj.Bounds.Contains( box );
+                if ( type == ContainmentType.Contains || type == ContainmentType.Intersects )
+                {
+                    collisions.Add( obj.Bounds );
+                }
+            }
+
+            return collisions.Count > 0;
+        }
+
+        /// <summary>
+        /// Gets the list of objects that the given bounding box collides with.
+        /// </summary>
+        /// <param name="box">The bounding box.</param>
+        /// <returns></returns>
+        public List<T> GetCollisions( BoundingBox box )
+        {
+            List<T> objects = new List<T>();
+
+            // check children first
+            if ( HasDivided )
+            {
+                foreach ( Octree<T> child in _children )
+                {
+                    objects.AddRange( child.GetCollisions( box ) );
                 }
             }
 
             // now check our objects
             foreach ( T obj in _objects )
             {
-                if ( obj.Bounds.Intersects( ray ).HasValue )
+                ContainmentType type = obj.Bounds.Contains( box );
+                if ( type == ContainmentType.Contains || type == ContainmentType.Intersects )
                 {
-                    intersections.Add( obj ); ;
+                    objects.Add( obj );
+                }
+            }
+
+            return objects;
+        }
+
+        /// <summary>
+        /// Gets the list of blocks that a ray intersects in this octree.
+        /// </summary>
+        /// <param name="ray">The ray.</param>
+        /// <returns></returns>
+        public Dictionary<T, float?> GetIntersections( Ray ray )
+        {
+            Dictionary<T, float?> intersections = new Dictionary<T, float?>();
+
+            // if we've divided, check our children first
+            if ( HasDivided )
+            {
+                foreach ( Octree<T> child in _children )
+                {
+                    intersections.Merge( child.GetIntersections( ray ) );
+                }
+            }
+
+            // now check our objects
+            foreach ( T obj in _objects )
+            {
+                float? value = obj.Bounds.Intersects( ray );
+                if ( value.HasValue )
+                {
+                    intersections.Add( obj, value );
                 }
             }
 
@@ -281,11 +405,11 @@ namespace Kyoob.Blocks
         public void Draw( GraphicsDevice device, Matrix view, Matrix proj, Color color )
         {
             // draw bounds of all objects
-            //foreach ( T obj in _objects )
-            //{
-            //    obj.Bounds.Draw( device, view, proj, color );
-            //}
-            _bounds.Draw( device, view, proj, color );
+            foreach ( T obj in _objects )
+            {
+                obj.Bounds.Draw( device, view, proj, color );
+            }
+            //_bounds.Draw( device, view, proj, color );
             if ( HasDivided )
             {
                 for ( int i = 0; i < 8; ++i )

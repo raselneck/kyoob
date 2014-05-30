@@ -8,6 +8,7 @@ using Kyoob.Blocks;
 using Kyoob.Debug;
 using Kyoob.Effects;
 
+#warning TODO : Move physics / jump stuff to Entity
 #warning TODO : Currently only uses rays. Combine rays and BoundingBoxes for collision
 //              Use rays to get closest blocks?
 //              Use Vector3.DistanceSquared because it's faster
@@ -19,9 +20,9 @@ namespace Kyoob.Game.Entities
     /// </summary>
     public class Player : Entity
     {
-        private const float VelocityDueToGravity    = -0.50f;
-        private const float TerminalVelocity        = -1.50f;
-        private const float CollisionDistanceBuffer =  0.10f;
+        private const float VelocityDueToGravity = -0.50f;
+        private const float TerminalVelocity     = -1.50f;
+        private const float CollisionBuffer      =  0.0001f;
 
         private World _world;
         private PlayerCamera _camera;
@@ -57,6 +58,30 @@ namespace Kyoob.Game.Entities
         }
 
         /// <summary>
+        /// Gets the player's size.
+        /// </summary>
+        public override Vector3 Size
+        {
+            get
+            {
+                return new Vector3( 0.8f, 1.6f, 0.8f );
+            }
+        }
+
+        /// <summary>
+        /// Gets the player's position.
+        /// </summary>
+        public override Vector3 Position
+        {
+            get
+            {
+                Vector3 pos = base.Position;
+                pos.Y += _camera.EyeHeight;
+                return pos;
+            }
+        }
+
+        /// <summary>
         /// Creates a new player.
         /// </summary>
         /// <param name="device">The graphics device to create the player on.</param>
@@ -64,8 +89,8 @@ namespace Kyoob.Game.Entities
         public Player( GraphicsDevice device, CameraSettings settings )
             : base( device )
         {
-            // _camera = new PlayerCamera( settings, this );
             _camera = new PlayerCamera( settings, this );
+            _camera.EyeHeight = 0.6f;
             _world = null;
             _currKeys = Keyboard.GetState();
             _prevKeys = Keyboard.GetState();
@@ -102,7 +127,7 @@ namespace Kyoob.Game.Entities
             Vector3 forward = GetMovementVector( Vector3.Forward, units );
             Vector3 up      = GetMovementVector( Vector3.Up, units );
             Vector3 right   = GetMovementVector( Vector3.Right, units );
-            if ( _camera.Pitch >= MathHelper.PiOver4 )
+            if ( _camera.Pitch >= 0.0f )
             {
                 up = -up;
             }
@@ -152,14 +177,23 @@ namespace Kyoob.Game.Entities
         {
             List<Chunk> chunks = new List<Chunk>();
 
-            chunks.Add( _world.GetChunk( Position ) );
-            chunks.Add( _world.GetChunk( new Vector3( Position.X + Chunk.Size, Position.Y + 0         , Position.Z + 0          ) ) );
-            chunks.Add( _world.GetChunk( new Vector3( Position.X - Chunk.Size, Position.Y - 0         , Position.Z - 0          ) ) );
-            chunks.Add( _world.GetChunk( new Vector3( Position.X + 0,          Position.Y + Chunk.Size, Position.Z + 0          ) ) );
-            chunks.Add( _world.GetChunk( new Vector3( Position.X - 0,          Position.Y - Chunk.Size, Position.Z - 0          ) ) );
-            chunks.Add( _world.GetChunk( new Vector3( Position.X + 0,          Position.Y + 0         , Position.Z + Chunk.Size ) ) );
-            chunks.Add( _world.GetChunk( new Vector3( Position.X - 0,          Position.Y - 0         , Position.Z - Chunk.Size ) ) );
+            // get the 9 surrounding chunks
+            for ( int x = -1; x <= 1; ++x )
+            {
+                for ( int y = -1; y <= 1; ++y )
+                {
+                    for ( int z = -1; z <= 1; ++z )
+                    {
+                        chunks.Add( _world.GetChunk( new Vector3(
+                            Position.X + x * Chunk.Size,
+                            Position.Y + y * Chunk.Size,
+                            Position.Z + z * Chunk.Size
+                        ) ) );
+                    }
+                }
+            }
 
+            // remove null chunks
             for ( int i = 0; i < chunks.Count; ++i )
             {
                 if ( chunks[ i ] == null )
@@ -172,41 +206,6 @@ namespace Kyoob.Game.Entities
             return chunks;
         }
 
-        /// <summary>
-        /// Queries each chunk in a given list for blocks intersecting the given ray.
-        /// </summary>
-        /// <param name="chunks">The chunks.</param>
-        /// <param name="ray">The ray.</param>
-        /// <returns></returns>
-        private List<Block> QueryChunks( List<Chunk> chunks, Ray ray )
-        {
-            List<Block> blocks = new List<Block>();
-
-            foreach ( Chunk chunk in chunks )
-            {
-                blocks.AddRange( chunk.GetIntersections( ray ) );
-            }
-
-            return blocks;
-        }
-
-        /// <summary>
-        /// Checks physics in the XZ direction.
-        /// </summary>
-        /// <param name="chunks">The list of chunks to query.</param>
-        /// <param name="ray">The ray.</param>
-        /// <param name="value">The value to modify.</param>
-        private void CheckPhysicsXZ( List<Chunk> chunks, Ray ray, ref float value )
-        {
-            foreach ( Block block in QueryChunks( chunks, ray ) )
-            {
-                float dist = block.GetInstersectionDistance( ray ).Value - CollisionDistanceBuffer;
-                if ( Math.Abs( value ) > dist )
-                {
-                    value = dist * Math.Sign( value );
-                }
-            }
-        }
 
 
         float TICK_COUNT;
@@ -214,6 +213,82 @@ namespace Kyoob.Game.Entities
         float TIME_XZ;
         float TIME_Y;
 
+
+
+        /// <summary>
+        /// Gets the minimum value in a collection of nullable floats.
+        /// </summary>
+        /// <param name="values">The values to check.</param>
+        /// <param name="defValue">The default value.</param>
+        /// <returns></returns>
+        private float GetMinimumValue( IEnumerable<float?> values, float defValue )
+        {
+            float val = defValue;
+            foreach ( float? value in values )
+            {
+                if ( value.HasValue && value.Value < val )
+                {
+                    val = value.Value;
+                }
+            }
+            return val;
+        }
+
+        /// <summary>
+        /// Gets the shortest collision distance in the XZ direction.
+        /// </summary>
+        /// <param name="chunk">The chunk to check for collisions</param>
+        /// <param name="rayDir">The ray direction.</param>
+        /// <param name="offs">The position offset to use.</param>
+        /// <returns></returns>
+        private float GetShortestCollisionDistanceXZ( Chunk chunk, Vector3 rayDir, Vector3 offs )
+        {
+            float startY = -Size.Y / 2.0f;
+            float endY   =  Size.Y / 2.0f;
+            int   countY = (int)( Math.Ceiling( Size.Y ) / Cube.Size ) + 1;
+            float incY = Math.Abs( endY - startY ) / (float)( countY - 1 );
+
+            float dist = Chunk.Size;
+            for ( float y = startY; y <= endY; y += incY )
+            {
+                Ray ray = new Ray(
+                    new Vector3(
+                        Position.X + offs.X,
+                        Position.Y + offs.Y + y,
+                        Position.Z + offs.Z
+                    ),
+                    rayDir
+                );
+
+                dist = Math.Min( dist, GetMinimumValue( chunk.GetIntersections( ray ).Values, Chunk.Size ) );
+            }
+
+            return dist;
+        }
+
+        /// <summary>
+        /// Gets the shortest collision distance in the Y direction.
+        /// </summary>
+        /// <param name="chunk">The chunk to check.</param>
+        /// <param name="dir">The direction.</param>
+        /// <returns></returns>
+        private float GetShortestCollisionDistanceY( Chunk chunk, Vector3 dir )
+        {
+            // create our rays
+            Ray ray0 = new Ray( new Vector3( Position.X + Size.X / 2.0f, Position.Y + dir.Y * Size.Y / 2.0f, Position.Z + Size.Z / 2.0f ), dir );
+            Ray ray1 = new Ray( new Vector3( Position.X + Size.X / 2.0f, Position.Y + dir.Y * Size.Y / 2.0f, Position.Z - Size.Z / 2.0f ), dir );
+            Ray ray2 = new Ray( new Vector3( Position.X - Size.X / 2.0f, Position.Y + dir.Y * Size.Y / 2.0f, Position.Z + Size.Z / 2.0f ), dir );
+            Ray ray3 = new Ray( new Vector3( Position.X - Size.X / 2.0f, Position.Y + dir.Y * Size.Y / 2.0f, Position.Z - Size.Z / 2.0f ), dir );
+
+            // go through each chunk
+            float dist0 = GetMinimumValue( chunk.GetIntersections( ray0 ).Values, Chunk.Size );
+            float dist1 = GetMinimumValue( chunk.GetIntersections( ray1 ).Values, Chunk.Size );
+            float dist2 = GetMinimumValue( chunk.GetIntersections( ray2 ).Values, Chunk.Size );
+            float dist3 = GetMinimumValue( chunk.GetIntersections( ray3 ).Values, Chunk.Size );
+
+            float dist = Math.Min( Math.Min( dist0, dist1 ), Math.Min( dist2, dist3 ) );
+            return dist;
+        }
 
         /// <summary>
         /// Applies collision and gravity physics to the player.
@@ -236,34 +311,89 @@ namespace Kyoob.Game.Entities
             _translation.Y = _velocityY;
 
             // get the surrounding chunks
-            List<Chunk> surrounding = GetSurroundingChunks();
-            if ( surrounding.Count == 0 )
-            {
-                return;
-            }
+            Chunk[] surrounding = GetSurroundingChunks().ToArray();
 
 
             Stopwatch watch = Stopwatch.StartNew();
 
 
-            // Z direction
-            if ( _translation.Z < 0.0f )
+            // create the XZ offset vectors
+            Vector3 offsX = new Vector3( Size.X / 2.0f, 0.0f, 0.0f );
+            Vector3 offsZ = new Vector3( 0.0f, 0.0f, Size.Z / 2.0f );
+
+
+            // X physics
+            BoundingBox boxx = GetBounds( _translation.X, 0.0f, 0.0f );
+            if ( _translation.X > 0.0f )
             {
-                CheckPhysicsXZ( surrounding, new Ray( Position, Vector3.Forward ), ref _translation.Z );
+                foreach ( Chunk chunk in surrounding )
+                {
+                    if ( chunk.Collides( boxx ) )
+                    {
+                        float dist = Math.Min(
+                            GetShortestCollisionDistanceXZ( chunk, Vector3.Right, offsX + offsZ ),
+                            GetShortestCollisionDistanceXZ( chunk, Vector3.Right, offsX - offsZ )
+                        ) - CollisionBuffer;
+                        if ( dist < _translation.X )
+                        {
+                            _translation.X = dist;
+                        }
+                    }
+                }
             }
-            else if ( _translation.Z > 0.0f )
+            else if ( _translation.X < 0.0f )
             {
-                CheckPhysicsXZ( surrounding, new Ray( Position, Vector3.Backward ), ref _translation.Z );
+                foreach ( Chunk chunk in surrounding )
+                {
+                    if ( chunk.Collides( boxx ) )
+                    {
+                        float dist = Math.Min(
+                            GetShortestCollisionDistanceXZ( chunk, Vector3.Left, -offsX + offsZ ),
+                            GetShortestCollisionDistanceXZ( chunk, Vector3.Left, -offsX - offsZ )
+                        ) - CollisionBuffer;
+                        if ( dist < -_translation.X )
+                        {
+                            _translation.X = -dist;
+                        }
+                    }
+                }
             }
 
-            // X direction
-            if ( _translation.X < 0.0f )
+            // Z physics
+            BoundingBox boxz = GetBounds( 0.0f, 0.0f, _translation.Z );
+            if ( _translation.Z > 0.0f )
             {
-                CheckPhysicsXZ( surrounding, new Ray( Position, Vector3.Left ), ref _translation.X );
+                foreach ( Chunk chunk in surrounding )
+                {
+                    if ( chunk.Collides( boxz ) )
+                    {
+                        float dist = Math.Min(
+                            GetShortestCollisionDistanceXZ( chunk, Vector3.Backward, offsZ + offsX ),
+                            GetShortestCollisionDistanceXZ( chunk, Vector3.Backward, offsZ - offsX )
+                        ) - CollisionBuffer;
+                        if ( dist < _translation.Z )
+                        {
+                            _translation.Z = dist;
+                        }
+                    }
+                }
             }
-            else if ( _translation.X > 0.0f )
+            else if ( _translation.Z < 0.0f )
             {
-                CheckPhysicsXZ( surrounding, new Ray( Position, Vector3.Right ), ref _translation.X );
+                foreach ( Chunk chunk in surrounding )
+                {
+                    if ( chunk.Collides( boxz ) )
+                    {
+                        float dist = Math.Min(
+                            GetShortestCollisionDistanceXZ( chunk, Vector3.Forward, -offsZ + offsX ),
+                            GetShortestCollisionDistanceXZ( chunk, Vector3.Forward, -offsZ - offsX )
+                        ) - CollisionBuffer;
+                        if ( dist < -_translation.Z )
+                        {
+                            _translation.Z = -dist;
+                        }
+                    }
+                }
             }
 
 
@@ -271,38 +401,29 @@ namespace Kyoob.Game.Entities
             watch = Stopwatch.StartNew();
 
 
-            // Y direction
-            if ( _translation.Y < 0.0f )
+            // Y physics (less complex than XZ physics)
+            if ( _translation.Y != 0.0f )
             {
-                // downward [0,-1,0] checking
-                Ray ray = new Ray( Position, Vector3.Down );
-                foreach ( Block block in QueryChunks( surrounding, ray ) )
+                Vector3 dir = ( _translation.Y < 0.0f ) ? Vector3.Down : Vector3.Up;
+
+                // check each surrounding chunk
+                foreach ( Chunk chunk in surrounding )
                 {
-                    float dist = block.GetInstersectionDistance( ray ).Value - CollisionDistanceBuffer - Size.Y * 0.75f;
-                    if ( _translation.Y < -dist )
+                    // get the absolute minimum collision distance
+                    float dist = GetShortestCollisionDistanceY( chunk, dir ) - CollisionBuffer;
+                    if ( dist < Math.Abs( _translation.Y ) )
                     {
-                        _translation.Y = -dist;
-                        _velocityY = 0.0f;
-                    }
-                }
-            }
-            else if ( _translation.Y > 0.0f )
-            {
-                // upward [0,1,0] checking
-                Ray ray = new Ray( Position, Vector3.Up );
-                foreach ( Block block in QueryChunks( surrounding, new Ray( Position, Vector3.Up ) ) )
-                {
-                    float dist = block.GetInstersectionDistance( ray ).Value - CollisionDistanceBuffer - Size.Y * 0.25f;
-                    if ( _translation.Y > dist )
-                    {
-                        _translation.Y = dist;
+                        _translation.Y = dist * Math.Sign( _translation.Y );
                         _velocityY = 0.0f;
                     }
                 }
             }
 
+
             TIME_Y += (float)watch.Elapsed.TotalMilliseconds;
         }
+
+
 
         /// <summary>
         /// Updates the player.
@@ -310,7 +431,6 @@ namespace Kyoob.Game.Entities
         /// <param name="gameTime">Frame time information.</param>
         public override void Update( GameTime gameTime )
         {
-            _camera.Update( gameTime );
             _currKeys = Keyboard.GetState();
 
             // we really only need to update if we're in a world
@@ -327,6 +447,7 @@ namespace Kyoob.Game.Entities
                 Move( _translation );
                 _translation = Vector3.Zero;
             }
+            _camera.Update( gameTime );
 
             _prevKeys = _currKeys;
 
@@ -352,12 +473,15 @@ namespace Kyoob.Game.Entities
         public override void Draw( GameTime gameTime, BaseEffect effect )
         {
 #if DEBUG
-            Chunk current = _world.GetChunk( Position );
-            if ( current != null )
-            {
-                current.Octree.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
-                // current.Bounds.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Black );
-            }
+            //Chunk current = _world.GetChunk( Position );
+            //if ( current != null )
+            //{
+            //    current.Octree.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
+            //    current.Bounds.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Black );
+            //}
+
+            BoundingBox box = GetBounds( 0.0f, 0.0f, 0.0f );
+            box.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
 #endif
         }
     }
