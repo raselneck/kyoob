@@ -33,16 +33,7 @@ Currently, commands are parsed in the following format:
 ```
 OBJECT.FUNCTION PARAM [PARAM ...]
 ```
-Where each parameter is separated by a space. ("Strings" are not yet supported.)
-
-Some built-in methods:
-* `terminal.hide` hides the terminal's output.
-* `terminal.show` shows the terminal's output.
-* `camera.pos` prints out the camera's position.
-* `camera.move X Y Z` moves the camera to [X,Y,Z].
-* `world.seed` gets the world's seed.
-* `world.reseed VALUE` sets the world's seed.
-* `world.reload` reloads the current world.
+Where each parameter is separated by a space. (Quoted strings are not yet supported.)
 
 License
 -------
@@ -60,13 +51,23 @@ Acknowledgments
   images were exported from Photoshop with NVIDIA's Photoshop Plugins.
 * Special thanks to [Sam Willis](https://github.com/Swillis57) for help with terrain.
 
-Bugs
-----
-
-None currently known.
-
 Change Log
 ----------
+
+**May 30, 2014**
+* Much better physics
+* Finally updated screenshot and readme
+* A bunch of small fixes
+
+**May 26, 2014**
+* Some minor improvements
+
+**May 24, 2014**
+* Implemented basic physics
+* Improved basic physics a bit
+
+**May 20, 2014**
+* Did some minor cleanup before implementing player
 
 **May 19, 2014**
 * Removed Minecraft textures

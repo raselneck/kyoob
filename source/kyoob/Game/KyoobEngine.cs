@@ -179,7 +179,7 @@ namespace Kyoob.Game
 
             Terminal.Update( gameTime );
             _player.Update( gameTime );
-            _effect.LightPosition = _player.Position;
+            _effect.LightPosition = _player.Camera.EyePosition;
             _world.Update( gameTime, _player.Camera );
 
 

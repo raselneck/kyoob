@@ -86,6 +86,21 @@ namespace Kyoob.Game.Entities
         }
 
         /// <summary>
+        /// The eye position of the camera.
+        /// </summary>
+        public Vector3 EyePosition
+        {
+            get
+            {
+                return new Vector3(
+                    Position.X,
+                    Position.Y + _eyeHeight,
+                    Position.Z
+                );
+            }
+        }
+
+        /// <summary>
         /// Gets whether or not the camera has control.
         /// </summary>
         public bool HasControl
@@ -190,7 +205,7 @@ namespace Kyoob.Game.Entities
             Vector3 up       = Vector3.Transform( Vector3.Up, _rotation );
             
             // update view matrix and bounding frustum
-            View = Matrix.CreateLookAt( Position, target, up );
+            View = Matrix.CreateLookAt( EyePosition, target, up );
             Frustum = new BoundingFrustum( View * Projection );
         }
 

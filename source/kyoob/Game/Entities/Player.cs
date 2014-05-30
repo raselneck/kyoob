@@ -9,9 +9,6 @@ using Kyoob.Debug;
 using Kyoob.Effects;
 
 #warning TODO : Move physics / jump stuff to Entity
-#warning TODO : Currently only uses rays. Combine rays and BoundingBoxes for collision
-//              Use rays to get closest blocks?
-//              Use Vector3.DistanceSquared because it's faster
 
 namespace Kyoob.Game.Entities
 {
@@ -65,19 +62,6 @@ namespace Kyoob.Game.Entities
             get
             {
                 return new Vector3( 0.8f, 1.6f, 0.8f );
-            }
-        }
-
-        /// <summary>
-        /// Gets the player's position.
-        /// </summary>
-        public override Vector3 Position
-        {
-            get
-            {
-                Vector3 pos = base.Position;
-                pos.Y += _camera.EyeHeight;
-                return pos;
             }
         }
 
