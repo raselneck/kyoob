@@ -1,6 +1,6 @@
 build/*
 source/kyoob/obj/*
-source/noiseutils/obj/*
+source/kyoob.lua/obj/*
 content/obj/*
 content/bin/*
 *.user
