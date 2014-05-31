@@ -1,22 +1,17 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 using Kyoob.Blocks;
 using Kyoob.Debug;
 using Kyoob.Effects;
 using Kyoob.Game.Entities;
 using Kyoob.Graphics;
 using Kyoob.Terrain;
-
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using XnaGame = Microsoft.Xna.Framework.Game;
 
-#warning TODO : Create 2D drawing utility
-#warning TODO : Kyoob.Lua
+#warning TODO : Create settings and input manager for key/mouse and controller
+#warning TODO : Create Renderer3D to facilitate 3D rendering like Renderer2D
 #warning TODO : Look into Lindgren.Network
 
 namespace Kyoob.Game
@@ -66,10 +61,10 @@ namespace Kyoob.Game
         protected override void LoadContent()
         {
             _device = GraphicsDevice;
+            Renderer2D.Initialize( this );
 
             // initialize the terminal
-            Terminal.Initialize( this );
-            Terminal.Font = Content.Load<SpriteFont>( "font/arial" );
+            Terminal.Font = Content.Load<SpriteFont>( "font/consolas" );
             Terminal.RequestControl += ( sender, args ) =>
             {
                 IsMouseVisible = true;
@@ -83,8 +78,9 @@ namespace Kyoob.Game
             // create a perlin terrain generator
             // PerlinTerrain terrain  = new PerlinTerrain( (int)DateTime.Now.Ticks );
             PerlinTerrain terrain  = new PerlinTerrain( 103695625 );
-            terrain.VerticalBias   = 1.0f / 49;
-            terrain.HorizontalBias = 1.0f / 79;
+            terrain.Octave            = 4;
+            terrain.VerticalBias      = 1.0f / 64;
+            terrain.HorizontalBias    = 1.0f / 97;
             terrain.Levels.WaterLevel = 0.500f;
             terrain.Levels.SetBounds( BlockType.Stone, 0.000f, 0.250f );
             terrain.Levels.SetBounds( BlockType.Sand,  0.250f, 0.625f );
@@ -93,10 +89,7 @@ namespace Kyoob.Game
 
             // create the player
             CameraSettings settings = new CameraSettings( _device );
-            // settings.InitialPosition = new Vector3( 288.0f, 1.5f / terrain.VerticalBias, -212.0f );  // cool overhang
-               settings.InitialPosition = new Vector3( -64.0f, 1.5f / terrain.VerticalBias, -64.0f );   // cool, big platform
-            // settings.InitialPosition = new Vector3( -759.0f, 1.5f / terrain.VerticalBias, -429.0f ); // cool open/disjoint area
-            // settings.InitialPosition = new Vector3( -33.0f, 1.5f / terrain.VerticalBias, -294.0f );  // cool, small platform
+            settings.InitialPosition = new Vector3( -50.0f, 1.5f / terrain.VerticalBias, -64.0f );
             _player = new Player( _device, settings );
 
 
@@ -136,7 +129,8 @@ namespace Kyoob.Game
             if ( _world == null )
             {
                 _world = new World( _renderer, _spriteSheet, terrain );
-                Terminal.WriteInfo( "Creating new world..." );
+
+                Terminal.WriteInfo( "Creating new world." );
             }
 
             // set the player's world and start chunk management
@@ -194,7 +188,7 @@ namespace Kyoob.Game
         {
             // clear based on ambient color if we can
             _renderer.ClearColor = new Color( _effect.AmbientColor );
-
+            
 
             // draw the world and the terminal
             _effect.Projection = _player.Camera.Projection;

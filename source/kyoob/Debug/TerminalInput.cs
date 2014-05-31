@@ -244,12 +244,14 @@ namespace Kyoob.Debug
         {
             List<Keys> newDown = new List<Keys>( _newKeys.GetPressedKeys() );
             Keys[] toCheck = _oldKeys.GetPressedKeys();
+            bool shift = _newKeys.IsKeyDown( Keys.LeftShift )
+                      || _oldKeys.IsKeyDown( Keys.LeftShift );
 
             foreach ( Keys key in toCheck )
             {
                 if ( !newDown.Contains( key ) )
                 {
-                    AppendToText( KeyToString( key, _newKeys.IsKeyDown( Keys.LeftShift ) ) );
+                    AppendToText( KeyToString( key, shift ) );
                 }
             }
         }

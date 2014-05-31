@@ -1,10 +1,8 @@
-﻿using System;
+﻿using Kyoob.Debug;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Kyoob.Debug;
 
-#warning TODO : Figure out how to push the camera view position forward a bit based on rotation so its closer to the bound edge.
+#warning TODO : Figure out how to push the camera view position forward a bit based on rotation so its closer to the bound's edge.
 
 namespace Kyoob.Game.Entities
 {
@@ -20,6 +18,7 @@ namespace Kyoob.Game.Entities
         private float _yaw;
         private float _pitch;
         private float _eyeHeight;
+        private float _lookVelocity;
         private bool _hasControl;
 
         /// <summary>
@@ -67,6 +66,21 @@ namespace Kyoob.Game.Entities
             get
             {
                 return _pitch;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the camera's look velocity.
+        /// </summary>
+        public float LookVelocity
+        {
+            get
+            {
+                return _lookVelocity;
+            }
+            set
+            {
+                _lookVelocity = value;
             }
         }
 
@@ -126,6 +140,7 @@ namespace Kyoob.Game.Entities
             _yaw = settings.InitialYaw;
             _pitch = settings.InitialPitch;
             _eyeHeight = _player.Size.Y / 4.0f;
+            _lookVelocity = 0.0025f;
 
             // set our control data
             _hasControl = true;
@@ -167,8 +182,8 @@ namespace Kyoob.Game.Entities
             // modify the yaw and pitch
             int dYaw    = _prevMouse.X - _currMouse.X;
             int dPitch  = _prevMouse.Y - _currMouse.Y;
-            _yaw       += 0.0025f * dYaw;
-            _pitch     += 0.0025f * dPitch;
+            _yaw       += _lookVelocity * dYaw;
+            _pitch     += _lookVelocity * dPitch;
 
             // clamp pitch
             if ( _pitch > MathHelper.PiOver2 )

@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using Kyoob.Effects;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Kyoob.Blocks;
-using Kyoob.Debug;
-using Kyoob.Effects;
 
 namespace Kyoob.Game.Entities
 {
@@ -15,7 +10,9 @@ namespace Kyoob.Game.Entities
     /// </summary>
     public class Player : Entity
     {
-        private const float JumpVelocity = 12.0f;
+        private const float JumpVelocity   = 10.00f;
+        private const float MoveVelocity   =  2.00f;
+        private const float SprintVelocity =  1.50f * MoveVelocity;
 
         private PlayerCamera _camera;
         private KeyboardState _currKeys;
@@ -53,6 +50,8 @@ namespace Kyoob.Game.Entities
         {
             _camera = new PlayerCamera( settings, this );
             _camera.EyeHeight = 0.6f;
+            _camera.LookVelocity = 0.0016f;
+
             _currKeys = Keyboard.GetState();
             _prevKeys = Keyboard.GetState();
         }
@@ -67,7 +66,7 @@ namespace Kyoob.Game.Entities
         {
             Vector3 transformed = Vector3.Transform( basis, _camera.Rotation );
             transformed.Y = 0.0f;
-            return transformed * units;
+            return Vector3.Normalize( transformed ) * units;
         }
 
         /// <summary>
@@ -77,16 +76,16 @@ namespace Kyoob.Game.Entities
         private void CheckUserInput( float time )
         {
             // calculate our "units per second"
-            float units = time * 6.0f;
+            float units = time * MoveVelocity;
             if ( _currKeys.IsKeyDown( Keys.LeftShift ) )
             {
-                units *= 2.25f;
+                units = time * SprintVelocity;
             }
 
             // get transformed basis vectors
             Vector3 forward = GetMovementVector( Vector3.Forward, units );
-            Vector3 up      = GetMovementVector( Vector3.Up, units );
-            Vector3 right   = GetMovementVector( Vector3.Right, units );
+            Vector3 up      = GetMovementVector( Vector3.Up,      units );
+            Vector3 right   = GetMovementVector( Vector3.Right,   units );
             if ( _camera.Pitch >= 0.0f )
             {
                 up = -up;
@@ -95,33 +94,33 @@ namespace Kyoob.Game.Entities
             // check if we need to strafe forward
             if ( _currKeys.IsKeyDown( Keys.W ) )
             {
-                Translation += forward;
-                Translation += up;
+                Move( forward );
+                Move( up );
             }
 
             // check if we need to strafe backward
             if ( _currKeys.IsKeyDown( Keys.S ) )
             {
-                Translation -= forward;
-                Translation -= up;
+                Move( -forward );
+                Move( -up );
             }
 
             // check if we need to strafe right
             if ( _currKeys.IsKeyDown( Keys.D ) )
             {
-                Translation += right;
+                Move( right );
             }
 
             // check if we need to strafe left
             if ( _currKeys.IsKeyDown( Keys.A ) )
             {
-                Translation -= right;
+                Move( -right );
             }
 
             // check if we need to jump
             if ( _currKeys.IsKeyDown( Keys.Space ) )
             {
-                Jump( time, JumpVelocity );
+                Jump( JumpVelocity * time );
             }
         }
 
@@ -143,9 +142,8 @@ namespace Kyoob.Game.Entities
                     ApplyPhysics( time );
                 }
 
-                // move the player and reset out translation vector
-                Move( Translation );
-                Translation = Vector3.Zero;
+                // call base.Update() to move the player
+                base.Update( gameTime );
             }
             _camera.Update( gameTime );
 
@@ -160,15 +158,7 @@ namespace Kyoob.Game.Entities
         public override void Draw( GameTime gameTime, BaseEffect effect )
         {
 #if DEBUG
-            //Chunk current = _world.GetChunk( Position );
-            //if ( current != null )
-            //{
-            //    current.Octree.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
-            //    current.Bounds.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Black );
-            //}
-
-            BoundingBox box = GetBounds( 0.0f, 0.0f, 0.0f );
-            box.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
+            Bounds.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
 #endif
         }
     }

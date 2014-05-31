@@ -1,0 +1,5 @@
+C:\Dev\projects\kyoob\build\debug\Kyoob.Lua.xml
+C:\Dev\projects\kyoob\build\debug\Kyoob.Lua.dll
+C:\Dev\projects\kyoob\build\debug\Kyoob.Lua.pdb
+C:\Dev\projects\kyoob\source\kyoob.lua\obj\Debug\Kyoob.Lua.dll
+C:\Dev\projects\kyoob\source\kyoob.lua\obj\Debug\Kyoob.Lua.pdb

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using Kyoob.Effects;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Kyoob.Effects;
 
 namespace Kyoob.Blocks
 {

@@ -1,6 +1,6 @@
 ﻿using System;
-using Microsoft.Xna.Framework;
 using Kyoob.Blocks;
+using Microsoft.Xna.Framework;
 
 namespace Kyoob.Terrain
 {
@@ -26,6 +26,14 @@ namespace Kyoob.Terrain
             {
                 _seed = value;
             }
+        }
+
+        /// <summary>
+        /// Gets the highest point this terrain generator can produce.
+        /// </summary>
+        public abstract float HighestPoint
+        {
+            get;
         }
 
         /// <summary>

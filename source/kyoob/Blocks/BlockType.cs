@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿
 namespace Kyoob.Blocks
 {
     /// <summary>
@@ -40,6 +39,11 @@ namespace Kyoob.Blocks
         /// <summary>
         /// Water block.
         /// </summary>
-        Water
+        Water,
+
+        /// <summary>
+        /// Snow block.
+        /// </summary>
+        Snow
     }
 }

@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Kyoob.Debug;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Kyoob.Blocks;
-using Kyoob.Debug;
 
 namespace Kyoob.Game
 {

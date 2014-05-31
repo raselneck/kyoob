@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Kyoob.Blocks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Kyoob.Blocks;
 
 namespace Kyoob.Graphics
 {

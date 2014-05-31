@@ -1,6 +1,5 @@
-﻿using System;
+﻿using Kyoob.Blocks;
 using Microsoft.Xna.Framework;
-using Kyoob.Blocks;
 
 namespace Kyoob.Terrain
 {
@@ -60,6 +59,32 @@ namespace Kyoob.Terrain
         }
 
         /// <summary>
+        /// Gets the highest point this Perlin terrain generator supports.
+        /// </summary>
+        public override float HighestPoint
+        {
+            get
+            {
+                return 1.0f / _vBias;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the current octave.
+        /// </summary>
+        public int Octave
+        {
+            get
+            {
+                return _noise.OctaveCount;
+            }
+            set
+            {
+                _noise.OctaveCount = value;
+            }
+        }
+
+        /// <summary>
         /// Creates a new Perlin terrain generator.
         /// </summary>
         /// <param name="seed">The Perlin terrain generator's seed.</param>
@@ -89,20 +114,23 @@ namespace Kyoob.Terrain
                 return BlockType.Air;
             }
 
+
             // modify world coordinates
             world.X *= _hBias;
             world.Y *= _vBias;
             world.Z *= _hBias;
+
 
             // get noise value
             float noise = (float)_noise.GetValue( world.X, world.Y, world.Z );
             noise = MathHelper.Clamp( noise, -1.0f, 1.0f ) / 2.0f + 0.5f;
             noise = 1.0f - noise;
 
-            // tbh not entirely sure why this works
+            // get the block type based on the noise value
             if ( world.Y <= noise )
             {
-                return Levels.GetType( world.Y );
+                //return Levels.GetType( world.Y );
+                return Levels.GetType( noise );
             }
 
             if ( world.Y <= Levels.WaterLevel )

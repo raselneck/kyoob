@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Kyoob.Graphics;
 
 using XnaGame = Microsoft.Xna.Framework.Game;
 
@@ -52,9 +53,6 @@ namespace Kyoob.Debug
         }
 
         private static List<TerminalMessage> _messages;
-        private static GraphicsDevice _device;
-        private static DepthStencilState _depthState;
-        private static SpriteBatch _spriteBatch;
         private static SpriteFont _font;
         private static float _lineHeight;
         private static TerminalInput _input;
@@ -111,7 +109,11 @@ namespace Kyoob.Debug
             _frameCount = 0;
             _tickCount = 0;
             _messages = new List<TerminalMessage>();
+#if DEBUG
             _isHidden = false;
+#else
+            _isHidden = true;
+#endif
 
             // setup the input
             _input = new TerminalInput( null );
@@ -149,24 +151,13 @@ namespace Kyoob.Debug
         private static void DrawHighlighted( TerminalMessage message, Vector2 position )
         {
             // draw a black border around the text
-            _spriteBatch.DrawString( _font, message.Message, new Vector2( position.X - 1, position.Y ), Color.Black );
-            _spriteBatch.DrawString( _font, message.Message, new Vector2( position.X + 1, position.Y ), Color.Black );
-            _spriteBatch.DrawString( _font, message.Message, new Vector2( position.X, position.Y - 1 ), Color.Black );
-            _spriteBatch.DrawString( _font, message.Message, new Vector2( position.X, position.Y + 1 ), Color.Black );
+            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X - 1, position.Y ), Color.Black );
+            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X + 1, position.Y ), Color.Black );
+            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X, position.Y - 1 ), Color.Black );
+            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X, position.Y + 1 ), Color.Black );
 
             // now draw the actual message
-            _spriteBatch.DrawString( _font, message.Message, position, message.TextColor );
-        }
-
-        /// <summary>
-        /// Initializes the terminal to work with a game.
-        /// </summary>
-        /// <param name="game">The game.</param>
-        public static void Initialize( XnaGame game )
-        {
-            _device = game.GraphicsDevice;
-            _depthState = _device.DepthStencilState;
-            _spriteBatch = new SpriteBatch( _device );
+            Renderer2D.DrawString( _font, message.Message, position, message.TextColor );
         }
 
         /// <summary>
@@ -216,7 +207,7 @@ namespace Kyoob.Debug
             // we can only draw if we have a font
             if ( _font != null )
             {
-                _spriteBatch.Begin();
+                Renderer2D.Begin();
 
                 // draw all messages from the top of the screen down (checking for input first)
                 Vector2 position = new Vector2( 10.0f, 10.0f );
@@ -235,8 +226,7 @@ namespace Kyoob.Debug
                     }
                 }
 
-                _spriteBatch.End();
-                _device.DepthStencilState = _depthState;
+                Renderer2D.End();
             }
         }
 

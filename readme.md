@@ -54,6 +54,14 @@ Acknowledgments
 Change Log
 ----------
 
+**May 31, 2014**
+* Bunch of small improvements
+* Added system console re-router for terminal
+* Added support for no-object functions for terminal
+  * I.e. `listcmd`
+* Added dedicated 2D renderer
+* Started Kyoob.Lua (as in I created the project)
+
 **May 30, 2014**
 * Much better physics
 * Finally updated screenshot and readme

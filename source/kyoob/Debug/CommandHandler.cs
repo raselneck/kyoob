@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.Xna.Framework;
-
-#warning TODO : Add ability to do just singular commands. (I.e. no object.)
 
 namespace Kyoob.Debug
 {
@@ -25,6 +22,19 @@ namespace Kyoob.Debug
         public CommandHandler()
         {
             _callbacks = new Dictionary<string, Dictionary<string, CommandCallback>>();
+
+            // add listcmd command
+            AddCallback( "", "listcmd", ( string[] param ) =>
+            {
+                Terminal.WriteInfo( "Terminal commands:" );
+                foreach ( string obj in _callbacks.Keys )
+                {
+                    foreach ( string func in _callbacks[ obj ].Keys )
+                    {
+                        Terminal.WriteInfo( "    {0}{1}", ( obj == "" ) ? "" : obj + ".", func );
+                    }
+                }
+            } );
         }
 
         /// <summary>
@@ -33,6 +43,8 @@ namespace Kyoob.Debug
         /// <param name="obj">The object name.</param>
         public bool HasObject( string obj )
         {
+            obj = obj.ToLower();
+
             return _callbacks.ContainsKey( obj );
         }
 
@@ -44,6 +56,9 @@ namespace Kyoob.Debug
         /// <returns></returns>
         public bool HasFunction( string obj, string func )
         {
+            obj = obj.ToLower();
+            func = func.ToLower();
+
             if ( !HasObject( obj ) )
             {
                 return false;
@@ -60,14 +75,17 @@ namespace Kyoob.Debug
         /// <param name="callback">The callback.</param>
         public void AddCallback( string obj, string func, CommandCallback callback )
         {
+            obj = obj.ToLower();
+            func = func.ToLower();
+
             if ( _callbacks.ContainsKey( obj ) )
             {
                 var functions = _callbacks[ obj ];
                 if ( functions.ContainsKey( func ) )
                 {
                     string message = string.Format(
-                        "The function {0}.{1} already exists.",
-                        obj, func
+                        "The function '{0}{1}' already exists.",
+                        ( obj == "" ) ? "" : obj + ".", func
                     );
                     throw new ArgumentException( message );
                 }
@@ -95,15 +113,15 @@ namespace Kyoob.Debug
             {
                 return;
             }
+            command = command.ToLower();
 
             // try to get the object
             int index = command.IndexOf( '.' );
-            if ( index == -1 )
+            string obj = "";
+            if ( index != -1 )
             {
-                Terminal.WriteError( "Could not find object in command '{0}'", command );
-                return;
+                obj = command.Substring( 0, index );
             }
-            string obj = command.Substring( 0, index );
 
             // try to get the function
             int start = index + 1;
@@ -146,12 +164,12 @@ namespace Kyoob.Debug
                     }
                     else
                     {
-                        Terminal.WriteError( "'{0}.{1}' is registered, but unbound", obj, func );
+                        Terminal.WriteError( "'{0}{1}' is registered, but unbound", ( obj == "" ) ? "" : obj + ".", func );
                     }
                 }
                 else
                 {
-                    Terminal.WriteError( "Could not find function '{0}.{1}'", obj, func );
+                    Terminal.WriteError( "Could not find function '{0}{1}'", ( obj == "" ) ? "" : obj + ".", func );
                 }
             }
             else

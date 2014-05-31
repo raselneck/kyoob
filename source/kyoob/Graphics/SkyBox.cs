@@ -1,8 +1,7 @@
-﻿using System;
+﻿using Kyoob.Effects;
+using Kyoob.Game;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Kyoob.Effects;
-using Kyoob.Game;
 
 namespace Kyoob.Graphics
 {

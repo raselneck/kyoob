@@ -1,23 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Threading;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Debug;
-using Kyoob.Effects;
 using Kyoob.Game;
 using Kyoob.Graphics;
 using Kyoob.Terrain;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 #pragma warning disable 1587 // disable "invalid XML comment placement"
 
 #warning TODO : When chunks are unloaded, their data should be saved to a file somehow so that block data can be retrieved in case a chunk was modified.
-#warning TODO : Create ChunkManager. (?)
+#warning TODO : Create dedicated chunk manager.
 #warning TODO : Split loading/unloading into two separate threads.
 #warning TODO : Create some kind of utilities class to help remove circular dependencies. (I.e. World<->TerrainGenerator)
-#warning TODO : Create CommonInitialization or whatever like in Chunk
 
 namespace Kyoob.Blocks
 {
@@ -84,6 +81,44 @@ namespace Kyoob.Blocks
         /// <param name="terrain">The terrain generator to use.</param>
         public World( EffectRenderer renderer, SpriteSheet spriteSheet, TerrainGenerator terrain )
         {
+            CommonInitialization( renderer, spriteSheet, terrain );
+        }
+
+        /// <summary>
+        /// Creates a new world by loading it from a stream.
+        /// </summary>
+        /// <param name="bin">The binary reader to use when reading the world.</param>
+        /// <param name="renderer">The renderer to use.</param>
+        /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
+        /// <param name="terrain">The terrain generator to use.</param>
+        private World( BinaryReader bin, EffectRenderer renderer, SpriteSheet spriteSheet, TerrainGenerator terrain )
+        {
+            CommonInitialization( renderer, spriteSheet, terrain );
+
+            // load the seed (and terrain) and chunks
+            _terrain.Seed = bin.ReadInt32();
+            int count = bin.ReadInt32();
+            for ( int i = 0; i < count; ++i )
+            {
+                // read the index, then the chunk, then record both
+                Index3D index = new Index3D( bin.ReadInt32(), bin.ReadInt32(), bin.ReadInt32() );
+                Chunk chunk = Chunk.ReadFrom( bin.BaseStream, this );
+                if ( chunk == null )
+                {
+                    break;
+                }
+                _chunks.Add( index, chunk );
+            }
+        }
+
+        /// <summary>
+        /// Performs common initialization logic for the world.
+        /// </summary>
+        /// <param name="renderer">The renderer to use.</param>
+        /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
+        /// <param name="terrain">The terrain generator to use.</param>
+        private void CommonInitialization( EffectRenderer renderer, SpriteSheet spriteSheet, TerrainGenerator terrain )
+        {
             // set variables
             _renderer = renderer;
             _spriteSheet = spriteSheet;
@@ -102,80 +137,11 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
-        /// Creates a new world by loading it from a stream.
-        /// </summary>
-        /// <param name="bin">The binary reader to use when reading the world.</param>
-        /// <param name="renderer">The renderer to use.</param>
-        /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
-        /// <param name="terrain">The terrain generator to use.</param>
-        private World( BinaryReader bin, EffectRenderer renderer, SpriteSheet spriteSheet, TerrainGenerator terrain )
-        {
-            // set variables
-            _renderer = renderer;
-            _spriteSheet = spriteSheet;
-            _chunks = new Dictionary<Index3D, Chunk>();
-            _renderQueue = new List<Chunk>();
-            _indices = new HashSet<Index3D>();
-            _terrain = terrain;
-            _terrain.World = this;
-            _isDisposed = false;
-
-            // load the seed (and terrain) and chunks
-            _terrain.Seed = bin.ReadInt32();
-            int count = bin.ReadInt32();
-            for ( int i = 0; i < count; ++i )
-            {
-                // read the index, then the chunk, then record both
-                Index3D index = new Index3D( bin.ReadInt32(), bin.ReadInt32(), bin.ReadInt32() );
-                Chunk chunk = Chunk.ReadFrom( bin.BaseStream, this );
-                if ( chunk != null )
-                {
-                    _chunks.Add( index, chunk );
-                }
-            }
-
-            // create our management lists
-            _createList = new List<Index3D>();
-            _unloadList = new List<Index3D>();
-
-            SetTerminalCommands();
-        }
-
-        /// <summary>
         /// Sets the world commands in the terminal.
         /// </summary>
         private void SetTerminalCommands()
         {
-            // world.reload
-            Terminal.AddCommand( "world", "reload", ( string[] param ) =>
-            {
-                lock ( _createList )
-                {
-                    _createList.Clear();
-                }
-                lock ( _unloadList )
-                {
-                    _unloadList.Clear();
-                }
-                lock ( _renderQueue )
-                {
-                    _renderQueue.Clear();
-                }
-                Terminal.WriteInfo( "Cleared all chunks." );
-            } );
-
-            // world.seed
-            Terminal.AddCommand( "world", "seed", ( string[] param ) =>
-            {
-                Terminal.WriteInfo( "Seed: {0}", _terrain.Seed );
-            } );
-
-            // world.reseed
-            Terminal.AddCommand( "world", "reseed", ( string[] param ) =>
-            {
-                int seed = int.Parse( param[ 0 ] );
-                _terrain.Seed = seed;
-            } );
+            // none yet
         }
 
         /// <summary>
@@ -225,16 +191,8 @@ namespace Kyoob.Blocks
         /// <returns></returns>
         private float GetDistanceBetween( Index3D a, Index3D b )
         {
-            Vector3 av = new Vector3(
-                a.X * Chunk.Size,
-                a.Y * Chunk.Size,
-                a.Z * Chunk.Size
-            );
-            Vector3 bv = new Vector3(
-                b.X * Chunk.Size,
-                b.Y * Chunk.Size,
-                b.Z * Chunk.Size
-            );
+            Vector3 av = IndexToPosition( a );
+            Vector3 bv = IndexToPosition( b );
             return Vector3.Distance( av, bv );
         }
 
@@ -247,21 +205,22 @@ namespace Kyoob.Blocks
             Index3D index;
             int maxDist;
             float viewDistance;
-            int maxHeight = (int)( ( 1.0f / ( _terrain as PerlinTerrain ).VerticalBias ) / Chunk.Size ) + 1;
+            int maxHeight = (int)Math.Ceiling( _terrain.HighestPoint / Chunk.Size );
+            float Root2 = (float)Math.Sqrt( 2 );
 
             while ( !_isDisposed )
             {
                 index = PositionToIndex( _currentViewPosition );
-                viewDistance = _currentViewDistance * 2.0f;
+                viewDistance = _currentViewDistance * Root2;
                 maxDist = (int)( viewDistance / Chunk.Size );
                 
                 // create a list of all of the indices to check
                 indices.Clear();
-                for ( int x = 0; x < maxDist; ++x )
+                for ( int y = maxHeight; y >= 0; --y )
                 {
-                    for ( int z = 0; z < maxDist; ++z )
+                    for ( int x = 0; x < maxDist; ++x )
                     {
-                        for ( int y = maxHeight; y >= 0; --y )
+                        for ( int z = 0; z < maxDist; ++z )
                         {
                             // check [+x,y,+z]
                             Index3D temp = new Index3D( index.X + x, y, index.Z + z );
@@ -603,12 +562,6 @@ namespace Kyoob.Blocks
             _currentViewPosition = camera.Position;
         }
 
-
-        float TICK_COUNT;
-        int FRAME_COUNT;
-        float TIME_COUNT;
-        int CHUNK_COUNT;
-
         /// <summary>
         /// Draws the world.
         /// </summary>
@@ -616,8 +569,6 @@ namespace Kyoob.Blocks
         /// <param name="camera">The current camera to use for getting visible tiles.</param>
         public void Draw( GameTime gameTime, Camera camera )
         {
-            Stopwatch watch = Stopwatch.StartNew();
-
             lock ( _renderQueue )
             {
                 foreach ( Chunk chunk in _renderQueue )
@@ -635,23 +586,10 @@ namespace Kyoob.Blocks
                     }
 
                     chunk.Draw( _renderer );
-                    ++CHUNK_COUNT;
                 }
             }
 
             _renderer.Render( camera );
-
-            TICK_COUNT += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            TIME_COUNT += (float)watch.Elapsed.TotalMilliseconds;
-            ++FRAME_COUNT;
-            if ( TICK_COUNT >= 1.0f )
-            {
-                TICK_COUNT -= 1.0f;
-                Terminal.WriteLine( Color.White, 1.0f, "{0} chunks / {1:0.00}ms", CHUNK_COUNT / FRAME_COUNT, TIME_COUNT / FRAME_COUNT );
-                FRAME_COUNT = 0;
-                TIME_COUNT = 0.0f;
-                CHUNK_COUNT = 0;
-            }
         }
 
         /// <summary>

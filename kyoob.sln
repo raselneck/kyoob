@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyoob", "source\kyoob\Kyoob.csproj", "{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyoob.Lua", "source\kyoob.lua\Kyoob.Lua.csproj", "{16B9134D-C16E-425A-825C-F102093355AD}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyoobContent", "content\KyoobContent.contentproj", "{7304DE30-B32B-4FE6-92FB-BD987149CA54}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "git", "git", "{5392863F-BEBE-49D6-8E8D-ABEEE4D5C6DB}"
@@ -20,15 +22,42 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "licenses", "licenses", "{C5
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
 		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}.Debug|Mixed Platforms.Build.0 = Debug|x86
 		{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}.Debug|x86.ActiveCfg = Debug|x86
 		{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}.Debug|x86.Build.0 = Debug|x86
+		{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}.Release|Any CPU.ActiveCfg = Release|x86
+		{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}.Release|Mixed Platforms.Build.0 = Release|x86
 		{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}.Release|x86.ActiveCfg = Release|x86
 		{9DDDFF01-79B3-4242-AC9B-ECDF54EFF7FE}.Release|x86.Build.0 = Release|x86
+		{16B9134D-C16E-425A-825C-F102093355AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{16B9134D-C16E-425A-825C-F102093355AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{16B9134D-C16E-425A-825C-F102093355AD}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{16B9134D-C16E-425A-825C-F102093355AD}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{16B9134D-C16E-425A-825C-F102093355AD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{16B9134D-C16E-425A-825C-F102093355AD}.Debug|x86.Build.0 = Debug|Any CPU
+		{16B9134D-C16E-425A-825C-F102093355AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{16B9134D-C16E-425A-825C-F102093355AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{16B9134D-C16E-425A-825C-F102093355AD}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{16B9134D-C16E-425A-825C-F102093355AD}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{16B9134D-C16E-425A-825C-F102093355AD}.Release|x86.ActiveCfg = Release|Any CPU
+		{16B9134D-C16E-425A-825C-F102093355AD}.Release|x86.Build.0 = Release|Any CPU
+		{7304DE30-B32B-4FE6-92FB-BD987149CA54}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{7304DE30-B32B-4FE6-92FB-BD987149CA54}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
 		{7304DE30-B32B-4FE6-92FB-BD987149CA54}.Debug|x86.ActiveCfg = Debug|x86
+		{7304DE30-B32B-4FE6-92FB-BD987149CA54}.Debug|x86.Build.0 = Debug|x86
+		{7304DE30-B32B-4FE6-92FB-BD987149CA54}.Release|Any CPU.ActiveCfg = Release|x86
+		{7304DE30-B32B-4FE6-92FB-BD987149CA54}.Release|Mixed Platforms.ActiveCfg = Release|x86
 		{7304DE30-B32B-4FE6-92FB-BD987149CA54}.Release|x86.ActiveCfg = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution

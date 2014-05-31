@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Blocks;
 using Kyoob.Effects;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
-#warning TODO : Consolidate some code in ApplyPhysics
+#warning TODO : Eventually create a physics system that manages a set of IPhysicsObject
+//              Could contain 'BoundingBox Bounds', 'Vector3 Translation', 'void Move(float,float,float)'
 
 namespace Kyoob.Game.Entities
 {
@@ -14,9 +15,9 @@ namespace Kyoob.Game.Entities
     /// </summary>
     public abstract class Entity
     {
-        private const float VelocityDueToGravity = -0.50f;
-        private const float TerminalVelocity = -1.50f;
-        private const float CollisionBuffer = 0.0001f;
+        private const float VelocityDueToGravity = -0.5000f;
+        private const float TerminalVelocity     = -1.5000f;
+        private const float CollisionBuffer      =  0.0001f;
 
         private GraphicsDevice _device;
         private World _world;
@@ -153,35 +154,28 @@ namespace Kyoob.Game.Entities
         /// <returns></returns>
         private List<Chunk> GetSurroundingChunks()
         {
-            List<Chunk> chunks = new List<Chunk>();
+            HashSet<Chunk> chunks = new HashSet<Chunk>();
 
-            // get the 9 surrounding chunks
             for ( int x = -1; x <= 1; ++x )
             {
                 for ( int y = -1; y <= 1; ++y )
                 {
                     for ( int z = -1; z <= 1; ++z )
                     {
-                        chunks.Add( World.GetChunk( new Vector3(
-                            Position.X + x * Chunk.Size,
-                            Position.Y + y * Chunk.Size,
-                            Position.Z + z * Chunk.Size
-                        ) ) );
+                        Chunk chunk = World.GetChunk( new Vector3(
+                            Position.X + x * Chunk.Size / 2.0f,
+                            Position.Y + y * Chunk.Size / 2.0f,
+                            Position.Z + z * Chunk.Size / 2.0f
+                        ) );
+                        if (chunk != null)
+                        {
+                            chunks.Add( chunk );
+                        }
                     }
                 }
             }
 
-            // remove null chunks
-            for ( int i = 0; i < chunks.Count; ++i )
-            {
-                if ( chunks[ i ] == null )
-                {
-                    chunks.RemoveAt( i );
-                    --i;
-                }
-            }
-
-            return chunks;
+            return new List<Chunk>( chunks );
         }
 
         /// <summary>
@@ -239,15 +233,15 @@ namespace Kyoob.Game.Entities
         /// Gets the shortest collision distance in the Y direction.
         /// </summary>
         /// <param name="chunk">The chunk to check.</param>
-        /// <param name="dir">The direction.</param>
+        /// <param name="rayDir">The ray direction.</param>
         /// <returns></returns>
-        private float GetShortestCollisionDistanceY( Chunk chunk, Vector3 dir )
+        private float GetShortestCollisionDistanceY( Chunk chunk, Vector3 rayDir )
         {
             // create our rays
-            Ray ray0 = new Ray( new Vector3( Position.X + Size.X / 2.0f, Position.Y + dir.Y * Size.Y / 2.0f, Position.Z + Size.Z / 2.0f ), dir );
-            Ray ray1 = new Ray( new Vector3( Position.X + Size.X / 2.0f, Position.Y + dir.Y * Size.Y / 2.0f, Position.Z - Size.Z / 2.0f ), dir );
-            Ray ray2 = new Ray( new Vector3( Position.X - Size.X / 2.0f, Position.Y + dir.Y * Size.Y / 2.0f, Position.Z + Size.Z / 2.0f ), dir );
-            Ray ray3 = new Ray( new Vector3( Position.X - Size.X / 2.0f, Position.Y + dir.Y * Size.Y / 2.0f, Position.Z - Size.Z / 2.0f ), dir );
+            Ray ray0 = new Ray( new Vector3( Position.X + Size.X / 2.0f, Position.Y + rayDir.Y * Size.Y / 2.0f, Position.Z + Size.Z / 2.0f ), rayDir );
+            Ray ray1 = new Ray( new Vector3( Position.X + Size.X / 2.0f, Position.Y + rayDir.Y * Size.Y / 2.0f, Position.Z - Size.Z / 2.0f ), rayDir );
+            Ray ray2 = new Ray( new Vector3( Position.X - Size.X / 2.0f, Position.Y + rayDir.Y * Size.Y / 2.0f, Position.Z + Size.Z / 2.0f ), rayDir );
+            Ray ray3 = new Ray( new Vector3( Position.X - Size.X / 2.0f, Position.Y + rayDir.Y * Size.Y / 2.0f, Position.Z - Size.Z / 2.0f ), rayDir );
 
             // go through each chunk
             float dist0 = GetMinimumValue( chunk.GetIntersections( ray0 ).Values, Chunk.Size );
@@ -277,126 +271,90 @@ namespace Kyoob.Game.Entities
             Chunk[] surrounding = GetSurroundingChunks().ToArray();
 
 
-            // create the XZ offset vectors
+            // Y physics (less complex than XZ physics)
+            _isOnGround = false;
+            Vector3 dir = ( _translation.Y < 0.0f ) ? Vector3.Down : Vector3.Up;
+            foreach ( Chunk chunk in surrounding )
+            {
+                // get the absolute minimum collision distance
+                float dist = GetShortestCollisionDistanceY( chunk, dir ) - CollisionBuffer;
+                if ( dist < Math.Abs( _translation.Y ) )
+                {
+                    // if we've hit a block going down, then we're on "ground"
+                    if ( _translation.Y < 0.0f )
+                    {
+                        _isOnGround = true;
+                    }
+
+                    _translation.Y = dist * Math.Sign( _translation.Y );
+                    _velocityY = 0.0f;
+                }
+
+                // if there's no distance, then we can exit the loop
+                if ( dist == 0.0f )
+                {
+                    break;
+                }
+            }
+            // end Y physics
+
+
+            // create the XYZ offset vectors
             Vector3 offsX = new Vector3( Size.X / 2.0f, 0.0f, 0.0f );
+            Vector3 offsY = new Vector3( 0.0f, _translation.Y, 0.0f );
             Vector3 offsZ = new Vector3( 0.0f, 0.0f, Size.Z / 2.0f );
 
 
-            // X physics
-            BoundingBox boxx = GetBounds( _translation.X, 0.0f, 0.0f );
-            if ( _translation.X > 0.0f )
+            // XZ physics
+            BoundingBox boxX  = GetBounds( _translation.X, _translation.Y, 0.0f );
+            BoundingBox boxZ  = GetBounds( 0.0f, _translation.Y, _translation.Z );
+            Vector3     vecX  = ( _translation.X > 0.0f ) ? Vector3.Right    : Vector3.Left;
+            Vector3     vecZ  = ( _translation.Z > 0.0f ) ? Vector3.Backward : Vector3.Forward;
+            float       signX = Math.Sign( _translation.X );
+            float       signZ = Math.Sign( _translation.Z );
+            foreach ( Chunk chunk in surrounding )
             {
-                foreach ( Chunk chunk in surrounding )
+                // check X direction
+                if ( chunk.Collides( boxX ) )
                 {
-                    if ( chunk.Collides( boxx ) )
+                    float distX = Math.Min(
+                        GetShortestCollisionDistanceXZ( chunk, vecX, signX * offsX + offsZ + offsY ),
+                        GetShortestCollisionDistanceXZ( chunk, vecX, signX * offsX - offsZ + offsY )
+                    ) - CollisionBuffer;
+                    if ( distX < Math.Abs( _translation.X ) )
                     {
-                        float dist = Math.Min(
-                            GetShortestCollisionDistanceXZ( chunk, Vector3.Right, offsX + offsZ ),
-                            GetShortestCollisionDistanceXZ( chunk, Vector3.Right, offsX - offsZ )
-                        ) - CollisionBuffer;
-                        if ( dist < _translation.X )
-                        {
-                            _translation.X = dist;
-                        }
+                        _translation.X = distX * signX;
                     }
                 }
-            }
-            else if ( _translation.X < 0.0f )
-            {
-                foreach ( Chunk chunk in surrounding )
+
+                // check Z direction
+                if ( chunk.Collides( boxZ ) )
                 {
-                    if ( chunk.Collides( boxx ) )
+                    // check Z direction
+                    float distZ = Math.Min(
+                        GetShortestCollisionDistanceXZ( chunk, vecZ, signZ * offsZ + offsX + offsY ),
+                        GetShortestCollisionDistanceXZ( chunk, vecZ, signZ * offsZ - offsX + offsY )
+                    ) - CollisionBuffer;
+                    if ( distZ < Math.Abs( _translation.Z ) )
                     {
-                        float dist = Math.Min(
-                            GetShortestCollisionDistanceXZ( chunk, Vector3.Left, -offsX + offsZ ),
-                            GetShortestCollisionDistanceXZ( chunk, Vector3.Left, -offsX - offsZ )
-                        ) - CollisionBuffer;
-                        if ( dist < -_translation.X )
-                        {
-                            _translation.X = -dist;
-                        }
-                    }
-                }
-            }
-
-            // Z physics
-            BoundingBox boxz = GetBounds( 0.0f, 0.0f, _translation.Z );
-            if ( _translation.Z > 0.0f )
-            {
-                foreach ( Chunk chunk in surrounding )
-                {
-                    if ( chunk.Collides( boxz ) )
-                    {
-                        float dist = Math.Min(
-                            GetShortestCollisionDistanceXZ( chunk, Vector3.Backward, offsZ + offsX ),
-                            GetShortestCollisionDistanceXZ( chunk, Vector3.Backward, offsZ - offsX )
-                        ) - CollisionBuffer;
-                        if ( dist < _translation.Z )
-                        {
-                            _translation.Z = dist;
-                        }
-                    }
-                }
-            }
-            else if ( _translation.Z < 0.0f )
-            {
-                foreach ( Chunk chunk in surrounding )
-                {
-                    if ( chunk.Collides( boxz ) )
-                    {
-                        float dist = Math.Min(
-                            GetShortestCollisionDistanceXZ( chunk, Vector3.Forward, -offsZ + offsX ),
-                            GetShortestCollisionDistanceXZ( chunk, Vector3.Forward, -offsZ - offsX )
-                        ) - CollisionBuffer;
-                        if ( dist < -_translation.Z )
-                        {
-                            _translation.Z = -dist;
-                        }
-                    }
-                }
-            }
-
-
-            // Y physics (less complex than XZ physics)
-            if ( _translation.Y != 0.0f )
-            {
-                _isOnGround = false;
-                Vector3 dir = ( _translation.Y < 0.0f ) ? Vector3.Down : Vector3.Up;
-
-                // check each surrounding chunk
-                foreach ( Chunk chunk in surrounding )
-                {
-                    // get the absolute minimum collision distance
-                    float dist = GetShortestCollisionDistanceY( chunk, dir ) - CollisionBuffer;
-                    if ( dist < Math.Abs( _translation.Y ) )
-                    {
-                        // if we've hit a block going down, then we're on "ground"
-                        if ( _translation.Y < 0.0f )
-                        {
-                            _isOnGround = true;
-                        }
-
-                        _translation.Y = dist * Math.Sign( _translation.Y );
-                        _velocityY = 0.0f;
+                        _translation.Z = distZ * signZ;
                     }
                 }
             }
         }
+
 
         /// <summary>
         /// Causes the entity to jump.
         /// </summary>
-        /// <param name="time">The amount of time (in seconds) since the last update.</param>
         /// <param name="velocity">The jump velocity.</param>
-        public void Jump( float time, float velocity )
+        public void Jump( float velocity )
         {
             if ( _isOnGround )
             {
-                _velocityY += velocity * time;
-                _isOnGround = false;
+                _velocityY += velocity;
             }
         }
-
 
         /// <summary>
         /// Moves the entity.
@@ -415,7 +373,7 @@ namespace Kyoob.Game.Entities
         /// <param name="amount">The amount to move.</param>
         public void Move( Vector3 amount )
         {
-            _position += amount;
+            _translation += amount;
         }
 
         /// <summary>
@@ -442,7 +400,11 @@ namespace Kyoob.Game.Entities
         /// Updates the entity.
         /// </summary>
         /// <param name="gameTime">Frame time information.</param>
-        public abstract void Update( GameTime gameTime );
+        public virtual void Update( GameTime gameTime )
+        {
+            _position += _translation;
+            _translation *= 0.5f;
+        }
 
         /// <summary>
         /// Draws the entity.
