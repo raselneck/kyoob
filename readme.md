@@ -12,7 +12,8 @@ Dependencies
     if you're using VS2012 or VS2013
   * I have no clue if this will work with MonoGame
 * [LibNoise for .NET](https://libnoisedotnet.codeplex.com/)
-* [Newtonsoft.Json](http://james.newtonking.com/json) (I use 6.0r3)
+* [Newtonsoft.Json](http://james.newtonking.com/json) (v6.0r3+)
+* [Boo](https://github.com/bamboo/boo) (v0.9.7+)
 
 Screenshot
 ----------
@@ -55,13 +56,19 @@ Acknowledgments
 Change Log
 ----------
 
+**June 1, 2014**
+* Made location conversions static
+* Speed increase for chunk generation
+* Temporarily removed world/chunk file support
+* Added chunk manager
+* Added Boo dependencies (to prepare for scripting)
+
 **May 31, 2014**
 * Bunch of small improvements
 * Added system console re-router for terminal
 * Added support for no-object functions for terminal
   * I.e. `listcmd`
 * Added dedicated 2D renderer
-* Started Kyoob.Lua (as in I created the project)
 * Added settings
 * Consolidated some code
 

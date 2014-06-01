@@ -30,9 +30,8 @@ namespace Kyoob
 
     internal static class RayExtensions
     {
-        private static BasicEffect _effect;
-
 #if DEBUG
+        private static BasicEffect _effect;
 
         /// <summary>
         /// Draws the ray.
@@ -76,8 +75,6 @@ namespace Kyoob
     /// </summary>
     internal static class BoundingBoxExtensions
     {
-        private static BasicEffect _effect;
-
         /// <summary>
         /// Gets the center coordinates of this bounding box.
         /// </summary>
@@ -151,6 +148,7 @@ namespace Kyoob
         }
 
 #if DEBUG
+        private static BasicEffect _effect;
 
         /// <summary>
         /// Draws the bounds of a bounding box.

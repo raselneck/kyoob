@@ -349,7 +349,20 @@ namespace Kyoob.Game.Entities
         /// <param name="z">The Z amount to move.</param>
         public void Move( float x, float y, float z )
         {
-            Move( new Vector3( x, y, z ) );
+            // translate by each component if the values are non NaN
+
+            if ( !float.IsNaN( x ) )
+            {
+                _translation.X += x;
+            }
+            if ( !float.IsNaN( y ) )
+            {
+                _translation.Y += y;
+            }
+            if ( !float.IsNaN( z ) )
+            {
+                _translation.Z += z;
+            }
         }
 
         /// <summary>
@@ -358,7 +371,7 @@ namespace Kyoob.Game.Entities
         /// <param name="amount">The amount to move.</param>
         public void Move( Vector3 amount )
         {
-            _translation += amount;
+            Move( amount.X, amount.Y, amount.Z );
         }
 
         /// <summary>

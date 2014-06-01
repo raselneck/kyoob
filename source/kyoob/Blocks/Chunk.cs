@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Kyoob.Debug;
+using Kyoob.Game;
 using Kyoob.Graphics;
 using Microsoft.Xna.Framework;
 
@@ -27,10 +28,11 @@ namespace Kyoob.Blocks
         private Vector3 _position;
         private BoundingBox _bounds;
         private World _world;
-        private Block[ , , ] _blocks;
+        private Block[,,] _blocks;
         private Octree<Block> _octree;
         private VoxelBuffer _terrainBuff;
         private VoxelBuffer _waterBuff;
+        private KyoobSettings _settings;
 
         /// <summary>
         /// Gets this chunk's bounds.
@@ -97,13 +99,14 @@ namespace Kyoob.Blocks
         /// <summary>
         /// Creates a new chunk.
         /// </summary>
+        /// <param name="settings">The global settings to use.</param>
         /// <param name="world">The world this chunk is in.</param>
         /// <param name="position">The chunk's position (the center of the chunk).</param>
-        public Chunk( World world, Vector3 position )
+        public Chunk( KyoobSettings settings, World world, Vector3 position )
         {
-            CommonInitialization( world, position );
+            CommonInitialization( settings, world, position );
 
-            // tell the terrain generator to generate data for this chunk
+            // generate block data for this chunk
             BlockType[,,] types = _world.TerrainGenerator.GenerateChunkData( this );
 
             // create blocks
@@ -114,63 +117,26 @@ namespace Kyoob.Blocks
                     for ( int z = 0; z < Size; ++z )
                     {
                         // get block data
-                        Vector3 coords = _world.LocalToWorld( _position, x, y, z );
-                        BlockType type = types[ x, y, z ];
+                        Vector3 coords = World.LocalToWorld( _position, x, y, z );
+                        BlockType type = types[ x + 1, y + 1, z + 1 ];
                         _blocks[ x, y, z ] = new Block( coords, type );
                     }
                 }
             }
 
             // build the voxel buffer and octree
-            BuildVoxelBuffers();
-        }
-
-        /// <summary>
-        /// Creates a chunk by loading data from a binary reader.
-        /// </summary>
-        /// <param name="bin">The reader.</param>
-        /// <param name="world">The world this chunk belongs in.</param>
-        private Chunk( BinaryReader bin, World world )
-        {
-            // read position
-            Vector3 position = new Vector3(
-                bin.ReadSingle(),
-                bin.ReadSingle(),
-                bin.ReadSingle()
-            );
-
-            CommonInitialization( world, position );
-
-            // load each block
-            for ( int x = 0; x < Size; ++x )
-            {
-                for ( int y = 0; y < Size; ++y )
-                {
-                    for ( int z = 0; z < Size; ++z )
-                    {
-                        // load block data
-                        Vector3 coords = _world.LocalToWorld( _position, x, y, z );
-                        BlockType type = (BlockType)bin.ReadByte();
-                        bool active = bin.ReadBoolean();
-
-                        // create the block
-                        _blocks[ x, y, z ] = new Block( coords, type );
-                        _blocks[ x, y, z ].IsActive = active;
-                    }
-                }
-            }
-
-            // finally, build our buffer and octree
-            BuildVoxelBuffers();
+            BuildVoxelBuffers( types );
         }
 
         /// <summary>
         /// Performs common chunk initialization.
         /// </summary>
+        /// <param name="settings">The global settings to use.</param>
         /// <param name="world">The chunk's world.</param>
         /// <param name="position">The chunk's position.</param>
-        private void CommonInitialization( World world, Vector3 position )
+        private void CommonInitialization( KyoobSettings settings, World world, Vector3 position )
         {
+            _settings = settings;
             _world = world;
             _blocks = new Block[ Size, Size, Size ];
             _position = position;
@@ -194,7 +160,7 @@ namespace Kyoob.Blocks
         /// <summary>
         /// Builds the voxel buffers.
         /// </summary>
-        private void BuildVoxelBuffers()
+        private void BuildVoxelBuffers( BlockType[,,] data )
         {
             /**
              * What we need to do is go through all of our blocks and determine which are exposed at all
@@ -208,13 +174,13 @@ namespace Kyoob.Blocks
             _octree.Clear();
 
             // begin block iteration
-            for ( int x = 0; x < Size; ++x )
+            for ( int x = 1; x < Size + 1; ++x )
             {
-                for ( int y = 0; y < Size; ++y )
+                for ( int y = 1; y < Size + 1; ++y )
                 {
-                    for ( int z = 0; z < Size; ++z )
+                    for ( int z = 1; z < Size + 1; ++z )
                     {
-                        Block block = _blocks[ x, y, z ];
+                        Block block = _blocks[ x - 1, y - 1, z - 1 ];
 
                         // make sure the block is active
                         if ( !block.IsActive )
@@ -223,7 +189,7 @@ namespace Kyoob.Blocks
                         }
 
                         // if the type is dirt and there's nothing on top, then the block should be grass.
-                        if ( block.Type == BlockType.Dirt && GetBlockType( x, y + 1, z ) == BlockType.Air )
+                        if ( block.Type == BlockType.Dirt && data[ x, y + 1, z ] == BlockType.Air )
                         {
                             block.Type = BlockType.Grass;
                         }
@@ -235,55 +201,55 @@ namespace Kyoob.Blocks
                         bool exposed = false;
 
                         // check above
-                        BlockType type = GetBlockType( x, y + 1, z );
+                        BlockType type = data[ x, y + 1, z ];
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
-                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Top, _settings.SpriteSheet, block.Type ) );
                             exposed = true;
                         }
                         // only do the tops of water
                         if ( block.Type == BlockType.Water && type == BlockType.Air )
                         {
-                            _waterBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Top, _world.SpriteSheet, block.Type ) );
+                            _waterBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Top, _settings.SpriteSheet, block.Type ) );
                         }
 
                         // check below
-                        type = GetBlockType( x, y - 1, z );
+                        type = data[ x, y - 1, z ];
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
-                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Bottom, _world.SpriteSheet, block.Type ) );
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Bottom, _settings.SpriteSheet, block.Type ) );
                             exposed = true;
                         }
 
                         // check to the left
-                        type = GetBlockType( x - 1, y, z );
+                        type = data[ x - 1, y, z ];
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
-                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Left, _world.SpriteSheet, block.Type ) );
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Left, _settings.SpriteSheet, block.Type ) );
                             exposed = true;
                         }
 
                         // check to the right
-                        type = GetBlockType( x + 1, y, z );
+                        type = data[ x + 1, y, z ];
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
-                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Right, _world.SpriteSheet, block.Type ) );
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Right, _settings.SpriteSheet, block.Type ) );
                             exposed = true;
                         }
 
                         // check in front
-                        type = GetBlockType( x, y, z - 1 );
+                        type = data[ x, y, z - 1 ];
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
-                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Front, _world.SpriteSheet, block.Type ) );
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Front, _settings.SpriteSheet, block.Type ) );
                             exposed = true;
                         }
 
                         // check in back
-                        type = GetBlockType( x, y, z + 1 );
+                        type = data[ x, y, z + 1 ];
                         if ( IsEmptyBlockType( type ) && !IsEmptyBlockType( block.Type ) )
                         {
-                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Back, _world.SpriteSheet, block.Type ) );
+                            _terrainBuff.AddFaceData( Cube.CreateFaceData( block.Position, CubeFace.Back, _settings.SpriteSheet, block.Type ) );
                             exposed = true;
                         }
 
@@ -297,8 +263,8 @@ namespace Kyoob.Blocks
             }
 
             // set our vertex count and create the buffer
-            _terrainBuff.Compile( _world.GraphicsDevice );
-            _waterBuff.Compile( _world.GraphicsDevice );
+            _terrainBuff.Compile( _settings.GraphicsDevice );
+            _waterBuff.Compile( _settings.GraphicsDevice );
         }
 
         /// <summary>
@@ -320,7 +286,7 @@ namespace Kyoob.Blocks
         /// <param name="z">The Z index of the block to check.</param>
         private BlockType GetBlockType( int x, int y, int z )
         {
-            Vector3 pos = _world.LocalToWorld( _position, x, y, z );
+            Vector3 pos = World.LocalToWorld( _position, x, y, z );
             return _world.GetBlockType( pos );
         }
 
@@ -407,19 +373,21 @@ namespace Kyoob.Blocks
             //_terrainBuff.Compile( _world.GraphicsDevice );
             //_waterBuff.Compile( _world.GraphicsDevice );
 
-            lock ( _terrainBuff )
-            {
-                lock ( _waterBuff )
-                {
-                    lock ( _octree )
-                    {
-                        if ( !_terrainBuff.IsOnGPU && !_waterBuff.IsOnGPU )
-                        {
-                            BuildVoxelBuffers();
-                        }
-                    }
-                }
-            }
+            //lock ( _terrainBuff )
+            //{
+            //    lock ( _waterBuff )
+            //    {
+            //        lock ( _octree )
+            //        {
+            //            if ( !_terrainBuff.IsOnGPU && !_waterBuff.IsOnGPU )
+            //            {
+            //                BuildVoxelBuffers();
+            //            }
+            //        }
+            //    }
+            //}
+
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -435,67 +403,6 @@ namespace Kyoob.Blocks
             if ( !_waterBuff.IsEmpty )
             {
                 renderer.QueueAlpha( _waterBuff );
-            }
-        }
-
-        /// <summary>
-        /// Saves this chunk to a stream.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        public void SaveTo( Stream stream )
-        {
-            // create helper writer and write the magic number
-            BinaryWriter bin = new BinaryWriter( stream );
-            bin.Write( MagicNumber );
-
-            // save chunk center
-            bin.Write( _position.X );
-            bin.Write( _position.Y );
-            bin.Write( _position.Z );
-
-            // save block data
-            for ( int x = 0; x < 16; ++x )
-            {
-                for ( int y = 0; y < 16; ++y )
-                {
-                    for ( int z = 0; z < 16; ++z )
-                    {
-                        bin.Write( (byte)_blocks[ x, y, z ].Type );
-                        bin.Write( _blocks[ x, y, z ].IsActive );
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Reads a chunk's data from a stream.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="world">The world the chunk is in.</param>
-        /// <returns></returns>
-        public static Chunk ReadFrom( Stream stream, World world )
-        {
-            // create our helper reader and make sure we find the chunk's magic number
-            BinaryReader bin = new BinaryReader( stream );
-            if ( bin.ReadInt32() != MagicNumber )
-            {
-                Terminal.WriteError( "Encountered invalid chunk in stream." );
-                return null;
-            }
-
-            // now try to read the chunk
-            try
-            {
-                Chunk chunk = new Chunk( bin, world );
-                return chunk;
-            }
-            catch ( Exception ex )
-            {
-                Terminal.WriteError( "Failed to load chunk." );
-                Terminal.WriteError( "-- {0}", ex.Message );
-                Terminal.WriteError( ex.StackTrace );
-
-                return null;
             }
         }
     }

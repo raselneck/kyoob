@@ -11,6 +11,8 @@ namespace Kyoob.Terrain
         private LibNoise.Perlin _noise;
         private float _hBias;
         private float _vBias;
+        private float _maxHeight;
+        private bool _invert;
 
         /// <summary>
         /// Gets or sets the seed for this Perlin terrain generator.
@@ -55,6 +57,22 @@ namespace Kyoob.Terrain
             set
             {
                 _vBias = value;
+                _maxHeight = 1.0f / _vBias;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets whether or not to invert the generated Perlin noise values.
+        /// </summary>
+        public bool Invert
+        {
+            get
+            {
+                return _invert;
+            }
+            set
+            {
+                _invert = value;
             }
         }
 
@@ -65,7 +83,7 @@ namespace Kyoob.Terrain
         {
             get
             {
-                return 1.0f / _vBias;
+                return _maxHeight;
             }
         }
 
@@ -94,8 +112,8 @@ namespace Kyoob.Terrain
             _noise = new LibNoise.Perlin();
             _noise.Seed = seed;
 
-            _hBias = 1.0f / 57; // prime numbers work best
-            _vBias = 1.0f / 24;
+            HorizontalBias = 1.0f / 57; // prime numbers work best
+            VerticalBias   = 1.0f / 24; // use property to set max height
         }
 
         /// <summary>
@@ -124,7 +142,10 @@ namespace Kyoob.Terrain
             // get noise value
             float noise = (float)_noise.GetValue( world.X, world.Y, world.Z );
             noise = MathHelper.Clamp( noise, -1.0f, 1.0f ) / 2.0f + 0.5f;
-            noise = 1.0f - noise;
+            if ( _invert )
+            {
+                noise = 1.0f - noise;
+            }
 
             // get the block type based on the noise value
             if ( world.Y <= noise )

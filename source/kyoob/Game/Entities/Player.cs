@@ -1,7 +1,8 @@
-﻿using Kyoob.Effects;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Kyoob.Debug;
+using Kyoob.Effects;
 
 namespace Kyoob.Game.Entities
 {
@@ -53,6 +54,19 @@ namespace Kyoob.Game.Entities
 
             _currKeys = Keyboard.GetState();
             _prevKeys = Keyboard.GetState();
+
+            SetTerminalCommands();
+        }
+
+        /// <summary>
+        /// Sets the player terminal commands.
+        /// </summary>
+        private void SetTerminalCommands()
+        {
+            Terminal.AddCommand( "player", "pos", ( string[] param ) =>
+            {
+                Terminal.WriteInfo( "[{0:0.00},{1:0.00},{2:0.00}]", Position.X, Position.Y, Position.Z );
+            } );
         }
 
         /// <summary>

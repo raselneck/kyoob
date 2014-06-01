@@ -7,7 +7,7 @@ namespace Kyoob.Blocks
     /// <summary>
     /// A simple cube.
     /// </summary>
-    public sealed class Cube
+    public static class Cube
     {
         /// <summary>
         /// The number of triangles per cube face.

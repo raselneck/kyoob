@@ -1,6 +1,5 @@
 build/*
 source/kyoob/obj/*
-source/kyoob.lua/obj/*
 content/obj/*
 content/bin/*
 *.user

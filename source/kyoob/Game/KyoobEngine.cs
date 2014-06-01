@@ -26,9 +26,9 @@ namespace Kyoob.Game
 
         private World _world;
         private Player _player;
+        private WorldEffect _effect;
         private KyoobSettings _settings;
         private GraphicsDevice _device;
-        private PointLightEffect _effect;
         private GraphicsDeviceManager _graphics;
 
         /// <summary>
@@ -85,19 +85,21 @@ namespace Kyoob.Game
 
             // create a perlin terrain generator
             PerlinTerrain terrain  = new PerlinTerrain( 103695625 );
-            terrain.Octave            = 4;
+            terrain.Invert            = true;
+            terrain.Octave            = 5;
             terrain.VerticalBias      = 1.0f / 64;
-            terrain.HorizontalBias    = 1.0f / 97;
-            terrain.Levels.WaterLevel = 0.500f;
-            terrain.Levels.SetBounds( BlockType.Stone, 0.000f, 0.250f );
-            terrain.Levels.SetBounds( BlockType.Sand,  0.250f, 0.625f );
-            terrain.Levels.SetBounds( BlockType.Dirt,  0.625f, 1.000f );
+            terrain.HorizontalBias    = 1.0f / 113;
+            terrain.Levels.WaterLevel = 0.450f;
+            terrain.Levels.SetBounds( BlockType.Stone, 0.000f, 0.375f );
+            terrain.Levels.SetBounds( BlockType.Sand,  0.375f, 0.500f );
+            terrain.Levels.SetBounds( BlockType.Dirt,  0.500f, 1.000f );
             _settings.TerrainGenerator = terrain;
 
 
             // create the player
             CameraSettings camSettings = new CameraSettings( _device );
-            camSettings.InitialPosition = new Vector3( -50.0f, 1.5f / terrain.VerticalBias, -64.0f );
+            camSettings.InitialPosition = new Vector3( -48.0f, 1.0f / terrain.VerticalBias + 4.0f, -80.0f );
+            camSettings.ClipFar = _settings.GameSettings.ViewDistance * 2.0f;
             _settings.CameraSettings = camSettings;
             _player = new Player( _settings );
 
@@ -107,7 +109,7 @@ namespace Kyoob.Game
 
 
             // load our effects
-            _effect = new PointLightEffect( Content.Load<Effect>( "fx/world" ) );
+            _effect = new WorldEffect( Content.Load<Effect>( "fx/world" ) );
             _effect.Texture = _settings.SpriteSheet.Texture;
             _effect.LightAttenuation = 96.0f;
 
@@ -122,29 +124,10 @@ namespace Kyoob.Game
             );
 
 
-            // create the world if we can't find the file
-            const string WorldFile = "./worlds/test.dat";
-            if ( File.Exists( WorldFile ) )
-            {
-                using ( Stream stream = File.OpenRead( WorldFile ) )
-                {
-                    _world = World.ReadFrom( stream, _settings );
-                }
-                if ( _world != null )
-                {
-                    Terminal.WriteInfo( "Loaded world from file." );
-                }
-            }
-            if ( _world == null )
-            {
-                _world = new World( _settings );
-
-                Terminal.WriteInfo( "Creating new world." );
-            }
-
-            // set the player's world and start chunk management
+            // create the world
+            _world = new World( _settings );
             _player.World = _world;
-            _world.StartChunkManagement( _player.Position, camSettings.ClipFar );
+            _world.StartChunkManagement( _player.Position, _settings.GameSettings.ViewDistance );
         }
 
         /// <summary>
@@ -152,21 +135,7 @@ namespace Kyoob.Game
         /// </summary>
         protected override void UnloadContent()
         {
-            // create world directory
-            if ( !Directory.Exists( "./worlds/" ) )
-            {
-                Directory.CreateDirectory( "./worlds/" );
-            }
-
-
-            /*
-            // save the world (figuratively, of course)
-            using ( Stream stream = File.Create( "./worlds/test.dat" ) )
-            {
-                _world.SaveTo( stream );
-            }
-            */
-
+            // dispose of the world
             _world.Dispose();
 
             // export our settings

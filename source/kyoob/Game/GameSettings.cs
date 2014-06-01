@@ -12,6 +12,7 @@ namespace Kyoob.Game
     /// </summary>
     public sealed class GameSettings
     {
+        private float _viewDistance;
         private float _mouseSensitivity;
         private Keys _keyStrafeLeft;
         private Keys _keyStrafeRight;
@@ -20,6 +21,22 @@ namespace Kyoob.Game
         private Keys _keySprint;
         private Keys _keyJump;
         private Keys _keyConsole;
+
+        /// <summary>
+        /// Gets or sets the view distance.
+        /// </summary>
+        [JsonProperty( "view_distance" )]
+        public float ViewDistance
+        {
+            get
+            {
+                return _viewDistance;
+            }
+            set
+            {
+                _viewDistance = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets the mouse velocity.
@@ -154,6 +171,7 @@ namespace Kyoob.Game
         /// </summary>
         public GameSettings()
         {
+            _viewDistance = 128.0f;
             _mouseSensitivity = 0.06f;
             _keyStrafeLeft = Keys.A;
             _keyStrafeRight = Keys.D;
@@ -170,6 +188,7 @@ namespace Kyoob.Game
         /// <param name="other">The other settings.</param>
         private void CopyFrom( GameSettings other )
         {
+            _viewDistance       = other._viewDistance;
             _mouseSensitivity   = other._mouseSensitivity;
             _keyStrafeLeft      = other._keyStrafeLeft;
             _keyStrafeRight     = other._keyStrafeRight;

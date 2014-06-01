@@ -9,7 +9,6 @@ float3    _lightPosition    = float3( 0.0, 0.0, 0.0 );
 float     _lightAttenuation = 10.0;
 float     _lightFalloff     = 4.0;
 
-float3    _cameraPosition;
 
 // point clamp the textures for the good ol' blocky style
 texture2D _texture;
@@ -34,10 +33,10 @@ struct VSInput
 // vertex shader output data
 struct VSOutput
 {
-    float4 Position : POSITION0;
-    float2 UV       : TEXCOORD0;
-    float3 Normal   : TEXCOORD1;
-    float4 WorldPos : TEXCOORD2;
+    float4 Position      : POSITION0;
+    float2 UV            : TEXCOORD0;
+    float3 Normal        : TEXCOORD1;
+    float4 WorldPosition : TEXCOORD2;
 };
 
 // vertex shader
@@ -53,7 +52,7 @@ VSOutput VSFunc( VSInput input )
     // send input data to pixel shader
     output.UV            = input.UV;
     output.Normal        = mul( input.Normal, _world );
-    output.WorldPos      = worldPosition;
+    output.WorldPosition = worldPosition;
 
     return output;
 }
@@ -61,13 +60,15 @@ VSOutput VSFunc( VSInput input )
 // pixel shader
 float4 PSFunc( VSOutput input ) : COLOR0
 {
+    // texture calculations
     float3 diffuseColor = _diffuseColor;
     float4 texColor = tex2D( _textureSampler, input.UV );
     diffuseColor *= texColor.rgb;
 
-    float3 lightDir = normalize( _lightPosition - input.WorldPos );
+    // lighting calculations
+    float3 lightDir = normalize( _lightPosition - input.WorldPosition );
     float  diffuse  = saturate( dot( normalize( input.Normal ), lightDir ) );
-    float  dist     = distance( _lightPosition, input.WorldPos );
+    float  dist     = distance( _lightPosition, input.WorldPosition );
     float  att      = 1 - pow( clamp( dist / _lightAttenuation, 0.0, 1.0 ), _lightFalloff );
     float3 output   = ( _ambientColor + diffuse * att * _lightColor ) * diffuseColor;
 
@@ -79,7 +80,7 @@ technique MainTechnique
     pass Pass0
     {
         AlphaBlendEnable = FALSE;
-        VertexShader     = compile vs_2_0 VSFunc();
+        VertexShader     = compile vs_1_1 VSFunc();
         PixelShader      = compile ps_2_0 PSFunc();
     }
 }
@@ -91,7 +92,7 @@ technique AlphaTechnique
         AlphaBlendEnable = TRUE;
         DestBlend        = INVSRCALPHA;
         SrcBlend         = SRCALPHA;
-        VertexShader     = compile vs_2_0 VSFunc();
+        VertexShader     = compile vs_1_1 VSFunc();
         PixelShader      = compile ps_2_0 PSFunc();
     }
 }

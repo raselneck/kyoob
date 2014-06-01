@@ -11,7 +11,6 @@ namespace Kyoob.Terrain
     {
         private int _seed;
         private TerrainLevels _levels;
-        private World _world;
 
         /// <summary>
         /// Gets or sets the seed for the seed for the terrain generator.
@@ -48,21 +47,6 @@ namespace Kyoob.Terrain
         }
 
         /// <summary>
-        /// Gets or sets the world this terrain generator is for.
-        /// </summary>
-        public World World
-        {
-            get
-            {
-                return _world;
-            }
-            set
-            {
-                _world = value;
-            }
-        }
-
-        /// <summary>
         /// Creates a new terrain generator.
         /// </summary>
         /// <param name="seed">The generator's seed.</param>
@@ -79,21 +63,15 @@ namespace Kyoob.Terrain
         /// <returns></returns>
         public virtual BlockType[,,] GenerateChunkData( Chunk chunk )
         {
-            // make sure we have a world
-            if ( _world == null )
-            {
-                throw new NullReferenceException( "The world must be set." );
-            }
+            BlockType[,,] blocks = new BlockType[ Chunk.Size + 2, Chunk.Size + 2, Chunk.Size + 2 ];
 
-            BlockType[,,] blocks = new BlockType[ Chunk.Size, Chunk.Size, Chunk.Size ];
-
-            for ( int x = 0; x < Chunk.Size; ++x )
+            for ( int x = 0; x < Chunk.Size + 2; ++x )
             {
-                for ( int y = 0; y < Chunk.Size; ++y )
+                for ( int y = 0; y < Chunk.Size + 2; ++y )
                 {
-                    for ( int z = 0; z < Chunk.Size; ++z )
+                    for ( int z = 0; z < Chunk.Size + 2; ++z )
                     {
-                        Vector3 world = _world.LocalToWorld( chunk.Center, x, y, z );
+                        Vector3 world = World.LocalToWorld( chunk.Center, x - 1, y - 1, z - 1 );
                         blocks[ x, y, z ] = GetBlockType( world );
                     }
                 }
