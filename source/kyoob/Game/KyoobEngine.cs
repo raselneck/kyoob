@@ -24,13 +24,12 @@ namespace Kyoob.Game
     {
         private const string SettingsFile = "./settings.json";
 
-        private GraphicsDeviceManager _graphics;
-        private GraphicsDevice _device;
-
-        private KyoobSettings _settings;
-        private PointLightEffect _effect;
         private World _world;
         private Player _player;
+        private KyoobSettings _settings;
+        private GraphicsDevice _device;
+        private PointLightEffect _effect;
+        private GraphicsDeviceManager _graphics;
 
         /// <summary>
         /// Creates a new Kyoob engine.

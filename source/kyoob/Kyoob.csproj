@@ -131,10 +131,6 @@
       <XnaReferenceType>Content</XnaReferenceType>
       <Project>{7304DE30-B32B-4FE6-92FB-BD987149CA54}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\kyoob.lua\Kyoob.Lua.csproj">
-      <Project>{16b9134d-c16e-425a-825c-f102093355ad}</Project>
-      <Name>Kyoob.Lua</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0,Profile=Client">
