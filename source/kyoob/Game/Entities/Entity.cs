@@ -19,7 +19,7 @@ namespace Kyoob.Game.Entities
         private const float TerminalVelocity     = -1.5000f;
         private const float CollisionBuffer      =  0.0001f;
 
-        private GraphicsDevice _device;
+        private KyoobSettings _settings;
         private World _world;
         private Vector3 _position;
         private Vector3 _translation;
@@ -27,28 +27,13 @@ namespace Kyoob.Game.Entities
         private bool _isOnGround;
 
         /// <summary>
-        /// Gets or sets the translation vector.
+        /// Gets the global Kyoob settings.
         /// </summary>
-        protected Vector3 Translation
+        protected KyoobSettings Settings
         {
             get
             {
-                return _translation;
-            }
-            set
-            {
-                _translation = value;
-            }
-        }
-
-        /// <summary>
-        /// Gets the graphics device this entity is on.
-        /// </summary>
-        public GraphicsDevice GraphicsDevice
-        {
-            get
-            {
-                return _device;
+                return _settings;
             }
         }
 
@@ -115,10 +100,10 @@ namespace Kyoob.Game.Entities
         /// <summary>
         /// Creates a new entity.
         /// </summary>
-        /// <param name="device">The graphics device to create the entity on.</param>
-        public Entity( GraphicsDevice device )
+        /// <param name="settings">The global settings to use.</param>
+        public Entity( KyoobSettings settings )
         {
-            _device = device;
+            _settings = settings;
             _world = null;
             _position = new Vector3();
             _translation = new Vector3();

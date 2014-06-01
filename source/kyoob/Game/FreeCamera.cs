@@ -40,12 +40,12 @@ namespace Kyoob.Game
         /// <summary>
         /// Creates a new camera.
         /// </summary>
-        /// <param name="settings">The camera settings to use.</param>
-        public FreeCamera( CameraSettings settings )
+        /// <param name="settings">The global settings to use.</param>
+        public FreeCamera( KyoobSettings settings )
             : base( settings )
         {
-            _yaw = settings.InitialYaw;
-            _pitch = settings.InitialPitch;
+            _yaw = Settings.InitialYaw;
+            _pitch = Settings.InitialPitch;
             _lastMouse = Mouse.GetState();
 
             SetTerminalCommands();

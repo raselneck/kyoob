@@ -14,7 +14,7 @@ using Microsoft.Xna.Framework.Graphics;
 #warning TODO : When chunks are unloaded, their data should be saved to a file somehow so that block data can be retrieved in case a chunk was modified.
 #warning TODO : Create dedicated chunk manager.
 #warning TODO : Split loading/unloading into two separate threads.
-#warning TODO : Create some kind of utilities class to help remove circular dependencies. (I.e. World<->TerrainGenerator)
+#warning TODO : Create some kind of utilities class to help remove circular dependencies. (I.e. World<->TerrainGenerator for LocalToWorld)
 
 namespace Kyoob.Blocks
 {
@@ -76,24 +76,20 @@ namespace Kyoob.Blocks
         /// <summary>
         /// Creates a new world.
         /// </summary>
-        /// <param name="renderer">The renderer to use.</param>
-        /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
-        /// <param name="terrain">The terrain generator to use.</param>
-        public World( EffectRenderer renderer, SpriteSheet spriteSheet, TerrainGenerator terrain )
+        /// <param name="settings">The global settings to use.</param>
+        public World( KyoobSettings settings )
         {
-            CommonInitialization( renderer, spriteSheet, terrain );
+            CommonInitialization( settings );
         }
 
         /// <summary>
         /// Creates a new world by loading it from a stream.
         /// </summary>
         /// <param name="bin">The binary reader to use when reading the world.</param>
-        /// <param name="renderer">The renderer to use.</param>
-        /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
-        /// <param name="terrain">The terrain generator to use.</param>
-        private World( BinaryReader bin, EffectRenderer renderer, SpriteSheet spriteSheet, TerrainGenerator terrain )
+        /// <param name="settings">The settings to use.</param>
+        private World( BinaryReader bin, KyoobSettings settings )
         {
-            CommonInitialization( renderer, spriteSheet, terrain );
+            CommonInitialization( settings );
 
             // load the seed (and terrain) and chunks
             _terrain.Seed = bin.ReadInt32();
@@ -114,18 +110,16 @@ namespace Kyoob.Blocks
         /// <summary>
         /// Performs common initialization logic for the world.
         /// </summary>
-        /// <param name="renderer">The renderer to use.</param>
-        /// <param name="spriteSheet">The sprite sheet to use with each cube.</param>
-        /// <param name="terrain">The terrain generator to use.</param>
-        private void CommonInitialization( EffectRenderer renderer, SpriteSheet spriteSheet, TerrainGenerator terrain )
+        /// <param name="settings">The settings to use.</param>
+        private void CommonInitialization( KyoobSettings settings )
         {
             // set variables
-            _renderer = renderer;
-            _spriteSheet = spriteSheet;
+            _renderer = settings.EffectRenderer;
+            _spriteSheet = settings.SpriteSheet;
             _chunks = new Dictionary<Index3D, Chunk>();
             _renderQueue = new List<Chunk>( 2048 );
             _indices = new HashSet<Index3D>();
-            _terrain = terrain;
+            _terrain = settings.TerrainGenerator;
             _terrain.World = this;
             _isDisposed = false;
 
@@ -621,10 +615,8 @@ namespace Kyoob.Blocks
         /// Reads a world's data from a stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
-        /// <param name="renderer">The renderer to use.</param>
-        /// <param name="spriteSheet">The world's sprite sheet.</param>
-        /// <param name="terrain">The terrain generator to use.</param>
-        public static World ReadFrom( Stream stream, EffectRenderer renderer, SpriteSheet spriteSheet, TerrainGenerator terrain )
+        /// <param name="settings">The settings to use.</param>
+        public static World ReadFrom( Stream stream, KyoobSettings settings )
         {
             // create our helper reader and make sure we find the world's magic number
             BinaryReader bin = new BinaryReader( stream );
@@ -637,7 +629,7 @@ namespace Kyoob.Blocks
             // now try to read the world
             try
             {
-                World world = new World( bin, renderer, spriteSheet, terrain );
+                World world = new World( bin, settings );
                 return world;
             }
             catch ( Exception ex )

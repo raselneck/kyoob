@@ -14,6 +14,17 @@ namespace Kyoob.Game
         private BoundingFrustum _frustum;
 
         /// <summary>
+        /// Gets the camera settings.
+        /// </summary>
+        protected CameraSettings Settings
+        {
+            get
+            {
+                return _settings;
+            }
+        }
+
+        /// <summary>
         /// Gets the camera's view matrix.
         /// </summary>
         public virtual Matrix View
@@ -76,10 +87,10 @@ namespace Kyoob.Game
         /// <summary>
         /// Creates a new camera with the given settings.
         /// </summary>
-        /// <param name="settings">The settings.</param>
-        public Camera( CameraSettings settings )
+        /// <param name="settings">The global settings to use.</param>
+        public Camera( KyoobSettings settings )
         {
-            _settings = settings;
+            _settings = settings.CameraSettings;
 
             _projection = _settings.GetProjection();
             _view = Matrix.Identity;

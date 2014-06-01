@@ -12,6 +12,7 @@ Dependencies
     if you're using VS2012 or VS2013
   * I have no clue if this will work with MonoGame
 * [LibNoise for .NET](https://libnoisedotnet.codeplex.com/)
+* [Newtonsoft.Json](http://james.newtonking.com/json) (I use 6.0r3)
 
 Screenshot
 ----------
@@ -61,6 +62,8 @@ Change Log
   * I.e. `listcmd`
 * Added dedicated 2D renderer
 * Started Kyoob.Lua (as in I created the project)
+* Added settings
+* Consolidated some code
 
 **May 30, 2014**
 * Much better physics

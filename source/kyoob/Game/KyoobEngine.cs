@@ -8,9 +8,10 @@ using Kyoob.Terrain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+
 using XnaGame = Microsoft.Xna.Framework.Game;
 
-#warning TODO : Create settings and input manager for key/mouse and controller
+#warning TODO : Create input manager for key/mouse and controller
 #warning TODO : Create Renderer3D to facilitate 3D rendering like Renderer2D
 #warning TODO : Look into Lindgren.Network
 
@@ -21,11 +22,12 @@ namespace Kyoob.Game
     /// </summary>
     public class KyoobEngine : XnaGame
     {
+        private const string SettingsFile = "./settings.json";
+
         private GraphicsDeviceManager _graphics;
         private GraphicsDevice _device;
 
-        private SpriteSheet _spriteSheet;
-        private EffectRenderer _renderer;
+        private KyoobSettings _settings;
         private PointLightEffect _effect;
         private World _world;
         private Player _player;
@@ -61,9 +63,16 @@ namespace Kyoob.Game
         protected override void LoadContent()
         {
             _device = GraphicsDevice;
+            _settings = new KyoobSettings( this );
             Renderer2D.Initialize( this );
 
+
+            // try to load the settings file
+            _settings.GameSettings.Import( SettingsFile );
+
+
             // initialize the terminal
+            Terminal.Initialize( _settings );
             Terminal.Font = Content.Load<SpriteFont>( "font/consolas" );
             Terminal.RequestControl += ( sender, args ) =>
             {
@@ -76,7 +85,6 @@ namespace Kyoob.Game
 
 
             // create a perlin terrain generator
-            // PerlinTerrain terrain  = new PerlinTerrain( (int)DateTime.Now.Ticks );
             PerlinTerrain terrain  = new PerlinTerrain( 103695625 );
             terrain.Octave            = 4;
             terrain.VerticalBias      = 1.0f / 64;
@@ -85,27 +93,29 @@ namespace Kyoob.Game
             terrain.Levels.SetBounds( BlockType.Stone, 0.000f, 0.250f );
             terrain.Levels.SetBounds( BlockType.Sand,  0.250f, 0.625f );
             terrain.Levels.SetBounds( BlockType.Dirt,  0.625f, 1.000f );
+            _settings.TerrainGenerator = terrain;
 
 
             // create the player
-            CameraSettings settings = new CameraSettings( _device );
-            settings.InitialPosition = new Vector3( -50.0f, 1.5f / terrain.VerticalBias, -64.0f );
-            _player = new Player( _device, settings );
+            CameraSettings camSettings = new CameraSettings( _device );
+            camSettings.InitialPosition = new Vector3( -50.0f, 1.5f / terrain.VerticalBias, -64.0f );
+            _settings.CameraSettings = camSettings;
+            _player = new Player( _settings );
 
 
             // load the sprite sheet and set the bounding box effect
-            _spriteSheet = new SpriteSheet( Content.Load<Texture2D>( "tex/spritesheet" ) );
+            _settings.SpriteSheet = new SpriteSheet( Content.Load<Texture2D>( "tex/spritesheet" ) );
 
 
             // load our effects
             _effect = new PointLightEffect( Content.Load<Effect>( "fx/world" ) );
-            _effect.Texture = _spriteSheet.Texture;
+            _effect.Texture = _settings.SpriteSheet.Texture;
             _effect.LightAttenuation = 96.0f;
 
 
             // create the renderer
-            _renderer = new EffectRenderer( _device, _effect, _player.Camera );
-            _renderer.SkyBox = new SkyBox(
+            _settings.EffectRenderer = new EffectRenderer( _device, _effect, _player.Camera );
+            _settings.EffectRenderer.SkyBox = new SkyBox(
                 Content.Load<Model>( "model/skybox" ),
                 _device,
                 new SkyBoxEffect( Content.Load<Effect>( "fx/skybox" ) ),
@@ -119,7 +129,7 @@ namespace Kyoob.Game
             {
                 using ( Stream stream = File.OpenRead( WorldFile ) )
                 {
-                    _world = World.ReadFrom( stream, _renderer, _spriteSheet, terrain );
+                    _world = World.ReadFrom( stream, _settings );
                 }
                 if ( _world != null )
                 {
@@ -128,14 +138,14 @@ namespace Kyoob.Game
             }
             if ( _world == null )
             {
-                _world = new World( _renderer, _spriteSheet, terrain );
+                _world = new World( _settings );
 
                 Terminal.WriteInfo( "Creating new world." );
             }
 
             // set the player's world and start chunk management
             _player.World = _world;
-            _world.StartChunkManagement( _player.Position, settings.ClipFar );
+            _world.StartChunkManagement( _player.Position, camSettings.ClipFar );
         }
 
         /// <summary>
@@ -159,6 +169,9 @@ namespace Kyoob.Game
             */
 
             _world.Dispose();
+
+            // export our settings
+            _settings.GameSettings.Export( SettingsFile );
         }
 
         /// <summary>
@@ -187,13 +200,12 @@ namespace Kyoob.Game
         protected override void Draw( GameTime gameTime )
         {
             // clear based on ambient color if we can
-            _renderer.ClearColor = new Color( _effect.AmbientColor );
+            _settings.EffectRenderer.ClearColor = new Color( _effect.AmbientColor );
             
 
             // draw the world and the terminal
             _effect.Projection = _player.Camera.Projection;
             _effect.View = _player.Camera.View;
-            _renderer.GraphicsDevice.Clear( _renderer.ClearColor );
             _world.Draw( gameTime, _player.Camera );
             _player.Draw( gameTime, _effect );
             Terminal.Draw( gameTime );

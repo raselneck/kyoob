@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using Kyoob.Game;
 using Kyoob.Graphics;
 
 using XnaGame = Microsoft.Xna.Framework.Game;
@@ -52,11 +54,11 @@ namespace Kyoob.Debug
             }
         }
 
-        private static List<TerminalMessage> _messages;
-        private static SpriteFont _font;
-        private static float _lineHeight;
-        private static TerminalInput _input;
         private static bool _isHidden;
+        private static float _lineHeight;
+        private static SpriteFont _font;
+        private static TerminalInput _input;
+        private static List<TerminalMessage> _messages;
 
         // FPS monitoring is delegated to the terminal
         private static int _frameCount;
@@ -114,9 +116,33 @@ namespace Kyoob.Debug
 #else
             _isHidden = true;
 #endif
+        }
 
+        /// <summary>
+        /// Draws a highlighted message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        /// <param name="position">The position to draw the image at.</param>
+        private static void DrawHighlighted( TerminalMessage message, Vector2 position )
+        {
+            // draw a black border around the text
+            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X - 1, position.Y ), Color.Black );
+            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X + 1, position.Y ), Color.Black );
+            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X, position.Y - 1 ), Color.Black );
+            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X, position.Y + 1 ), Color.Black );
+
+            // now draw the actual message
+            Renderer2D.DrawString( _font, message.Message, position, message.TextColor );
+        }
+
+        /// <summary>
+        /// Initializes the terminal.
+        /// </summary>
+        /// <param name="settings">The global settings to use.</param>
+        public static void Initialize( KyoobSettings settings )
+        {
             // setup the input
-            _input = new TerminalInput( null );
+            _input = new TerminalInput( null, settings.GameSettings.ConsoleKey );
             _input.ReleaseControl += ( sender, args ) =>
             {
                 if ( ReleaseControl != null )
@@ -141,23 +167,6 @@ namespace Kyoob.Debug
             {
                 _isHidden = true;
             } );
-        }
-
-        /// <summary>
-        /// Draws a highlighted message.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        /// <param name="position">The position to draw the image at.</param>
-        private static void DrawHighlighted( TerminalMessage message, Vector2 position )
-        {
-            // draw a black border around the text
-            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X - 1, position.Y ), Color.Black );
-            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X + 1, position.Y ), Color.Black );
-            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X, position.Y - 1 ), Color.Black );
-            Renderer2D.DrawString( _font, message.Message, new Vector2( position.X, position.Y + 1 ), Color.Black );
-
-            // now draw the actual message
-            Renderer2D.DrawString( _font, message.Message, position, message.TextColor );
         }
 
         /// <summary>
@@ -299,7 +308,7 @@ namespace Kyoob.Debug
         /// <param name="options">The formatting options.</param>
         public static void WriteError( string message, params object[] options )
         {
-            Color lightRed = Color.Lerp( Color.Red, Color.White, 0.3f );
+            Color lightRed = Color.Lerp( Color.Red, Color.White, 0.15f );
             WriteLine( lightRed, 5.0, message, options );
         }
 

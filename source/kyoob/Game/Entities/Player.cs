@@ -43,14 +43,13 @@ namespace Kyoob.Game.Entities
         /// <summary>
         /// Creates a new player.
         /// </summary>
-        /// <param name="device">The graphics device to create the player on.</param>
-        /// <param name="settings">The settings for the player's camera.</param>
-        public Player( GraphicsDevice device, CameraSettings settings )
-            : base( device )
+        /// <param name="settings">The settings to use.</param>
+        public Player( KyoobSettings settings )
+            : base( settings )
         {
             _camera = new PlayerCamera( settings, this );
             _camera.EyeHeight = 0.6f;
-            _camera.LookVelocity = 0.0016f;
+            _camera.LookVelocity = settings.GameSettings.MouseSensitivity;
 
             _currKeys = Keyboard.GetState();
             _prevKeys = Keyboard.GetState();
@@ -77,7 +76,7 @@ namespace Kyoob.Game.Entities
         {
             // calculate our "units per second"
             float units = time * MoveVelocity;
-            if ( _currKeys.IsKeyDown( Keys.LeftShift ) )
+            if ( _currKeys.IsKeyDown( Settings.GameSettings.SprintKey ) )
             {
                 units = time * SprintVelocity;
             }
@@ -92,33 +91,33 @@ namespace Kyoob.Game.Entities
             }
 
             // check if we need to strafe forward
-            if ( _currKeys.IsKeyDown( Keys.W ) )
+            if ( _currKeys.IsKeyDown( Settings.GameSettings.StrafeForwardKey ) )
             {
                 Move( forward );
                 Move( up );
             }
 
             // check if we need to strafe backward
-            if ( _currKeys.IsKeyDown( Keys.S ) )
+            if ( _currKeys.IsKeyDown( Settings.GameSettings.StrafeBackwardKey ) )
             {
                 Move( -forward );
                 Move( -up );
             }
 
             // check if we need to strafe right
-            if ( _currKeys.IsKeyDown( Keys.D ) )
+            if ( _currKeys.IsKeyDown( Settings.GameSettings.StrafeRightKey ) )
             {
                 Move( right );
             }
 
             // check if we need to strafe left
-            if ( _currKeys.IsKeyDown( Keys.A ) )
+            if ( _currKeys.IsKeyDown( Settings.GameSettings.StrafeLeftKey ) )
             {
                 Move( -right );
             }
 
             // check if we need to jump
-            if ( _currKeys.IsKeyDown( Keys.Space ) )
+            if ( _currKeys.IsKeyDown( Settings.GameSettings.JumpKey ) )
             {
                 Jump( JumpVelocity * time );
             }
@@ -158,7 +157,7 @@ namespace Kyoob.Game.Entities
         public override void Draw( GameTime gameTime, BaseEffect effect )
         {
 #if DEBUG
-            Bounds.Draw( GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
+            Bounds.Draw( Settings.GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
 #endif
         }
     }

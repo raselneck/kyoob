@@ -1,5 +1,6 @@
 ﻿using Kyoob.Debug;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 #warning TODO : Figure out how to push the camera view position forward a bit based on rotation so its closer to the bound's edge.
@@ -14,6 +15,7 @@ namespace Kyoob.Game.Entities
         private MouseState _currMouse;
         private MouseState _prevMouse;
         private Player _player;
+        private GraphicsDevice _device;
         private Matrix _rotation;
         private float _yaw;
         private float _pitch;
@@ -128,19 +130,20 @@ namespace Kyoob.Game.Entities
         /// <summary>
         /// Creates a new player camera.
         /// </summary>
-        /// <param name="settings">The camera settings to use.</param>
+        /// <param name="settings">The global settings to use.</param>
         /// <param name="player">The player to be linked to.</param>
-        public PlayerCamera( CameraSettings settings, Player player )
+        public PlayerCamera( KyoobSettings settings, Player player )
             : base( settings )
         {
+            _device = settings.GraphicsDevice;
             _currMouse = Mouse.GetState();
             _prevMouse = Mouse.GetState();
             _player = player;
-            _player.MoveTo( settings.InitialPosition );
-            _yaw = settings.InitialYaw;
-            _pitch = settings.InitialPitch;
+            _player.MoveTo( Settings.InitialPosition );
+            _yaw = Settings.InitialYaw;
+            _pitch = Settings.InitialPitch;
             _eyeHeight = _player.Size.Y / 4.0f;
-            _lookVelocity = 0.0025f;
+            _lookVelocity = 0.04f;
 
             // set our control data
             _hasControl = true;
@@ -169,21 +172,21 @@ namespace Kyoob.Game.Entities
         /// </summary>
         private void CenterMouse()
         {
-            int width  = _player.GraphicsDevice.PresentationParameters.BackBufferWidth;
-            int height = _player.GraphicsDevice.PresentationParameters.BackBufferHeight;
+            int width  = _device.PresentationParameters.BackBufferWidth;
+            int height = _device.PresentationParameters.BackBufferHeight;
             Mouse.SetPosition( width / 2, height / 2 );
         }
 
         /// <summary>
         /// Rotates the camera based on cached mouse states.
         /// </summary>
-        private void Rotate()
+        private void Rotate( float time )
         {
             // modify the yaw and pitch
             int dYaw    = _prevMouse.X - _currMouse.X;
             int dPitch  = _prevMouse.Y - _currMouse.Y;
-            _yaw       += _lookVelocity * dYaw;
-            _pitch     += _lookVelocity * dPitch;
+            _yaw       += _lookVelocity * dYaw * time;
+            _pitch     += _lookVelocity * dPitch * time;
 
             // clamp pitch
             if ( _pitch > MathHelper.PiOver2 )
@@ -235,7 +238,8 @@ namespace Kyoob.Game.Entities
             // update based on whether or not we have control
             if ( _hasControl )
             {
-                Rotate();
+                float time = (float)gameTime.ElapsedGameTime.TotalSeconds;
+                Rotate( time );
                 CenterMouse();
             }
             ApplyTransformations();

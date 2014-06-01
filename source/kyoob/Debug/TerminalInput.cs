@@ -11,14 +11,15 @@ namespace Kyoob.Debug
     /// </summary>
     public sealed class TerminalInput
     {
-        private SpriteFont _font;
-        private KeyboardState _oldKeys;
-        private KeyboardState _newKeys;
+        private int _historyIndex;
+        private Keys _inputKey;
         private bool _hasControl;
         private string _text;
-        private CommandHandler _commands;
+        private SpriteFont _font;
         private List<string> _history;
-        private int _historyIndex;
+        private KeyboardState _oldKeys;
+        private KeyboardState _newKeys;
+        private CommandHandler _commands;
 
         /// <summary>
         /// The event that is called when the input requests control of user input.
@@ -82,9 +83,11 @@ namespace Kyoob.Debug
         /// Creates a new terminal input object.
         /// </summary>
         /// <param name="font">The font to use.</param>
-        public TerminalInput( SpriteFont font )
+        /// <param name="inputKey">The key to monitor for toggling control.</param>
+        public TerminalInput( SpriteFont font, Keys inputKey )
         {
             _font = font;
+            _inputKey = inputKey;
             _oldKeys = Keyboard.GetState();
             _hasControl = false;
             _commands = new CommandHandler();
@@ -108,7 +111,7 @@ namespace Kyoob.Debug
         private void CheckForControl()
         {
             // if tilde was pressed
-            if ( WasPressed( Keys.OemTilde ) )
+            if ( WasPressed( _inputKey ) )
             {
                 // get the event and change our control flag
                 EventHandler<EventArgs> evt = null;

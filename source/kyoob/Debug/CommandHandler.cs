@@ -38,6 +38,49 @@ namespace Kyoob.Debug
         }
 
         /// <summary>
+        /// Executes a function.
+        /// </summary>
+        /// <param name="obj">The object.</param>
+        /// <param name="func">The function.</param>
+        /// <param name="param">The parameter.</param>
+        public void Execute( string obj, string func, string[] param )
+        {
+            if ( _callbacks.ContainsKey( obj ) )
+            {
+                var functions = _callbacks[ obj ];
+                if ( functions.ContainsKey( func ) )
+                {
+                    // get the callback
+                    CommandCallback callback = functions[ func ];
+                    if ( callback != null )
+                    {
+                        // we'll handle exceptions for the callback
+                        try
+                        {
+                            callback( param );
+                        }
+                        catch ( Exception ex )
+                        {
+                            Terminal.WriteError( ex.Message );
+                        }
+                    }
+                    else
+                    {
+                        Terminal.WriteError( "'{0}{1}' is registered, but unbound", ( obj == "" ) ? "" : obj + ".", func );
+                    } // if callback not null
+                }
+                else
+                {
+                    Terminal.WriteError( "Could not find function '{0}{1}'", ( obj == "" ) ? "" : obj + ".", func );
+                } // if functions.contains func
+            }
+            else
+            {
+                Terminal.WriteError( "Could not find object '{0}'", obj );
+            } // if callbacks.contains obj
+        }
+
+        /// <summary>
         /// Checks to see if the command handler has an object registered.
         /// </summary>
         /// <param name="obj">The object name.</param>
@@ -115,66 +158,39 @@ namespace Kyoob.Debug
             }
             command = command.ToLower();
 
-            // try to get the object
-            int index = command.IndexOf( '.' );
-            string obj = "";
-            if ( index != -1 )
+            try
             {
-                obj = command.Substring( 0, index );
-            }
-
-            // try to get the function
-            int start = index + 1;
-            index = command.IndexOf( ' ' );
-            string func = "";
-            if ( index == -1 )
-            {
-                func = command.Substring( start, command.Length - start );
-            }
-            else
-            {
-                func = command.Substring( start, index - start );
-            }
-
-            // now try to get the callback
-            if ( _callbacks.ContainsKey( obj ) )
-            {
-                var functions = _callbacks[ obj ];
-                if ( functions.ContainsKey( func ) )
+                // try to get the object
+                int index = command.IndexOf( '.' );
+                string obj = "";
+                if ( index != -1 )
                 {
-                    // get the callback
-                    CommandCallback callback = functions[ func ];
+                    obj = command.Substring( 0, index );
+                }
 
-                    // ayy, lmao
-                    if ( callback != null )
-                    {
-                        // get parameters to pass in then execute the callback
-                        start = index + 1;
-                        string[] param = command.Substring( start, command.Length - start ).Split( ' ' );
-                        
-                        // we'll handle exceptions for the callback
-                        try
-                        {
-                            callback( param );
-                        }
-                        catch ( Exception ex )
-                        {
-                            Terminal.WriteError( ex.Message );
-                        }
-                    }
-                    else
-                    {
-                        Terminal.WriteError( "'{0}{1}' is registered, but unbound", ( obj == "" ) ? "" : obj + ".", func );
-                    }
+                // try to get the function
+                int start = index + 1;
+                index = command.IndexOf( ' ' );
+                string func = "";
+                if ( index == -1 )
+                {
+                    func = command.Substring( start, command.Length - start );
                 }
                 else
                 {
-                    Terminal.WriteError( "Could not find function '{0}{1}'", ( obj == "" ) ? "" : obj + ".", func );
+                    func = command.Substring( start, index - start );
                 }
+
+                // get parameters to pass in then execute the callback
+                start = index + 1;
+                string[] param = command.Substring( start, command.Length - start ).Split( ' ' );
+
+                // now attempt to execute the command
+                Execute( obj, func, param );
             }
-            else
+            catch ( Exception )
             {
-                Terminal.WriteError( "Could not find object '{0}'", obj );
+                Terminal.WriteError( "Failed to parse command" );
             }
         }
     }

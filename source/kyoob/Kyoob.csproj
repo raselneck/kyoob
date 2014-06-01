@@ -73,6 +73,9 @@
     <Reference Include="Microsoft.Xna.Framework.Graphics, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
     <Reference Include="Microsoft.Xna.Framework.GamerServices, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=x86" />
     <Reference Include="mscorlib" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\references\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Net" />
   </ItemGroup>
@@ -88,6 +91,8 @@
     <Compile Include="Game\Entities\Entity.cs" />
     <Compile Include="Game\Entities\Player.cs" />
     <Compile Include="Game\Entities\PlayerCamera.cs" />
+    <Compile Include="Game\GameSettings.cs" />
+    <Compile Include="Game\KyoobSettings.cs" />
     <Compile Include="Graphics\Renderer2D.cs" />
     <Compile Include="Graphics\SpriteSheet.cs" />
     <Compile Include="Blocks\VoxelBuffer.cs" />
