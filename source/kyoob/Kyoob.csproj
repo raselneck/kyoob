@@ -105,6 +105,10 @@
     <Compile Include="Game\Entities\PlayerCamera.cs" />
     <Compile Include="Game\GameSettings.cs" />
     <Compile Include="Game\KyoobSettings.cs" />
+    <Compile Include="Game\Management\GameState.cs" />
+    <Compile Include="Game\Management\LoadState.cs" />
+    <Compile Include="Game\Management\PlayState.cs" />
+    <Compile Include="Game\Management\StateSystem.cs" />
     <Compile Include="Graphics\Renderer2D.cs" />
     <Compile Include="Graphics\SpriteSheet.cs" />
     <Compile Include="Blocks\VoxelBuffer.cs" />

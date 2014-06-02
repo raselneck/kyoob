@@ -13,6 +13,7 @@ namespace Kyoob.Blocks
     {
         private volatile int _updateRenderCount;
         private volatile bool _isDisposed;
+        private volatile float _chunkCreationProgress;
         private volatile float _currentViewDistance;
         private          Vector3 _currentViewPosition;
         private volatile List<Chunk> _toRender;
@@ -82,6 +83,17 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Gets the progress on the current batch of chunks to be created.
+        /// </summary>
+        public float ChunkCreationProgress
+        {
+            get
+            {
+                return _chunkCreationProgress;
+            }
+        }
+
+        /// <summary>
         /// Creates a new chunk manager.
         /// </summary>
         /// <param name="settings">The global settings to use.</param>
@@ -100,19 +112,6 @@ namespace Kyoob.Blocks
             _chunks = new Dictionary<Index3D, Chunk>();
         }
 
-
-        /// <summary>
-        /// Gets the distance between two 3D indices.
-        /// </summary>
-        /// <param name="a">The first index.</param>
-        /// <param name="b">The second index.</param>
-        /// <returns></returns>
-        private float GetDistanceBetween( Index3D a, Index3D b )
-        {
-            Vector3 av = World.IndexToPosition( a );
-            Vector3 bv = World.IndexToPosition( b );
-            return Vector3.Distance( av, bv );
-        }
 
         /// <summary>
         /// Creates a chunk with the given index.
@@ -161,34 +160,51 @@ namespace Kyoob.Blocks
             // create some variables to help with chunk management
             HashSet<Index3D> indices = new HashSet<Index3D>();
             Index3D index;
-            int maxDist;
+            int maxDist, currDist = -1;
             int maxHeight = (int)Math.Ceiling(
                 _settings.TerrainGenerator.HighestPoint / Chunk.Size
             );
-            int y = maxHeight;
 
             // continue while we're not disposed
             while ( !_isDisposed )
             {
                 index = World.PositionToIndex( _currentViewPosition );
                 maxDist = (int)( _currentViewDistance / Chunk.Size );
+                currDist = ( currDist == -1 ) ? maxDist / 2 : maxDist;
 
                 // create a list of all of the indices to check
                 indices.Clear();
-                for ( int x = 0; x < maxDist; ++x )
+                for ( int y = 0; y < maxHeight; ++y )
                 {
-                    for ( int z = 0; z < maxDist; ++z )
+                    for ( int x = 0; x < currDist; ++x )
                     {
-                        indices.Add( new Index3D( index.X + x, y, index.Z + z ) );
-                        indices.Add( new Index3D( index.X + x, y, index.Z - z ) );
-                        indices.Add( new Index3D( index.X - x, y, index.Z + z ) );
-                        indices.Add( new Index3D( index.X - x, y, index.Z - z ) );
+                        for ( int z = 0; z < currDist; ++z )
+                        {
+                            Index3D temp = new Index3D( index.X + x, y, index.Z + z );
+                            if ( World.Distance( index, temp ) < _currentViewDistance )
+                            {
+                                indices.Add( temp );
+                            }
+
+                            temp = new Index3D( index.X + x, y, index.Z - z );
+                            if ( World.Distance( index, temp ) < _currentViewDistance )
+                            {
+                                indices.Add( temp );
+                            }
+
+                            temp = new Index3D( index.X - x, y, index.Z + z );
+                            if ( World.Distance( index, temp ) < _currentViewDistance )
+                            {
+                                indices.Add( temp );
+                            }
+
+                            temp = new Index3D( index.X - x, y, index.Z - z );
+                            if ( World.Distance( index, temp ) < _currentViewDistance )
+                            {
+                                indices.Add( temp );
+                            }
+                        }
                     }
-                }
-                // update distance creators
-                if ( --y < 0 )
-                {
-                    y = maxHeight;
                 }
 
                 // put ALL chunks on the chopping block
@@ -246,6 +262,9 @@ namespace Kyoob.Blocks
                 {
                     UpdateRenderList();
                 }
+
+                // update the percentage
+                _chunkCreationProgress = (float)count / _toCreate.Count;
             }
             _toCreate.Clear();
         }
@@ -318,6 +337,8 @@ namespace Kyoob.Blocks
         /// <returns></returns>
         public List<Chunk> GetRenderList()
         {
+            // return new List<Chunk>( _toRender ); // laggy?
+
             List<Chunk> copy;
             lock ( _toRender )
             {

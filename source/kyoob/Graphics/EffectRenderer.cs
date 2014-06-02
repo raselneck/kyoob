@@ -14,7 +14,6 @@ namespace Kyoob.Graphics
     {
         private GraphicsDevice _device;
         private BaseEffect _effect;
-        private Camera _camera;
         private List<VoxelBuffer> _solidQueue;
         private List<VoxelBuffer> _alphaQueue;
         private Color _clearColor;
@@ -66,12 +65,10 @@ namespace Kyoob.Graphics
         /// </summary>
         /// <param name="device">The graphics device to render to.</param>
         /// <param name="effect">The effect to render with.</param>
-        /// <param name="camera">The camera to use.</param>
-        public EffectRenderer( GraphicsDevice device, BaseEffect effect, Camera camera )
+        public EffectRenderer( GraphicsDevice device, BaseEffect effect )
         {
             _device = device;
             _effect = effect;
-            _camera = camera;
             _solidQueue = new List<VoxelBuffer>();
             _alphaQueue = new List<VoxelBuffer>();
             _clearColor = Color.CornflowerBlue;

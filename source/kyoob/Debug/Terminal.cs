@@ -116,6 +116,8 @@ namespace Kyoob.Debug
 #else
             _isHidden = true;
 #endif
+
+            Console.SetOut( new TerminalWriter() );
         }
 
         /// <summary>

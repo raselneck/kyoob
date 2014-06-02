@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Kyoob.Debug;
 using Kyoob.Game;
@@ -21,6 +22,11 @@ namespace Kyoob.Blocks
         public const int Size = 16;
 
         /// <summary>
+        /// The total number of blocks per chunk, or Size * Size * Size.
+        /// </summary>
+        private const int SizeCubed = Size * Size * Size;
+
+        /// <summary>
         /// The magic number for chunks. (FourCC = 'CHNK')
         /// </summary>
         private const int MagicNumber = 0x4B4E4843;
@@ -29,6 +35,7 @@ namespace Kyoob.Blocks
         private BoundingBox _bounds;
         private World _world;
         private Block[,,] _blocks;
+        private List<Block> _grassBlocks;
         private Octree<Block> _octree;
         private VoxelBuffer _terrainBuff;
         private VoxelBuffer _waterBuff;
@@ -86,6 +93,17 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Gets the list of grass blocks in this chunk to be used for finding suitable starting points.
+        /// </summary>
+        public List<Block> GrassBlocks
+        {
+            get
+            {
+                return _grassBlocks;
+            }
+        }
+
+        /// <summary>
         /// Gets this chunk's octree.
         /// </summary>
         public Octree<Block> Octree
@@ -107,9 +125,10 @@ namespace Kyoob.Blocks
             CommonInitialization( settings, world, position );
 
             // generate block data for this chunk
-            BlockType[,,] types = _world.TerrainGenerator.GenerateChunkData( this );
+            BlockType[,,] types = _settings.TerrainGenerator.GenerateChunkData( this );
 
             // create blocks
+            int airCount = 0;
             for ( int x = 0; x < Size; ++x )
             {
                 for ( int y = 0; y < Size; ++y )
@@ -119,13 +138,20 @@ namespace Kyoob.Blocks
                         // get block data
                         Vector3 coords = World.LocalToWorld( _position, x, y, z );
                         BlockType type = types[ x + 1, y + 1, z + 1 ];
+                        if ( type == BlockType.Air )
+                        {
+                            airCount++;
+                        }
                         _blocks[ x, y, z ] = new Block( coords, type );
                     }
                 }
             }
 
             // build the voxel buffer and octree
-            BuildVoxelBuffers( types );
+            if ( airCount < SizeCubed )
+            {
+                BuildVoxelBuffers( types );
+            }
         }
 
         /// <summary>
@@ -152,6 +178,7 @@ namespace Kyoob.Blocks
                     _position.Z + Size / 2 - Cube.Size / 2
                 )
             );
+            _grassBlocks = new List<Block>();
             _octree = new Octree<Block>( _bounds );
             _terrainBuff = new VoxelBuffer();
             _waterBuff = new VoxelBuffer();
@@ -172,6 +199,7 @@ namespace Kyoob.Blocks
             _terrainBuff.Clear();
             _waterBuff.Clear();
             _octree.Clear();
+            _grassBlocks.Clear();
 
             // begin block iteration
             for ( int x = 1; x < Size + 1; ++x )
@@ -192,6 +220,8 @@ namespace Kyoob.Blocks
                         if ( block.Type == BlockType.Dirt && data[ x, y + 1, z ] == BlockType.Air )
                         {
                             block.Type = BlockType.Grass;
+
+                            _grassBlocks.Add( block );
                         }
 
                         /**

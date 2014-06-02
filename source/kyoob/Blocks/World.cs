@@ -29,13 +29,13 @@ namespace Kyoob.Blocks
         private ChunkManager _chunkManager;
 
         /// <summary>
-        /// Gets this world's terrain generator.
+        /// Gets the chunk manager used by this world.
         /// </summary>
-        public TerrainGenerator TerrainGenerator
+        public ChunkManager ChunkManager
         {
             get
             {
-                return _settings.TerrainGenerator;
+                return _chunkManager;
             }
         }
 
@@ -69,6 +69,17 @@ namespace Kyoob.Blocks
             // none yet
         }
 
+
+        /// <summary>
+        /// Gets the world distance between two indices.
+        /// </summary>
+        /// <param name="a">The first index.</param>
+        /// <param name="b">The second index.</param>
+        /// <returns></returns>
+        public static float Distance( Index3D a, Index3D b )
+        {
+            return Vector3.Distance( IndexToPosition( a ), IndexToPosition( b ) );
+        }
 
         /// <summary>
         /// Converts a chunk's local coordinates to world coordinates.
@@ -214,7 +225,7 @@ namespace Kyoob.Blocks
             Chunk chunk = GetChunk( index );
             if ( chunk == null )
             {
-                return TerrainGenerator.GetBlockType( loc );
+                return _settings.TerrainGenerator.GetBlockType( loc );
             }
             else
             {

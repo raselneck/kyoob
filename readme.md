@@ -56,6 +56,9 @@ Acknowledgments
 Change Log
 ----------
 
+**June 2, 2014**
+* Added state system
+
 **June 1, 2014**
 * Made location conversions static
 * Speed increase for chunk generation
