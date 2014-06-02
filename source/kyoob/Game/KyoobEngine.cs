@@ -138,8 +138,8 @@ namespace Kyoob.Game
         /// </summary>
         protected override void UnloadContent()
         {
-            // dispose of the world
-            _stateSystem.World.Dispose();
+            // dispose of the state system
+            _stateSystem.Dispose();
 
             // export our settings
             _settings.GameSettings.Export( SettingsFile );

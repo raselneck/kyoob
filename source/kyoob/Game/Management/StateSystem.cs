@@ -10,7 +10,7 @@ namespace Kyoob.Game.Management
     /// <summary>
     /// The main class for dealing with game states.
     /// </summary>
-    public sealed class StateSystem
+    public sealed class StateSystem : IDisposable
     {
         private World _world;
         private GameState _currentState;
@@ -64,6 +64,19 @@ namespace Kyoob.Game.Management
             _settings = settings;
             _currentState = null;
             _states = new Dictionary<string, GameState>();
+        }
+
+        /// <summary>
+        /// Disposes of all states in the state system and the world.
+        /// </summary>
+        public void Dispose()
+        {
+            foreach ( GameState state in _states.Values )
+            {
+                state.Dispose();
+            }
+
+            _world.Dispose();
         }
 
         /// <summary>

@@ -48,6 +48,34 @@ namespace Kyoob.Graphics
         }
 
         /// <summary>
+        /// Draws a texture.
+        /// </summary>
+        /// <param name="texture">The texture.</param>
+        /// <param name="position">The position.</param>
+        /// <param name="color">The color.</param>
+        public static void Draw( Texture2D texture, Vector2 position, Color color )
+        {
+            if ( _hasBegun )
+            {
+                _spriteBatch.Draw( texture, position, color );
+            }
+        }
+
+        /// <summary>
+        /// Draws a texture.
+        /// </summary>
+        /// <param name="texture">The texture.</param>
+        /// <param name="position">The position.</param>
+        /// <param name="color">The color.</param>
+        public static void Draw( Texture2D texture, Rectangle position, Color color )
+        {
+            if ( _hasBegun )
+            {
+                _spriteBatch.Draw( texture, position, color );
+            }
+        }
+
+        /// <summary>
         /// Draws a string to the screen.
         /// </summary>
         /// <param name="font">The font.</param>

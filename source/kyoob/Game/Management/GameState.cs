@@ -6,7 +6,7 @@ namespace Kyoob.Game.Management
     /// <summary>
     /// The base class for game states.
     /// </summary>
-    public abstract class GameState
+    public abstract class GameState : IDisposable
     {
         private StateSystem _controller;
 
@@ -29,6 +29,11 @@ namespace Kyoob.Game.Management
         {
             _controller = controller;
         }
+
+        /// <summary>
+        /// Disposes of this game state.
+        /// </summary>
+        public abstract void Dispose();
 
         /// <summary>
         /// Updates the game state.

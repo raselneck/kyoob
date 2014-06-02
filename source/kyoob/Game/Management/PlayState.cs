@@ -41,6 +41,13 @@ namespace Kyoob.Game.Management
         }
 
         /// <summary>
+        /// Disposes of this play state.
+        /// </summary>
+        public override void Dispose()
+        {
+        }
+
+        /// <summary>
         /// Updates the play state.
         /// </summary>
         /// <param name="gameTime">Frame time information.</param>

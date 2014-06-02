@@ -13,7 +13,12 @@ namespace Kyoob.Game.Management
     /// </summary>
     public sealed class LoadState : GameState
     {
+        private const string InitialProgressText = "creating some terrain";
+
         private float _progress;
+        private float _progressTime;
+        private string _progressText;
+        private Texture2D _pixel;
         private SpriteFont _font;
         private PresentationParameters _pp;
 
@@ -25,7 +30,13 @@ namespace Kyoob.Game.Management
             : base( controller )
         {
             _pp = Controller.Engine.GraphicsDevice.PresentationParameters;
-            _font = Controller.Engine.Content.Load<SpriteFont>( "font/arial" );
+            _font = Controller.Engine.Content.Load<SpriteFont>( "font/consolas" );
+
+            _progressTime = 0.0f;
+            _progressText = InitialProgressText;
+
+            _pixel = new Texture2D( Controller.Engine.GraphicsDevice, 1, 1 );
+            _pixel.SetData( new[] { Color.White } );
 
             Controller.Engine.IsMouseVisible = true;
 
@@ -43,22 +54,39 @@ namespace Kyoob.Game.Management
         private Block FindSuitableStartPoint()
         {
             Index3D start = World.PositionToIndex( Controller.Settings.CameraSettings.InitialPosition );
-            int dist = 0;
 
             // get the surrounding chunks
+            Index3D idx;
             List<Chunk> surrounding = new List<Chunk>();
-            for ( int x = -3; x < 4; ++x )
+            for ( int x = 0; x < 4; ++x )
             {
-                for ( int y = -3; y < 4; ++y )
+                for ( int y = 0; y < 4; ++y )
                 {
-                    for ( int z = -3; z < 4; ++z )
+                    for ( int z = 0; z < 4; ++z )
                     {
-                        Index3D idx = new Index3D( x, y, z );
-                        Chunk chunk = Controller.World.GetChunk( idx );
-                        if ( chunk != null )
-                        {
-                            surrounding.Add( chunk );
-                        }
+                        idx = new Index3D( x, y, z );
+                        surrounding.Add( Controller.World.GetChunk( idx ) );
+
+                        idx = new Index3D( x, y, -z );
+                        surrounding.Add( Controller.World.GetChunk( idx ) );
+
+                        idx = new Index3D( x, -y, z );
+                        surrounding.Add( Controller.World.GetChunk( idx ) );
+
+                        idx = new Index3D( x, -y, -z );
+                        surrounding.Add( Controller.World.GetChunk( idx ) );
+
+                        idx = new Index3D( -x, y, z );
+                        surrounding.Add( Controller.World.GetChunk( idx ) );
+
+                        idx = new Index3D( -x, y, -z );
+                        surrounding.Add( Controller.World.GetChunk( idx ) );
+
+                        idx = new Index3D( -x, -y, z );
+                        surrounding.Add( Controller.World.GetChunk( idx ) );
+
+                        idx = new Index3D( -x, -y, -z );
+                        surrounding.Add( Controller.World.GetChunk( idx ) );
                     }
                 }
             }
@@ -66,6 +94,10 @@ namespace Kyoob.Game.Management
             // check each surrounding chunk
             foreach ( Chunk chunk in surrounding )
             {
+                if ( chunk == null )
+                {
+                    continue;
+                }
                 foreach ( Block grass in chunk.GrassBlocks )
                 {
                     Vector3 pos = grass.Position;
@@ -82,24 +114,90 @@ namespace Kyoob.Game.Management
         }
 
         /// <summary>
+        /// Switches to the play state.
+        /// </summary>
+        private void SwitchToPlayState()
+        {
+            // get the suitable start position and move the player
+            Block start = FindSuitableStartPoint();
+            Vector3 pos = start.Position;
+            pos.Y += 2;
+            ( Controller.GetState( "play" ) as PlayState ).Player.MoveTo( pos );
+
+            // update the chunk manager
+            Controller.World.ChunkManager.ViewPosition = pos;
+
+            // switch to the play state
+            Controller.Engine.IsMouseVisible = false;
+            Controller.ChangeState( "play" );
+        }
+
+        /// <summary>
+        /// Draws the progress bar.
+        /// </summary>
+        private void DrawProgressBar()
+        {
+            float maxWidth = _pp.BackBufferWidth * 0.95f;
+
+            int height = 10;
+            int x = (int)Math.Round( _pp.BackBufferWidth * 0.025f );
+            int y = _pp.BackBufferHeight / 2 - height / 2;
+
+            Rectangle rectPartial = new Rectangle(
+                x + 2, y + 2, (int)Math.Round( _progress * maxWidth ), height - 4
+            );
+
+            Rectangle rectFull = new Rectangle(
+                x, y, (int)Math.Round( maxWidth ), height
+            );
+
+            Renderer2D.Draw( _pixel, rectFull, Color.DarkGray );
+            Renderer2D.Draw( _pixel, rectPartial, Color.White );
+        }
+
+        /// <summary>
+        /// Draws the progress text.
+        /// </summary>
+        private void DrawProgressText()
+        {
+            Vector2 size = _font.MeasureString( _progressText );
+            Vector2 pos = new Vector2( _pp.BackBufferWidth / 2 - size.X / 2, _pp.BackBufferHeight / 2 - size.Y / 2 );
+            pos.Y -= _font.LineSpacing;
+
+            Renderer2D.DrawString( _font, _progressText, pos, Color.White );
+        }
+
+        /// <summary>
+        /// Disposes of this load state.
+        /// </summary>
+        public override void Dispose()
+        {
+            _pixel.Dispose();
+        }
+
+        /// <summary>
         /// Updates the load state.
         /// </summary>
         /// <param name="gameTime">Frame time information.</param>
         public override void Update( GameTime gameTime )
         {
-            // switch to the play state if we've loaded 90% or more of the world
+            // switch to the play state if we've loaded the initial world
             _progress = Controller.World.ChunkManager.ChunkCreationProgress;
-            if ( _progress >= 0.90f )
+            if ( _progress == 1.00f )
             {
-                // get the suitable start position and move the player
-                Block start = FindSuitableStartPoint();
-                Vector3 pos = start.Position;
-                pos.Y += 2;
-                ( Controller.GetState( "play" ) as PlayState ).Player.MoveTo( pos );
-
-                // switch to the play state
-                Controller.Engine.IsMouseVisible = false;
-                Controller.ChangeState( "play" );
+                SwitchToPlayState();
+            }
+            
+            // update the progress text
+            _progressTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if ( _progressTime >= 0.50f )
+            {
+                _progressTime -= 0.50f;
+                _progressText += ".";
+                if ( _progressText.EndsWith( "...." ) )
+                {
+                    _progressText = InitialProgressText;
+                }
             }
         }
 
@@ -109,15 +207,12 @@ namespace Kyoob.Game.Management
         /// <param name="gameTime">Frame time information.</param>
         public override void Draw( GameTime gameTime )
         {
-            string text = string.Format( "progress: {0:0.00}%", _progress * 100 );
-            Vector2 size = _font.MeasureString( text );
-            Vector2 loc = new Vector2( _pp.BackBufferWidth / 2, _pp.BackBufferHeight / 2 );
-            loc.X -= size.X / 2;
-            loc.Y -= size.Y / 2;
-
             Controller.Engine.GraphicsDevice.Clear( Color.Black );
             Renderer2D.Begin();
-            Renderer2D.DrawString( _font, text, loc, Color.White );
+
+            DrawProgressBar();
+            DrawProgressText();
+
             Renderer2D.End();
         }
     }

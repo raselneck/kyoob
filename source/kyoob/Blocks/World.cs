@@ -66,7 +66,11 @@ namespace Kyoob.Blocks
         /// </summary>
         private void SetTerminalCommands()
         {
-            // none yet
+            // world.seed to get the seed
+            Terminal.AddCommand( "world", "seed", ( string[] param ) =>
+            {
+                Terminal.WriteInfo( "seed: {0}", _settings.TerrainGenerator.Seed );
+            } );
         }
 
 

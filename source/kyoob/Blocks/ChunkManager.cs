@@ -170,36 +170,40 @@ namespace Kyoob.Blocks
             {
                 index = World.PositionToIndex( _currentViewPosition );
                 maxDist = (int)( _currentViewDistance / Chunk.Size );
-                currDist = ( currDist == -1 ) ? maxDist / 2 : maxDist;
+                currDist = ( currDist == -1 ) ? (int)Math.Round( maxDist * 0.75f ) : maxDist;
 
                 // create a list of all of the indices to check
                 indices.Clear();
-                for ( int y = 0; y < maxHeight; ++y )
+                for ( int y = 0; y <= maxHeight; ++y )
                 {
                     for ( int x = 0; x < currDist; ++x )
                     {
                         for ( int z = 0; z < currDist; ++z )
                         {
                             Index3D temp = new Index3D( index.X + x, y, index.Z + z );
-                            if ( World.Distance( index, temp ) < _currentViewDistance )
+                            if ( World.Distance( index, temp ) < _currentViewDistance &&
+                                !_chunks.ContainsKey( temp ) )
                             {
                                 indices.Add( temp );
                             }
 
                             temp = new Index3D( index.X + x, y, index.Z - z );
-                            if ( World.Distance( index, temp ) < _currentViewDistance )
+                            if ( World.Distance( index, temp ) < _currentViewDistance &&
+                                !_chunks.ContainsKey( temp ) )
                             {
                                 indices.Add( temp );
                             }
 
                             temp = new Index3D( index.X - x, y, index.Z + z );
-                            if ( World.Distance( index, temp ) < _currentViewDistance )
+                            if ( World.Distance( index, temp ) < _currentViewDistance &&
+                                !_chunks.ContainsKey( temp ) )
                             {
                                 indices.Add( temp );
                             }
 
                             temp = new Index3D( index.X - x, y, index.Z - z );
-                            if ( World.Distance( index, temp ) < _currentViewDistance )
+                            if ( World.Distance( index, temp ) < _currentViewDistance &&
+                                !_chunks.ContainsKey( temp ) )
                             {
                                 indices.Add( temp );
                             }
