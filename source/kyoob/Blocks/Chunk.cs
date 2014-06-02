@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using Kyoob.Debug;
 using Kyoob.Game;
 using Kyoob.Graphics;
@@ -31,6 +32,7 @@ namespace Kyoob.Blocks
         /// </summary>
         private const int MagicNumber = 0x4B4E4843;
 
+        private volatile bool _isCompiled;
         private Vector3 _position;
         private BoundingBox _bounds;
         private World _world;
@@ -162,6 +164,7 @@ namespace Kyoob.Blocks
         /// <param name="position">The chunk's position.</param>
         private void CommonInitialization( KyoobSettings settings, World world, Vector3 position )
         {
+            _isCompiled = false;
             _settings = settings;
             _world = world;
             _blocks = new Block[ Size, Size, Size ];
@@ -293,8 +296,23 @@ namespace Kyoob.Blocks
             }
 
             // set our vertex count and create the buffer
+            //Thread compileThread = new Thread( new ParameterizedThreadStart( CompileVoxelBuffers ) );
+            //compileThread.IsBackground = true;
+            //compileThread.Start( compileThread );
+            CompileVoxelBuffers( null );
+        }
+
+        /// <summary>
+        /// Compiles the voxel buffers.
+        /// </summary>
+        /// <param name="thread">The thread object.</param>
+        private void CompileVoxelBuffers( object thread )
+        {
             _terrainBuff.Compile( _settings.GraphicsDevice );
             _waterBuff.Compile( _settings.GraphicsDevice );
+
+            _isCompiled = true;
+            //( thread as Thread ).Join( 1 );
         }
 
         /// <summary>
@@ -393,6 +411,7 @@ namespace Kyoob.Blocks
             {
                 _waterBuff.Dispose();
             }
+            _isCompiled = false;
         }
 
         /// <summary>
@@ -426,13 +445,16 @@ namespace Kyoob.Blocks
         /// <param name="renderer">The renderer to draw with.</param>
         public void Draw( EffectRenderer renderer )
         {
-            if ( !_terrainBuff.IsEmpty )
+            if ( _isCompiled )
             {
-                renderer.QueueSolid( _terrainBuff );
-            }
-            if ( !_waterBuff.IsEmpty )
-            {
-                renderer.QueueAlpha( _waterBuff );
+                if ( !_terrainBuff.IsEmpty )
+                {
+                    renderer.QueueSolid( _terrainBuff );
+                }
+                if ( !_waterBuff.IsEmpty )
+                {
+                    renderer.QueueAlpha( _waterBuff );
+                }
             }
         }
     }

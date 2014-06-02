@@ -262,10 +262,11 @@ namespace Kyoob.Blocks
                 CreateChunk( idx );
 
                 // check if we need to update the render list
-                if ( ++count % _updateRenderCount == 0 )
-                {
-                    UpdateRenderList();
-                }
+                ++count;
+                //if ( count % _updateRenderCount == 0 )
+                //{
+                //    UpdateRenderList();
+                //}
 
                 // update the percentage
                 _chunkCreationProgress = (float)count / _toCreate.Count;

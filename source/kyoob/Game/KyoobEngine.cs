@@ -86,7 +86,7 @@ namespace Kyoob.Game
             PerlinTerrain terrain = new PerlinTerrain( (int)DateTime.Now.Ticks );
             terrain.Invert            = true;
             terrain.Octave            = 5;
-            terrain.VerticalBias      = 1.0f / 64;
+            terrain.VerticalBias      = 1.0f / 36;
             terrain.HorizontalBias    = 1.0f / 113;
             terrain.Levels.WaterLevel = 0.450f;
             terrain.Levels.SetBounds( BlockType.Stone, 0.000f, 0.375f );
@@ -97,7 +97,6 @@ namespace Kyoob.Game
 
             // create the player
             CameraSettings camSettings = new CameraSettings( GraphicsDevice );
-            //camSettings.InitialPosition = new Vector3( -48.0f, 1.0f / terrain.VerticalBias + 4.0f, -80.0f );
             camSettings.InitialPosition = new Vector3( 0.0f, 1.0f / terrain.VerticalBias + 4.0f, 0.0f );
             camSettings.ClipFar = _settings.GameSettings.ViewDistance * 2.0f;
             _settings.CameraSettings = camSettings;

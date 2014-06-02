@@ -13,10 +13,12 @@ namespace Kyoob.Game.Management
     /// </summary>
     public sealed class LoadState : GameState
     {
-        private const string InitialProgressText = "creating some terrain";
+        private static readonly Color ClearColor    = new Color( 0.10f, 0.10f, 0.10f );
+        private static readonly Color TextColor     = new Color( 0.95f, 0.95f, 0.95f );
+        private static readonly Color PBarBackColor = new Color( 0.20f, 0.20f, 0.20f );
+        private static readonly Color PBarForeColor = new Color( 0.85f, 0.85f, 0.85f );
 
         private float _progress;
-        private float _progressTime;
         private string _progressText;
         private Texture2D _pixel;
         private SpriteFont _font;
@@ -31,9 +33,6 @@ namespace Kyoob.Game.Management
         {
             _pp = Controller.Engine.GraphicsDevice.PresentationParameters;
             _font = Controller.Engine.Content.Load<SpriteFont>( "font/consolas" );
-
-            _progressTime = 0.0f;
-            _progressText = InitialProgressText;
 
             _pixel = new Texture2D( Controller.Engine.GraphicsDevice, 1, 1 );
             _pixel.SetData( new[] { Color.White } );
@@ -144,15 +143,15 @@ namespace Kyoob.Game.Management
             int y = _pp.BackBufferHeight / 2 - height / 2;
 
             Rectangle rectPartial = new Rectangle(
-                x + 2, y + 2, (int)Math.Round( _progress * maxWidth ), height - 4
+                x + 2, y + 2, (int)Math.Round( _progress * ( maxWidth - 4 ) ), height - 4
             );
 
             Rectangle rectFull = new Rectangle(
                 x, y, (int)Math.Round( maxWidth ), height
             );
 
-            Renderer2D.Draw( _pixel, rectFull, Color.DarkGray );
-            Renderer2D.Draw( _pixel, rectPartial, Color.White );
+            Renderer2D.Draw( _pixel, rectFull, PBarBackColor );
+            Renderer2D.Draw( _pixel, rectPartial, PBarForeColor );
         }
 
         /// <summary>
@@ -161,10 +160,12 @@ namespace Kyoob.Game.Management
         private void DrawProgressText()
         {
             Vector2 size = _font.MeasureString( _progressText );
-            Vector2 pos = new Vector2( _pp.BackBufferWidth / 2 - size.X / 2, _pp.BackBufferHeight / 2 - size.Y / 2 );
-            pos.Y -= _font.LineSpacing;
+            Vector2 pos = new Vector2(
+                _pp.BackBufferWidth  / 2 - size.X / 2,
+                _pp.BackBufferHeight / 2 - size.Y / 2 - _font.LineSpacing
+            );
 
-            Renderer2D.DrawString( _font, _progressText, pos, Color.White );
+            Renderer2D.DrawString( _font, _progressText, pos, TextColor );
         }
 
         /// <summary>
@@ -181,24 +182,17 @@ namespace Kyoob.Game.Management
         /// <param name="gameTime">Frame time information.</param>
         public override void Update( GameTime gameTime )
         {
-            // switch to the play state if we've loaded the initial world
-            _progress = Controller.World.ChunkManager.ChunkCreationProgress;
+            // switch to the play state if we're done loading
             if ( _progress == 1.00f )
             {
                 SwitchToPlayState();
             }
+
+            // get the progress
+            _progress = Controller.World.ChunkManager.ChunkCreationProgress;
             
             // update the progress text
-            _progressTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            if ( _progressTime >= 0.50f )
-            {
-                _progressTime -= 0.50f;
-                _progressText += ".";
-                if ( _progressText.EndsWith( "...." ) )
-                {
-                    _progressText = InitialProgressText;
-                }
-            }
+            _progressText = string.Format( "creating some terrain... {0:0.0}%", _progress * 100 );
         }
 
         /// <summary>
@@ -207,7 +201,7 @@ namespace Kyoob.Game.Management
         /// <param name="gameTime">Frame time information.</param>
         public override void Draw( GameTime gameTime )
         {
-            Controller.Engine.GraphicsDevice.Clear( Color.Black );
+            Controller.Engine.GraphicsDevice.Clear( ClearColor );
             Renderer2D.Begin();
 
             DrawProgressBar();
