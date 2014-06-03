@@ -11,6 +11,11 @@ namespace Kyoob.Game.Management
         private StateSystem _controller;
 
         /// <summary>
+        /// The event that is called when this game state gains focus.
+        /// </summary>
+        public event EventHandler<EventArgs> SwitchTo;
+
+        /// <summary>
         /// Gets the state system controlling this game state.
         /// </summary>
         public StateSystem Controller
@@ -28,6 +33,18 @@ namespace Kyoob.Game.Management
         public GameState( StateSystem controller )
         {
             _controller = controller;
+
+            // add a dummy event handler just so that it's not null
+            SwitchTo += ( object sender, EventArgs args ) => { };
+        }
+
+        /// <summary>
+        /// Triggers the SwitchTo event.
+        /// </summary>
+        /// <param name="args">Event arguments.</param>
+        public virtual void OnSwitchTo( EventArgs args )
+        {
+            SwitchTo( this, args );
         }
 
         /// <summary>

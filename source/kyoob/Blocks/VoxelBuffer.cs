@@ -95,7 +95,7 @@ namespace Kyoob.Blocks
             {
                 return;
             }
-            if ( _vertexCount > 0 && !device.IsDisposed )
+            if ( _vertexCount > 0 && device != null && !device.IsDisposed )
             {
                 _vertices = new VertexBuffer( device, VertexPositionNormalTexture.VertexDeclaration, _vertexCount, BufferUsage.None );
                 _vertices.SetData<VertexPositionNormalTexture>( _data.ToArray() );

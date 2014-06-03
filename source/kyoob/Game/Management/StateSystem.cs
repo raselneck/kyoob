@@ -108,6 +108,10 @@ namespace Kyoob.Game.Management
         public void ChangeState( string name )
         {
             _states.TryGetValue( name, out _currentState );
+            if ( _currentState != null )
+            {
+                _currentState.OnSwitchTo( new EventArgs() );
+            }
         }
 
         /// <summary>

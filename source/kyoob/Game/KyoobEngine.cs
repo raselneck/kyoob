@@ -13,10 +13,6 @@ using Microsoft.Xna.Framework.Input;
 
 using XnaGame = Microsoft.Xna.Framework.Game;
 
-#warning TODO : Create input manager for key/mouse and controller
-#warning TODO : Create Renderer3D to facilitate 3D rendering like Renderer2D
-#warning TODO : Look into Lindgren.Network
-
 namespace Kyoob.Game
 {
     /// <summary>

@@ -3,8 +3,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-#warning TODO : Figure out how to push the camera view position forward a bit based on rotation so its closer to the bound's edge.
-
 namespace Kyoob.Game.Entities
 {
     /// <summary>

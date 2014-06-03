@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-#warning TODO : After Renderer3D is created, move drawing extensions to that
-
 namespace Kyoob
 {
     /// <summary>

@@ -11,8 +11,6 @@ using Microsoft.Xna.Framework.Graphics;
 
 #pragma warning disable 1587 // disable "invalid XML comment placement"
 
-#warning TODO : When chunks are unloaded, their data should be saved to a file somehow so that block data can be retrieved in case a chunk was modified.
-
 namespace Kyoob.Blocks
 {
     /// <summary>

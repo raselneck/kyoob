@@ -117,6 +117,10 @@ namespace Kyoob.Game.Management
         /// </summary>
         private void SwitchToPlayState()
         {
+            // switch to the play state
+            Controller.Engine.IsMouseVisible = false;
+            Controller.ChangeState( "play" );
+
             // get the suitable start position and move the player
             Block start = FindSuitableStartPoint();
             Vector3 pos = start.Position;
@@ -125,10 +129,6 @@ namespace Kyoob.Game.Management
 
             // update the chunk manager
             Controller.World.ChunkManager.ViewPosition = pos;
-
-            // switch to the play state
-            Controller.Engine.IsMouseVisible = false;
-            Controller.ChangeState( "play" );
         }
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace Kyoob.Game.Management
         public override void Update( GameTime gameTime )
         {
             // switch to the play state if we're done loading
-            if ( _progress == 1.00f )
+            if ( _progress >= 0.998f ) // 99.*% is good enough right?
             {
                 SwitchToPlayState();
             }

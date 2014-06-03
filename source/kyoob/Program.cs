@@ -1,4 +1,9 @@
+using System;
+using System.IO;
+using System.Reflection;
 using Kyoob.Game;
+
+using BinaryFormatter = System.Runtime.Serialization.Formatters.Binary.BinaryFormatter;
 
 namespace Kyoob
 {

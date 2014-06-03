@@ -5,9 +5,6 @@ using Kyoob.Effects;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-#warning TODO : Eventually create a physics system that manages a set of IPhysicsObject
-//              Could contain 'BoundingBox Bounds', 'Vector3 Translation', 'void Move(float,float,float)'
-
 namespace Kyoob.Game.Entities
 {
     /// <summary>

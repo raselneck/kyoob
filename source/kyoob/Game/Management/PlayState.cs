@@ -36,6 +36,7 @@ namespace Kyoob.Game.Management
             : base( controller )
         {
             _effect = effect;
+            
             _player = new Player( Controller.Settings );
             _player.World = Controller.World;
         }

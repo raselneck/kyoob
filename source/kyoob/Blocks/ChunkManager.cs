@@ -4,6 +4,8 @@ using System.Threading;
 using Microsoft.Xna.Framework;
 using Kyoob.Game;
 
+// http://msdn.microsoft.com/en-us/library/3dasc8as(v=vs.110).aspx
+
 namespace Kyoob.Blocks
 {
     /// <summary>
@@ -11,14 +13,97 @@ namespace Kyoob.Blocks
     /// </summary>
     public sealed class ChunkManager : IDisposable
     {
+        /// <summary>
+        /// The delegate type for registering created chunks.
+        /// </summary>
+        /// <param name="chunk">The chunk.</param>
+        private delegate void ChunkRegistrationDelegate( Chunk chunk );
+
+        /// <summary>
+        /// The delegate type for reporting progress.
+        /// </summary>
+        /// <param name="progress">The progress.</param>
+        private delegate void ReportProgressDelegate( float progress );
+
+        /// <summary>
+        /// The objects used by the chunk manager for the thread pool.
+        /// </summary>
+        private sealed class ChunkCreator
+        {
+            private World _world;
+            private KyoobSettings _settings;
+            private ManualResetEvent _doneEvent;
+            private ReportProgressDelegate _reportProgress;
+            private ChunkRegistrationDelegate _registerChunk;
+
+            /// <summary>
+            /// Creates a new chunk creator.
+            /// </summary>
+            /// <param name="settings">The global settings to use.</param>
+            /// <param name="world">The world to place the chunk in.</param>
+            /// <param name="doneEvent">The event to call when done.</param>
+            public ChunkCreator( KyoobSettings settings, World world, ManualResetEvent doneEvent )
+            {
+                _world = world;
+                _settings = settings;
+                _doneEvent = doneEvent;
+            }
+
+            /// <summary>
+            /// Sets the callback used for reporting progress.
+            /// </summary>
+            /// <param name="callback">The callback.</param>
+            public void SetReportProgressCallback( ReportProgressDelegate callback )
+            {
+                _reportProgress = callback;
+            }
+
+            /// <summary>
+            /// Sets the callback used for registering chunks.
+            /// </summary>
+            /// <param name="callback">The callback.</param>
+            public void SetRegisterChunkCallback( ChunkRegistrationDelegate callback )
+            {
+                _registerChunk = callback;
+            }
+
+            /// <summary>
+            /// The thread pool callback for this chunk creator.
+            /// </summary>
+            /// <param name="data">The data to create. (Should be of type HashSet&lt;Index3D&gt;.)</param>
+            public void ThreadPoolCallback( object data )
+            {
+                // make sure the data is what we actually need
+                HashSet<Index3D> toCreate = data as HashSet<Index3D>;
+                if ( toCreate == null )
+                {
+                    _doneEvent.Set();
+                }
+
+                // now create each index
+                foreach ( Index3D idx in toCreate )
+                {
+                    // get the index and skip it if it's below the world
+                    if ( idx.Y < 0 )
+                    {
+                        continue;
+                    }
+
+                    // create the chunk, register it, and report our progress
+                    Chunk chunk = new Chunk( _settings, _world, World.IndexToPosition( idx ) );
+                    _reportProgress( 1.0f / toCreate.Count );
+                    _registerChunk( chunk );
+                }
+                _doneEvent.Set();
+            }
+        }
+
         private volatile int _updateRenderCount;
         private volatile bool _isDisposed;
         private volatile float _chunkCreationProgress;
         private volatile float _currentViewDistance;
         private          Vector3 _currentViewPosition;
-        private volatile List<Chunk> _toRender;
         private volatile HashSet<Index3D> _toUnload;
-        private volatile HashSet<Index3D> _toCreate;
         private volatile Dictionary<Index3D, Chunk> _chunks;
 
         private World _world;
@@ -106,7 +191,6 @@ namespace Kyoob.Blocks
             _isDisposed = false;
             _currentViewDistance = 0.0f;
             _currentViewPosition = Vector3.Zero;
-            _toRender = new List<Chunk>( 1024 );
             // _toUnload = new HashSet<Index3D>(); // will be populated in thread
             // _toCreate = new HashSet<Index3D>(); // will be populated in thread
             _chunks = new Dictionary<Index3D, Chunk>();
@@ -114,42 +198,66 @@ namespace Kyoob.Blocks
 
 
         /// <summary>
-        /// Creates a chunk with the given index.
+        /// Registers a chunk.
         /// </summary>
-        /// <param name="index">The 3D index.</param>
-        private void CreateChunk( Index3D index )
+        /// <param name="chunk">The chunk.</param>
+        private void RegisterChunk( Chunk chunk )
         {
-            // if we're disposed, then there's no sense in creating a chunk
-            if ( _isDisposed )
+            lock ( _chunks )
             {
-                return;
-            }
-
-            // if the y is out of bounds, no need to create an empty chunk
-            if ( index.Y < 0 )
-            {
-                return;
-            }
-
-            // make sure we don't already have that chunk created
-            if ( !_chunks.ContainsKey( index ) )
-            {
-                // create the chunk and store it
-                Chunk chunk = new Chunk( _settings, _world, World.IndexToPosition( index ) );
-                _chunks.Add( index, chunk );
+                Index3D index = World.PositionToIndex( chunk.Center );
+                if ( !_chunks.ContainsKey( index ) )
+                {
+                    _chunks.Add( index, chunk );
+                }
             }
         }
 
         /// <summary>
-        /// Updates the render list.
+        /// Determines whether or not an index is okay to create.
         /// </summary>
-        private void UpdateRenderList()
+        /// <param name="current">The current index.</param>
+        /// <param name="desired">The desired index.</param>
+        /// <param name="maxDist">The current maximum distance.</param>
+        /// <returns></returns>
+        private bool IsOkayToCreate( Index3D current, Index3D desired, int maxDist )
         {
-            lock ( _toRender )
+            int dx = Math.Abs( current.X - desired.X );
+            int dy = Math.Abs( current.Y - desired.Y );
+            int dz = Math.Abs( current.Z - desired.Z );
+            return ( dx <= maxDist ) && ( dy <= maxDist ) && ( dz <= maxDist );
+        }
+
+        /// <summary>
+        /// Unloads chunks that need to be unloaded.
+        /// </summary>
+        /// <param name="index">The current player index.</param>
+        /// <param name="maxDist">The maximum distance allowed.</param>
+        private void UnloadChunks( Index3D index, int maxDist )
+        {
+            // put ALL chunks on the chopping block
+            List<Index3D> currentIndices;
+            lock ( _chunks )
             {
-                _toRender.Clear();
-                _toRender.AddRange( _chunks.Values );
+                _toUnload = new HashSet<Index3D>( _chunks.Keys );
+                currentIndices = new List<Index3D>( _chunks.Keys );
             }
+            foreach ( Index3D idx in currentIndices )
+            {
+                // check if we can still see the chunk
+                if ( IsOkayToCreate( index, idx, maxDist ) )
+                {
+                    _toUnload.Remove( idx );
+                }
+            }
+
+            // unload all of the chunks that we need to unload first
+            foreach ( Index3D idx in _toUnload )
+            {
+                _chunks[ idx ].Unload();
+                _chunks.Remove( idx );
+            }
+            _toUnload.Clear();
         }
 
         /// <summary>
@@ -158,133 +266,85 @@ namespace Kyoob.Blocks
         private void ChunkManagementCallback()
         {
             // create some variables to help with chunk management
-            HashSet<Index3D> indices = new HashSet<Index3D>();
+            //List<ChunkCreator> creators = new List<ChunkCreator>();
+            ManualResetEvent[] doneEvents;
             Index3D index;
-            int maxDist, currDist = -1;
+            int maxDist;
             int maxHeight = (int)Math.Ceiling(
                 _settings.TerrainGenerator.HighestPoint / Chunk.Size
             );
+
+            // create our report progress delegate
+            float totalProgress = 0.0f;
+            ReportProgressDelegate reportProgress = ( float progress ) =>
+            {
+                totalProgress += progress;
+                _chunkCreationProgress = totalProgress / ( maxHeight + 1 );
+            };
 
             // continue while we're not disposed
             while ( !_isDisposed )
             {
                 index = World.PositionToIndex( _currentViewPosition );
                 maxDist = (int)( _currentViewDistance / Chunk.Size );
-                currDist = ( currDist == -1 ) ? (int)Math.Round( maxDist * 0.75f ) : maxDist;
+                doneEvents = new ManualResetEvent[ maxHeight + 1 ];
 
                 // create a list of all of the indices to check
-                indices.Clear();
                 for ( int y = 0; y <= maxHeight; ++y )
                 {
-                    for ( int x = 0; x < currDist; ++x )
+                    HashSet<Index3D> layer = new HashSet<Index3D>();
+
+                    // go through each chunk in the XZ layer
+                    for ( int x = 0; x < maxDist; ++x )
                     {
-                        for ( int z = 0; z < currDist; ++z )
+                        for ( int z = 0; z < maxDist; ++z )
                         {
                             Index3D temp = new Index3D( index.X + x, y, index.Z + z );
-                            if ( World.Distance( index, temp ) < _currentViewDistance &&
+                            if ( IsOkayToCreate( index, temp, maxDist ) &&
                                 !_chunks.ContainsKey( temp ) )
                             {
-                                indices.Add( temp );
+                                layer.Add( temp );
                             }
 
                             temp = new Index3D( index.X + x, y, index.Z - z );
-                            if ( World.Distance( index, temp ) < _currentViewDistance &&
+                            if ( IsOkayToCreate( index, temp, maxDist ) &&
                                 !_chunks.ContainsKey( temp ) )
                             {
-                                indices.Add( temp );
+                                layer.Add( temp );
                             }
 
                             temp = new Index3D( index.X - x, y, index.Z + z );
-                            if ( World.Distance( index, temp ) < _currentViewDistance &&
+                            if ( IsOkayToCreate( index, temp, maxDist ) &&
                                 !_chunks.ContainsKey( temp ) )
                             {
-                                indices.Add( temp );
+                                layer.Add( temp );
                             }
 
                             temp = new Index3D( index.X - x, y, index.Z - z );
-                            if ( World.Distance( index, temp ) < _currentViewDistance &&
+                            if ( IsOkayToCreate( index, temp, maxDist ) &&
                                 !_chunks.ContainsKey( temp ) )
                             {
-                                indices.Add( temp );
+                                layer.Add( temp );
                             }
                         }
                     }
-                }
 
-                // put ALL chunks on the chopping block
-                _toUnload = new HashSet<Index3D>( _chunks.Keys );
-                foreach ( Index3D idx in _chunks.Keys )
-                {
-                    // check if we can still see the chunk
-                    Vector3 pos = World.IndexToPosition( idx );
-                    if ( Vector3.Distance( _currentViewPosition, pos ) <= _currentViewDistance )
-                    {
-                        _toUnload.Remove( idx );
-                    }
-                    else
-                    {
-                        // if we can't see it, we need to make sure it's not slated to be created
-                        indices.Remove( idx );
-                    }
+                    // spawn the chunk creator
+                    doneEvents[ y ] = new ManualResetEvent( false );
+                    ChunkCreator creator = new ChunkCreator( _settings, _world, doneEvents[ y ] );
+                    creator.SetRegisterChunkCallback( RegisterChunk );
+                    creator.SetReportProgressCallback( reportProgress );
+                    ThreadPool.QueueUserWorkItem( creator.ThreadPoolCallback, layer );
                 }
 
 
-                // whatever's left in indices is what needs to be created
-                _toCreate = new HashSet<Index3D>( indices );
+                UnloadChunks( index, maxDist );
+                
 
-
-                ChunkUnloadingCallback();
-                ChunkCreationCallback();
-
-
-                // update the render queue
-                UpdateRenderList();
+                // now let the thread pool run
+                WaitHandle.WaitAll( doneEvents );
+                totalProgress = 0.0f;
             }
-        }
-
-        /// <summary>
-        /// Callback for chunk creation.
-        /// </summary>
-        private void ChunkCreationCallback()
-        {
-            Index3D current = World.PositionToIndex( _currentViewPosition );
-            int count = 0;
-
-            foreach ( Index3D idx in _toCreate )
-            {
-                // make sure we're not disposed and we can actually view the chunk
-                if ( _isDisposed )
-                {
-                    break;
-                }
-
-                // create the chunk
-                CreateChunk( idx );
-
-                // check if we need to update the render list
-                ++count;
-                //if ( count % _updateRenderCount == 0 )
-                //{
-                //    UpdateRenderList();
-                //}
-
-                // update the percentage
-                _chunkCreationProgress = (float)count / _toCreate.Count;
-            }
-            _toCreate.Clear();
-        }
-
-        /// <summary>
-        /// Callback for chunk unloading.
-        /// </summary>
-        private void ChunkUnloadingCallback()
-        {
-            foreach ( Index3D idx in _toUnload )
-            {
-                _chunks[ idx ].Unload();
-                _chunks.Remove( idx );
-            }
-            _toUnload.Clear();
         }
 
 
@@ -342,14 +402,12 @@ namespace Kyoob.Blocks
         /// <returns></returns>
         public List<Chunk> GetRenderList()
         {
-            // return new List<Chunk>( _toRender ); // laggy?
-
-            List<Chunk> copy;
-            lock ( _toRender )
+            List<Chunk> toRender;
+            lock ( _chunks )
             {
-                copy = new List<Chunk>( _toRender );
+                toRender = new List<Chunk>( _chunks.Values );
             }
-            return copy;
+            return toRender;
         }
     }
 }

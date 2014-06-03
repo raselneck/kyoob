@@ -8,8 +8,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "git", "git", "{5392863F-BEBE-49D6-8E8D-ABEEE4D5C6DB}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
+		changelog.md = changelog.md
 		readme.md = readme.md
 		screenshot.png = screenshot.png
+		todo.md = todo.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "licenses", "licenses", "{C52875CA-4CF2-40BD-8095-2198FC19C675}"
