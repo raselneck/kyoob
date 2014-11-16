@@ -4,9 +4,6 @@ Kyoob - XNA Voxel Engine
 For some reason I've always wanted to make a voxel engine, so I decided that
 I was going to finally start writing one. This is the result.
 
-Screenshot
-----------
-
 ![ScreenShot](https://raw.githubusercontent.com/fastinvsqrt/kyoob/master/screenshot.png)
 
 The Terminal
@@ -36,7 +33,6 @@ Dependencies
   * I have no clue if this will work with MonoGame
 * [LibNoise for .NET](https://libnoisedotnet.codeplex.com/)
 * [Newtonsoft.Json](http://james.newtonking.com/json) (v6.0r3+)
-* [Boo](https://github.com/bamboo/boo) (v0.9.7+)
 
 License
 -------
