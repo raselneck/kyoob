@@ -17,7 +17,7 @@ namespace Kyoob.Blocks
         /// The delegate type for registering created chunks.
         /// </summary>
         /// <param name="chunk">The chunk.</param>
-        private delegate void ChunkRegistrationDelegate( Chunk chunk );
+        private delegate bool ChunkRegistrationDelegate( Chunk chunk );
 
         /// <summary>
         /// The delegate type for reporting progress.
@@ -91,18 +91,20 @@ namespace Kyoob.Blocks
 
                     // create the chunk, register it, and report our progress
                     Chunk chunk = new Chunk( _settings, _world, World.IndexToPosition( idx ) );
+                    while ( !_registerChunk( chunk ) ) ;
                     _reportProgress( 1.0f / toCreate.Count );
-                    _registerChunk( chunk );
                 }
                 _doneEvent.Set();
             }
         }
 
         private volatile int _updateRenderCount;
+        private volatile bool _isBusy;
         private volatile bool _isDisposed;
         private volatile float _chunkCreationProgress;
         private volatile float _currentViewDistance;
         private          Vector3 _currentViewPosition;
+        private volatile List<Chunk> _cachedRenderList;
         private volatile HashSet<Index3D> _toUnload;
         private volatile Dictionary<Index3D, Chunk> _chunks;
 
@@ -168,6 +170,28 @@ namespace Kyoob.Blocks
         }
 
         /// <summary>
+        /// Checks to see if the chunk manager is ready.
+        /// </summary>
+        public bool IsReady
+        {
+            get
+            {
+                return _cachedRenderList.Count > 0;
+            }
+        }
+
+        /// <summary>
+        /// Checks to see if this chunk manager is currently busy.
+        /// </summary>
+        public bool IsBusy
+        {
+            get
+            {
+                return _isBusy;
+            }
+        }
+
+        /// <summary>
         /// Gets the progress on the current batch of chunks to be created.
         /// </summary>
         public float ChunkCreationProgress
@@ -188,12 +212,12 @@ namespace Kyoob.Blocks
             _updateRenderCount = 16;
             _world = world;
             _settings = settings;
+            _isBusy = false;
             _isDisposed = false;
             _currentViewDistance = 0.0f;
             _currentViewPosition = Vector3.Zero;
-            // _toUnload = new HashSet<Index3D>(); // will be populated in thread
-            // _toCreate = new HashSet<Index3D>(); // will be populated in thread
             _chunks = new Dictionary<Index3D, Chunk>();
+            _cachedRenderList = new List<Chunk>();
         }
 
 
@@ -201,16 +225,19 @@ namespace Kyoob.Blocks
         /// Registers a chunk.
         /// </summary>
         /// <param name="chunk">The chunk.</param>
-        private void RegisterChunk( Chunk chunk )
+        private bool RegisterChunk( Chunk chunk )
         {
+            bool ret = false;
             lock ( _chunks )
             {
                 Index3D index = World.PositionToIndex( chunk.Center );
                 if ( !_chunks.ContainsKey( index ) )
                 {
+                    ret = true;
                     _chunks.Add( index, chunk );
                 }
             }
+            return ret;
         }
 
         /// <summary>
@@ -344,6 +371,11 @@ namespace Kyoob.Blocks
                 // now let the thread pool run
                 WaitHandle.WaitAll( doneEvents );
                 totalProgress = 0.0f;
+
+                _isBusy = true;
+                _cachedRenderList.Clear();
+                _cachedRenderList.AddRange( _chunks.Values );
+                _isBusy = false;
             }
         }
 
@@ -402,12 +434,11 @@ namespace Kyoob.Blocks
         /// <returns></returns>
         public List<Chunk> GetRenderList()
         {
-            List<Chunk> toRender;
-            lock ( _chunks )
+            if ( _isBusy )
             {
-                toRender = new List<Chunk>( _chunks.Values );
+                return new List<Chunk>();
             }
-            return toRender;
+            return new List<Chunk>( _cachedRenderList ); ;
         }
     }
 }

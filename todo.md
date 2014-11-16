@@ -15,11 +15,18 @@ Gameplay
 Terrain
 -------
 
-* Improve threading to remove lag spikes
+* **Improve threading to remove lag spikes**
+  * Is this even a software thing? Or is it a hardware thing?
+  * I think it's a hardware thing
+  * If it's a hardware thing, cache a position when creating chunks and
+    if the player's distance from said position > some value, (un)load chunks
+  * Currently, rendering is a slave to chunk creation (i.e. only update the chunks
+    to be rendered when the chunk creator says it's okay) whereas Minecraft appears
+    to be the other way around
 * Modifiable terrain
   * Modify ray-intersection to also return normal of closest intersected face
   * Normal could be used to calculate position of new block if placing blocks
-* Try to speed up terrain generation even more
+* **Try to speed up terrain generation even more**
 * More realistic terrain
   * Sand only needs to be around water
   * Water doesn't need to be at a set level
@@ -28,7 +35,7 @@ Terrain
 Graphics
 --------
 
-* Create 3D render helper (similar to `Renderer2D`)
+* *Create 3D render helper (similar to `Renderer2D`)*
   * Move drawing extensions to this
   * Edit classes to use this
   * `IDrawable3D`

@@ -1,6 +1,10 @@
 Change Log
 ----------
 
+**June 5, 2014**
+* Removed Boo dependencies (temporary)
+  * Files are still intact
+
 **June 3, 2014**
 * Implemented thread pool for chunk creation (much faster)
 * Created [To-Do list](todo.md) in case anyone decided to fork

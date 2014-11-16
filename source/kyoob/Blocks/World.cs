@@ -25,6 +25,7 @@ namespace Kyoob.Blocks
 
         private KyoobSettings _settings;
         private ChunkManager _chunkManager;
+        private List<Chunk> _renderList;
 
         /// <summary>
         /// Gets the chunk manager used by this world.
@@ -55,6 +56,7 @@ namespace Kyoob.Blocks
             // set variables
             _settings = settings;
             _chunkManager = new ChunkManager( _settings, this );
+            _renderList = new List<Chunk>();
 
             SetTerminalCommands();
         }
@@ -264,6 +266,11 @@ namespace Kyoob.Blocks
         {
             _chunkManager.ViewDistance = _settings.GameSettings.ViewDistance;
             _chunkManager.ViewPosition = camera.Position;
+
+            if ( !_chunkManager.IsBusy )
+            {
+                _renderList = _chunkManager.GetRenderList();
+            }
         }
 
         /// <summary>
@@ -273,8 +280,7 @@ namespace Kyoob.Blocks
         /// <param name="camera">The current camera to use for getting visible tiles.</param>
         public void Draw( GameTime gameTime, Camera camera )
         {
-            List<Chunk> chunks = _chunkManager.GetRenderList();
-            foreach ( Chunk chunk in chunks )
+            foreach ( Chunk chunk in _renderList )
             {
                 // if the chunk is non-existant, skip it
                 if ( chunk == null )

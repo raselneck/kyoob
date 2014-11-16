@@ -11,6 +11,7 @@ namespace Kyoob.Terrain
     {
         private int _seed;
         private TerrainLevels _levels;
+        private BlockType[,,] _blocks;
 
         /// <summary>
         /// Gets or sets the seed for the seed for the terrain generator.
@@ -54,6 +55,7 @@ namespace Kyoob.Terrain
         {
             _seed = seed;
             _levels = new TerrainLevels();
+            _blocks = new BlockType[Chunk.Size + 2, Chunk.Size + 2, Chunk.Size + 2];
         }
 
         /// <summary>
@@ -63,8 +65,6 @@ namespace Kyoob.Terrain
         /// <returns></returns>
         public virtual BlockType[,,] GenerateChunkData( Chunk chunk )
         {
-            BlockType[,,] blocks = new BlockType[ Chunk.Size + 2, Chunk.Size + 2, Chunk.Size + 2 ];
-
             for ( int x = 0; x < Chunk.Size + 2; ++x )
             {
                 for ( int y = 0; y < Chunk.Size + 2; ++y )
@@ -72,12 +72,12 @@ namespace Kyoob.Terrain
                     for ( int z = 0; z < Chunk.Size + 2; ++z )
                     {
                         Vector3 world = World.LocalToWorld( chunk.Center, x - 1, y - 1, z - 1 );
-                        blocks[ x, y, z ] = GetBlockType( world );
+                        _blocks[ x, y, z ] = GetBlockType( world );
                     }
                 }
             }
 
-            return blocks;
+            return _blocks;
         }
 
         /// <summary>

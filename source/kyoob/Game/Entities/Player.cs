@@ -170,9 +170,6 @@ namespace Kyoob.Game.Entities
         /// <param name="effect">The effect to use when drawing.</param>
         public override void Draw( GameTime gameTime, BaseEffect effect )
         {
-#if DEBUG
-            Bounds.Draw( Settings.GraphicsDevice, _camera.View, _camera.Projection, Color.Magenta );
-#endif
         }
     }
 }

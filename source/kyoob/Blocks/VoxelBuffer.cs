@@ -13,7 +13,6 @@ namespace Kyoob.Blocks
     {
         private VertexBuffer _vertices;
         private List<VertexPositionNormalTexture> _data;
-        private HashSet<Vector3> _uniquePoints;
         private int _triangleCount;
         private int _vertexCount;
 
@@ -46,7 +45,6 @@ namespace Kyoob.Blocks
         {
             _vertices = null;
             _data = new List<VertexPositionNormalTexture>();
-            _uniquePoints = new HashSet<Vector3>();
         }
 
         /// <summary>
@@ -58,15 +56,6 @@ namespace Kyoob.Blocks
             if ( data.Length != Cube.VerticesPerFace )
             {
                 throw new ArgumentException( "Face data must contain " + Cube.VerticesPerFace + " vertices." );
-            }
-
-            // get unique points
-            for ( int i = 0; i < data.Length; ++i )
-            {
-                if ( !_uniquePoints.Contains( data[ i ].Position ) )
-                {
-                    _uniquePoints.Add( data[ i ].Position );
-                }
             }
 
             _data.AddRange( data );
@@ -82,7 +71,6 @@ namespace Kyoob.Blocks
             _data.Clear();
             _triangleCount = 0;
             _vertexCount = 0;
-            _uniquePoints.Clear();
         }
 
         /// <summary>

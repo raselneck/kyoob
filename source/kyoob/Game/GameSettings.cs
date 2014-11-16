@@ -171,7 +171,7 @@ namespace Kyoob.Game
         /// </summary>
         public GameSettings()
         {
-            _viewDistance = 128.0f;
+            _viewDistance = 96.0f;
             _mouseSensitivity = 0.06f;
             _keyStrafeLeft = Keys.A;
             _keyStrafeRight = Keys.D;

@@ -182,12 +182,6 @@ namespace Kyoob.Game.Management
         /// <param name="gameTime">Frame time information.</param>
         public override void Update( GameTime gameTime )
         {
-            // switch to the play state if we're done loading
-            if ( _progress >= 0.998f ) // 99.*% is good enough right?
-            {
-                SwitchToPlayState();
-            }
-
             // get the progress
             _progress = Controller.World.ChunkManager.ChunkCreationProgress;
             
@@ -208,6 +202,13 @@ namespace Kyoob.Game.Management
             DrawProgressText();
 
             Renderer2D.End();
+
+            // switch to the play state if we're done loading
+            // do this here to ensure that the play state's update is called before it draws
+            if ( Controller.World.ChunkManager.IsReady )
+            {
+                SwitchToPlayState();
+            }
         }
     }
 }
