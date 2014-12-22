@@ -2,9 +2,11 @@
 
 Ever since first playing Minecraft, I've toyed around with the idea of making
 my very own voxel engine. My first attempt was not as fast as it could have
-been due to my "jump right into it" attitude. However, I have taken then time
+been due to my "jump right into it" attitude. However, I have taken the time
 to completely rewrite Kyoob from scratch (using some of my old code for hints)
 and it runs cleaner, smoother, and faster than before.
+
+[![screenshot of Kyoob](kyoob.png)](kyoob.png)
 
 ## Requirements
 

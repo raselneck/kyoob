@@ -25,7 +25,7 @@ namespace Kyoob.VoxelData
         /// <summary>
         /// The time offset to use in calculating the position of the sun for the day/night cycle.
         /// </summary>
-        private const double DayNightCycleOffset = ( 10 * Math.PI / 180.0 + Math.PI ) * DayNightCycleDuration;
+        private const double DayNightCycleOffset = ( 20 * Math.PI / 180.0 + Math.PI ) * DayNightCycleDuration;
 
         private static World _instance;
         private TerrainGenerator _terrain;
