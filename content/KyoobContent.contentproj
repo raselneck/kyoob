@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <ProjectGuid>{7304DE30-B32B-4FE6-92FB-BD987149CA54}</ProjectGuid>
+    <ProjectGuid>{BF9D432A-BAA9-4766-9D2A-70F62967F81D}</ProjectGuid>
     <ProjectTypeGuids>{96E2B04D-8817-42c6-938A-82C39BA4D311};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -30,66 +30,121 @@
     <Reference Include="Microsoft.Xna.Framework.Content.Pipeline.VideoImporters, Version=4.0.0.0, Culture=neutral, PublicKeyToken=842cf8be1de50553, processorArchitecture=MSIL" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="fx\texture.hlsl">
-      <Name>texture</Name>
-      <Importer>EffectImporter</Importer>
-      <Processor>EffectProcessor</Processor>
+    <Compile Include="textures\lens_flare1.png">
+      <Name>lens_flare1</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+    <Compile Include="textures\lens_flare2.png">
+      <Name>lens_flare2</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+    <Compile Include="textures\lens_flare3.png">
+      <Name>lens_flare3</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+    <Compile Include="textures\lens_glow.png">
+      <Name>lens_glow</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="fx\world.hlsl">
-      <Name>world</Name>
-      <Importer>EffectImporter</Importer>
-      <Processor>EffectProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="font\arial.spritefont">
-      <Name>arial</Name>
-      <Importer>FontDescriptionImporter</Importer>
-      <Processor>FontDescriptionProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="tex\spritesheet.png">
+    <Compile Include="textures\spritesheet.png">
       <Name>spritesheet</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="font\consolas.spritefont">
-      <Name>consolas</Name>
+    <Compile Include="fonts\arial.spritefont">
+      <Name>arial</Name>
       <Importer>FontDescriptionImporter</Importer>
       <Processor>FontDescriptionProcessor</Processor>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="tex\spritesheet-flat.png">
-      <Name>spritesheet-flat</Name>
-      <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="model\skybox.fbx">
-      <Name>skybox</Name>
-      <Importer>FbxImporter</Importer>
-      <Processor>ModelProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="fx\skybox.hlsl">
-      <Name>skybox</Name>
+    <Compile Include="shaders\sun_test.fx">
+      <Name>sun_test</Name>
       <Importer>EffectImporter</Importer>
       <Processor>EffectProcessor</Processor>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="tex\skybox-512.dds">
-      <Name>skybox-512</Name>
-      <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
+    <Compile Include="shaders\depth_normal.fx">
+      <Name>depth_normal</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="meshes\light_mesh.fbx">
+      <Name>light_mesh</Name>
+      <Importer>FbxImporter</Importer>
+      <Processor>ModelProcessor</Processor>
+    </Compile>
+    <None Include="shaders\shared.fx">
+      <Name>shared</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\dir_light_ps.fx">
+      <Name>dir_light_ps</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\light_base.fx">
+      <Name>light_base</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="shaders\dir_light.fx">
+      <Name>dir_light</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\point_light_ps.fx">
+      <Name>point_light_ps</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="shaders\point_light.fx">
+      <Name>point_light</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="shaders\spot_light.fx">
+      <Name>spot_light</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\spot_light_ps.fx">
+      <Name>spot_light_ps</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="shaders\multilight.fx">
+      <Name>multilight</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
     </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\XNA Game Studio\$(XnaFrameworkVersion)\Microsoft.Xna.GameStudio.ContentPipeline.targets" />

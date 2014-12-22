@@ -1,8 +1,11 @@
 build/*
-source/kyoob/obj/*
-content/obj/*
 content/bin/*
-*.user
+content/obj/*
+source/obj/*
+NSight/build/*
+*.cachefile
+*.nvuser
+*.opensdf
+*.sdf
 *.suo
-*.cache*
-.gitattributes
+*.user
