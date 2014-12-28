@@ -1,10 +1,8 @@
-# Kyoob v0.2.0
+# Kyoob v0.2.1
 
 Ever since first playing Minecraft, I've toyed around with the idea of making
-my very own voxel engine. My first attempt was not as fast as it could have
-been due to my "jump right into it" attitude. However, I have taken the time
-to completely rewrite Kyoob from scratch (using some of my old code for hints)
-and it runs cleaner, smoother, and faster than before.
+my very own voxel engine. Kyoob is the result of my turning the idea into
+something tangible.
 
 [![screenshot of Kyoob](kyoob.png)](kyoob.png)
 
@@ -17,11 +15,13 @@ and it runs cleaner, smoother, and faster than before.
 
 ## Todo
 
+* Add GUI items (button, etc.)
 * Prevent walking off map (mainly for slower computers)
 * Fix gravity problems when vsync is disabled
-* Fix lens flare draw order
+* Fix lens flare draw order (?)
+* Fix physics for far away places (coordinates in the thousands)
+  * "Normalize" the block and player positions for physics calculations
 * Adapt sun so that it doesn't act weird "at night"
-* Better chunk priority generation
 * Improve block generation, taking hints [from Notch](http://n0tch.tumblr.com/post/4231184692/terrain-generation-part-1)
   * Actual world generation (caves, trees, etc.)
 * Loading and unloading of chunks from and to disk
@@ -33,9 +33,11 @@ and it runs cleaner, smoother, and faster than before.
 
 ## Special Thanks
 
-* Sean James for writing [3D Graphics with XNA Game Studio 4.0](http://www.amazon.com/Graphics-XNA-Game-Studio-4-0/dp/1849690049)
+* Sean James for writing [3D Graphics with XNA Game Studio 4.0](http://www.amazon.com/Graphics-XNA-Game-Studio-4-0/dp/1849690049) (I highly recommend picking it up if you plan on doing
+  serious XNA development)
 * Microsoft for being such swell people and providing so many free XNA samples,
   such as their lens flare and sky sphere demos
+* Nick and Jessie for helping me test this
 
 ## License
 

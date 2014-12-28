@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using Microsoft.Xna.Framework;
 
 namespace Kyoob.VoxelData
@@ -68,15 +69,16 @@ namespace Kyoob.VoxelData
             _terrain = new VoxelBuffer();
 
             // create bounds
+            var sizeOffs = ChunkData.Size * 0.5f - 0.5f;
             Vector3 boundsMin = new Vector3(
-                center.X - ChunkData.Size / 2 - 0.5f,
-                center.Y - ChunkData.Size / 2 - 0.5f,
-                center.Z - ChunkData.Size / 2 - 0.5f
+                center.X - sizeOffs,
+                center.Y - sizeOffs,
+                center.Z - sizeOffs
             );
             Vector3 boundsMax = new Vector3(
-                center.X + ChunkData.Size / 2 - 0.5f,
-                center.Y + ChunkData.Size / 2 - 0.5f,
-                center.Z + ChunkData.Size / 2 - 0.5f
+                center.X + sizeOffs,
+                center.Y + sizeOffs,
+                center.Z + sizeOffs
             );
             _bounds = new BoundingBox( boundsMin, boundsMax );
             _octree = new Octree( _bounds );
@@ -97,6 +99,61 @@ namespace Kyoob.VoxelData
         }
 
         /// <summary>
+        /// Writes a chunk to a stream.
+        /// </summary>
+        /// <param name="bw">The binary writer to use.</param>
+        /// <param name="chunk">The chunk to write.</param>
+        public static void Write( BinaryWriter bw, Chunk chunk )
+        {
+            // write chunk center
+            bw.Write( chunk.Data.Center.X );
+            bw.Write( chunk.Data.Center.Y );
+            bw.Write( chunk.Data.Center.Z );
+
+            // write chunk blocks
+            for ( int x = 0; x < ChunkData.Size; ++x )
+            {
+                for ( int y = 0; y < ChunkData.Size; ++y )
+                {
+                    for ( int z = 0; z < ChunkData.Size; ++z )
+                    {
+                        bw.Write( (byte)chunk.Data[ x, y, z ].Type );
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Reads a chunk from a stream.
+        /// </summary>
+        /// <param name="br">The binary reader to use.</param>
+        public static Chunk Read( BinaryReader br )
+        {
+            // read chunk center
+            var center = new Vector3();
+            center.X = br.ReadSingle();
+            center.Y = br.ReadSingle();
+            center.Z = br.ReadSingle();
+
+            // create the chunk
+            var chunk = new Chunk( center, false );
+
+            // read chunk blocks
+            for ( int x = 0; x < ChunkData.Size; ++x )
+            {
+                for ( int y = 0; y < ChunkData.Size; ++y )
+                {
+                    for ( int z = 0; z < ChunkData.Size; ++z )
+                    {
+                        chunk.Data[ x, y, z ].Type = (BlockType)br.ReadByte();
+                    }
+                }
+            }
+
+            return chunk;
+        }
+
+        /// <summary>
         /// Disposes of this chunk.
         /// </summary>
         public void Dispose()
@@ -110,7 +167,10 @@ namespace Kyoob.VoxelData
         /// </summary>
         public void Draw()
         {
-            _terrain.Draw();
+            if ( _terrain.HasData )
+            {
+                _terrain.Draw();
+            }
         }
 
         /// <summary>
@@ -289,7 +349,8 @@ namespace Kyoob.VoxelData
         private void CreateBlockBounds( int x, int y, int z, ref BoundingBox bounds )
         {
             // get block position
-            Vector3 p = Position.LocalToWorld( _data.Center, x, y, z );
+            Vector3 p;
+            Position.LocalToWorld( _data.Center, x, y, z, out p );
             Vector3 hvec = Vector3.One * 0.5f;
 
             // set corners

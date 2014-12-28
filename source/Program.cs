@@ -11,7 +11,6 @@ namespace Kyoob
     /// </summary>
     internal static class Program
     {
-#if DEBUG
         /// <summary>
         /// A custom trace listener.
         /// </summary>
@@ -109,7 +108,6 @@ namespace Kyoob
                 );
             }
         }
-#endif
 
         /// <summary>
         /// The main entry point for the application.
@@ -119,14 +117,14 @@ namespace Kyoob
         {
             try
             {
-#if DEBUG
                 // setup the debugger
+#if DEBUG
                 Debug.Listeners.Clear(); // remove default listener
                 Debug.Listeners.Add( new CustomTraceListener( Console.Out ) );
                 Debug.Listeners.Add( new CustomTraceListener( "debug.log" ) );
+#endif
                 Debug.IndentSize = 2;
                 Debug.AutoFlush = true;
-#endif
 
                 // load the settings
                 Settings.Load();
@@ -136,9 +134,6 @@ namespace Kyoob
                 {
                     game.Run();
                 }
-
-                // save the settings
-                Settings.Save();
             }
             catch ( Exception ex )
             {
@@ -148,6 +143,11 @@ namespace Kyoob
 #else
                 MessageBox.Show( ex.Message + "\n\n" + ex.StackTrace, "ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error );
 #endif
+            }
+            finally
+            {
+                // save the settings even if an error occurred
+                Settings.Save();
             }
         }
     }

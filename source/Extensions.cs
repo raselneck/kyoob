@@ -38,6 +38,22 @@ namespace Kyoob
 
 
         /// <summary>
+        /// Inflates this bounding box by the given amount.
+        /// </summary>
+        /// <param name="box">This bounding box.</param>
+        /// <param name="amount">The amount to inflate by.</param>
+        public static void Inflate( this BoundingBox box, float amount )
+        {
+            var ha = amount * 0.5f;
+            box.Min.X -= ha;
+            box.Min.Y -= ha;
+            box.Min.Z -= ha;
+            box.Max.X += ha;
+            box.Max.Y += ha;
+            box.Max.Z += ha;
+        }
+
+        /// <summary>
         /// Gets the center coordinates of this bounding box.
         /// </summary>
         /// <param name="box">The bounding box.</param>

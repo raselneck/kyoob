@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Kyoob.VoxelData;
 
-// TODO : Use velocity variable instead of translation
+// TODO : Use velocity variable instead of translation (maybe just rename and get rid of _yVelocity?)
 
 namespace Kyoob.Entities
 {
@@ -151,10 +151,11 @@ namespace Kyoob.Entities
         /// <summary>
         /// Causes this entity to jump if they are on the ground.
         /// </summary>
-        public void Jump()
+        public void Jump( GameTime gameTime )
         {
             if ( IsOnGround && Position.Y < TerrainGenerator.MaxEntityHeight )
             {
+                // TODO : This is where to fix the jump glitch without vsync
                 _yVelocity += JumpForce * JumpVelocity;
             }
         }
@@ -169,6 +170,7 @@ namespace Kyoob.Entities
             float time = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             // add some falling physics
+            // TODO : This is where to fix the gravity glitch without vsync
             _yVelocity += GravityVelocity * time;
             _yVelocity = Math.Max( _yVelocity, TerminalVelocity );
             _translation.Y = _yVelocity;
@@ -229,6 +231,7 @@ namespace Kyoob.Entities
                 var chunk = _surroundingChunks[ i ];
                 if ( chunk == null )
                 {
+                    // TODO : This is where to prevent walking off of the world
                     continue;
                 }
 

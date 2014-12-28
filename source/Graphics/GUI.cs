@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
 // TODO : Add draw texture overloads and remove access to sprite batch
@@ -13,6 +14,7 @@ namespace Kyoob.Graphics
     public static class GUI
     {
         private static GraphicsDevice _graphicsDevice;
+        private static ContentManager _content;
         private static SpriteBatch _spriteBatch;
         private static SpriteFont _spriteFont;
         private static Texture2D _pixel;
@@ -35,7 +37,8 @@ namespace Kyoob.Graphics
         /// </summary>
         static GUI()
         {
-            _graphicsDevice = Kyoob.Game.Instance.GraphicsDevice;
+            _graphicsDevice = Game.Instance.GraphicsDevice;
+            _content = Game.Instance.Content;
 
             _spriteBatch = new SpriteBatch( _graphicsDevice );
             LoadFont( "fonts/arial" ); // default font

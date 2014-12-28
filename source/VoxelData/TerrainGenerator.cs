@@ -150,7 +150,7 @@ namespace Kyoob.VoxelData
         public void SetCurrentChunk( Chunk chunk )
         {
             const int max = ChunkData.Size + 2;
-            Vector3 world = new Vector3();
+            Vector3 world;
             for ( int x = 0; x < max; ++x )
             {
                 for ( int y = 0; y < max; ++y )

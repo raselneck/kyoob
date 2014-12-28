@@ -33,6 +33,7 @@ namespace Kyoob.Graphics
         private RenderTarget2D _normalTarget;
         private RenderTarget2D _lightTarget;
         private GraphicsDevice _device;
+        private Settings _settings;
         private RenderMode _renderMode;
         private LensFlare _lensFlare;
         private Model _lightMesh;
@@ -104,6 +105,7 @@ namespace Kyoob.Graphics
             _pointLights = new List<PointLight>();
 
             _world = World.Instance;
+            _settings = Settings.Instance;
         }
 
         /// <summary>
@@ -199,6 +201,7 @@ namespace Kyoob.Graphics
             _depthNormalEffect.Projection = camera.Projection;
             _multilightEffect.View = camera.View;
             _multilightEffect.Projection = camera.Projection;
+            _multilightEffect.SetDefaultFogRange();
 
 
             Profiler.Stop( "Scene Update" );

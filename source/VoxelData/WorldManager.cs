@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using Microsoft.Xna.Framework;
 using Kyoob.Entities;
@@ -15,6 +16,7 @@ namespace Kyoob.VoxelData
         private volatile Dictionary<Vector3, Chunk> _chunks;
         private readonly int _maxChunksY;
         private Thread _threadLoad;
+        private Settings _settings;
 
         /// <summary>
         /// Checks to see if this world manager is disposed.
@@ -40,9 +42,7 @@ namespace Kyoob.VoxelData
         /// <param name="initialPosition">The initial position to begin generation around.</param>
         public WorldManager( Vector3 initialPosition )
         {
-            ShouldBeRunning = false;
-
-            // create our data structures
+            _settings = Settings.Instance;
             _chunks = new Dictionary<Vector3, Chunk>();
 
             // calculate max number of chunks in the Y direction
@@ -116,13 +116,25 @@ namespace Kyoob.VoxelData
         /// <summary>
         /// Draws all of the chunks, assuming that an effect is currently active.
         /// </summary>
-        public void DrawChunks()
+        /// <param name="camera">The camera to use for visibility testing.</param>
+        public void DrawChunks( Camera camera )
         {
             lock ( _chunks )
             {
+                // render each chunk that the camera can see
                 foreach ( var chunk in _chunks.Values )
                 {
-                    chunk.Draw();
+                    if ( _settings.CullFrustum  )
+                    {
+                        if ( camera.CanSee( chunk.Bounds ) )
+                        {
+                            chunk.Draw();
+                        }
+                    }
+                    else
+                    {
+                        chunk.Draw();
+                    }
                 }
             }
         }
@@ -156,25 +168,17 @@ namespace Kyoob.VoxelData
         }
 
         /// <summary>
-        /// Begins chunk maintenance.
+        /// Maintains the chunks.
         /// </summary>
-        /// <param name="sender">The X direction to maintain in.</param>
         private void MaintainChunks()
         {
-            // TODO : Create some kind of centroid to be used at the center of chunk generation instead of using the player's
-            // position each frame. Then, incrementally create chunks-- instead of going from 0 to currentIndexDist in the
-            // X and Z direction, go 0..1 then 0..2 then 0..3, etc. until currentIndexDist. If the user ventures too far
-            // from the centroid, then reset the max iteration for the X and Z generation and update the centroid. If the
-            // iteration variable reaches currentIndexDist, then all chunks that need to be generated have been generated so
-            // none need to be unloaded/re-loaded until the user is too far from the centroid.
-
             var player = Player.Instance;
 
             // prepare for loop
-            Vector3 chunkCenter, chunkIndex, currentPosition, currentForward, toCheck;
-            Vector3 chunkCenterNoY = Vector3.Zero, currentPositionNoY = Vector3.Zero;
+            Vector3 chunkCenter, chunkIndex, currentPosition, toCheck, toCheckNoY;
+            Vector3 chunkCenterNoY = Vector3.Zero, currentPositionNoY = Vector3.Zero, centroid = Vector3.Zero;
             float currentViewDistance;
-            int currentIndexDist = 0;
+            int maxIndexDist = 0, currentIndexDist = 0;
             int x, y, z;
             var toUnload = new List<Vector3>( ChunkData.Size * ChunkData.Size * _maxChunksY );
 
@@ -182,13 +186,44 @@ namespace Kyoob.VoxelData
             while ( ShouldBeRunning )
             {
                 // get current chunk center and index and calculate the max distance in the X and Z direction
-                currentForward = player.Camera.Forward;
                 currentPosition = player.Position;
                 currentPositionNoY.X = currentPosition.X;
                 currentPositionNoY.Z = currentPosition.Z;
                 currentViewDistance = Settings.Instance.ViewDistance;
-                currentIndexDist = (int)Math.Ceiling( currentViewDistance / ChunkData.Size );
                 Position.WorldToLocal( currentPosition, out chunkIndex, out chunkCenter );
+
+                // update index distance
+                var playerDistFromCentroid = Vector3.Distance( centroid, currentPositionNoY );
+                var maxDistFromCentroid = currentViewDistance * 0.25f;
+                maxIndexDist = (int)Math.Ceiling( currentViewDistance / ChunkData.Size );
+                if ( ++currentIndexDist > maxIndexDist || playerDistFromCentroid >= maxDistFromCentroid )
+                {
+                    centroid.X = currentPositionNoY.X;
+                    centroid.Z = currentPositionNoY.Z;
+                    currentIndexDist = 0;
+                }
+
+
+
+                // put all chunks up on the chopping block
+                toUnload.Clear();
+                lock ( _chunks )
+                {
+                    toUnload.AddRange( _chunks.Keys );
+                }
+
+                // now go through all of those chunks and see which ones we need to unload
+                for ( int i = 0; i < toUnload.Count && ShouldBeRunning; ++i )
+                {
+                    // if it's too far away, unload it
+                    toCheck = toCheckNoY = toUnload[ i ];
+                    toCheckNoY.Y = 0.0f;
+                    if ( Vector3.Distance( currentPositionNoY, toCheckNoY ) > currentViewDistance )
+                    {
+                        UnloadChunk( ref toCheck );
+                    }
+                }
+
 
 
                 // go through and create chunks that need to be loaded
@@ -234,26 +269,6 @@ namespace Kyoob.VoxelData
                         }
                     }
                 }
-
-
-                // put all chunks up on the chopping block
-                toUnload.Clear();
-                lock ( _chunks )
-                {
-                    toUnload.AddRange( _chunks.Keys );
-                }
-
-                // now go through all of those chunks and see which ones we need to unload
-                for ( int i = 0; i < toUnload.Count && ShouldBeRunning; ++i )
-                {
-                    // if it's too far away, unload it
-                    toCheck = toUnload[ i ];
-                    toCheck.Y = 0;
-                    if ( Vector3.Distance( currentPositionNoY, toCheck ) > currentViewDistance )
-                    {
-                        UnloadChunk( ref toCheck );
-                    }
-                }
             }
         }
 
@@ -263,32 +278,22 @@ namespace Kyoob.VoxelData
         /// <param name="pos"></param>
         private void LoadChunk( ref Vector3 pos )
         {
-            var chunk = new Chunk( pos, true );
+            // check if the chunk already exists
+            bool contains = false;
             lock ( _chunks )
             {
-                _chunks[ pos ] = chunk;
+                contains = _chunks.ContainsKey( pos );
             }
 
-            // With the following method, I believe that sometimes when a chunk is added
-            // it doesn't have its terrain generated for some reason
-            /*
-            bool added = false;
-            var chunk = new Chunk( pos );
-            
-            lock ( _chunks )
+            // if the chunk doesn't exist, create it and add it
+            if ( !contains )
             {
-                if ( !_chunks.ContainsKey( pos ) )
+                var chunk = new Chunk( pos, true );
+                lock ( _chunks )
                 {
-                    _chunks.Add( pos, chunk );
-                    added = true;
+                    _chunks[ pos ] = chunk;
                 }
             }
-            
-            if ( added )
-            {
-                chunk.PopulateTerrain();
-            }
-            */
         }
 
         /// <summary>
@@ -305,10 +310,6 @@ namespace Kyoob.VoxelData
                     chunk = _chunks[ pos ];
                     _chunks.Remove( pos );
                 }
-            }
-            if ( chunk != null )
-            {
-                chunk.Dispose();
             }
         }
     }

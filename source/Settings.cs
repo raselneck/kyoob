@@ -79,6 +79,16 @@ namespace Kyoob
         }
 
         /// <summary>
+        /// Gets or sets whether or not to use frustum culling.
+        /// </summary>
+        [JsonProperty( "cull_frustum" )]
+        public bool CullFrustum
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// Attempts to load the settings file.
         /// </summary>
         /// <returns></returns>
@@ -131,6 +141,7 @@ namespace Kyoob
 #else
             UseVerboseOutput = false;
 #endif
+            CullFrustum = false;
             VSync = true;
             ViewDistance = 128.0f;
         }

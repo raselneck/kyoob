@@ -42,11 +42,11 @@ namespace Kyoob.Entities
         /// <summary>
         /// Gets the camera's frustum.
         /// </summary>
-        public BoundingFrustum Frustum
+        public virtual BoundingFrustum Frustum
         {
             get
             {
-                return new BoundingFrustum( View * Projection );
+                return _frustum;
             }
         }
 
@@ -61,6 +61,7 @@ namespace Kyoob.Entities
                 Game.Instance.GraphicsDevice.Viewport.AspectRatio,
                 0.01f, 1000.0f
             );
+            _frustum = new BoundingFrustum( View * Projection );
         }
 
         /// <summary>
@@ -70,20 +71,7 @@ namespace Kyoob.Entities
         /// <returns></returns>
         public bool CanSee( BoundingBox bounds )
         {
-            ContainmentType ct = _frustum.Contains( bounds );
-            return ct == ContainmentType.Contains
-                || ct == ContainmentType.Intersects;
-        }
-
-        /// <summary>
-        /// Checks to see if this camera can see an object.
-        /// </summary>
-        /// <param name="bounds">The object's bounds.</param>
-        public bool CanSee( BoundingSphere bounds )
-        {
-            ContainmentType ct = _frustum.Contains( bounds );
-            return ct == ContainmentType.Contains
-                || ct == ContainmentType.Intersects;
+            return _frustum.Intersects( bounds );
         }
 
         /// <summary>
@@ -92,7 +80,7 @@ namespace Kyoob.Entities
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         public virtual void Update( GameTime gameTime )
         {
-            _frustum = Frustum;
+            _frustum.Matrix = View * Projection;
         }
     }
 }

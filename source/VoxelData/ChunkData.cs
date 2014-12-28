@@ -18,6 +18,11 @@ namespace Kyoob.VoxelData
         public const int Size = 16;
 
         /// <summary>
+        /// The inverse size of each dimension of the chunk data.
+        /// </summary>
+        public const float InverseSize = 1.0f / Size;
+
+        /// <summary>
         /// Gets the center of this chunk data.
         /// </summary>
         public Vector3 Center

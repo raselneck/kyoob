@@ -153,13 +153,23 @@ namespace Kyoob
             {
                 _renderer.RenderMode = RenderMode.Normal;
             }
-            else if ( WasKeyPressed( Keys.D2 ) )
+            if ( WasKeyPressed( Keys.D2 ) )
             {
                 _renderer.RenderMode = RenderMode.LightMap;
             }
-            else if ( WasKeyPressed( Keys.D3 ) )
+            if ( WasKeyPressed( Keys.D3 ) )
             {
                 _renderer.RenderMode = RenderMode.NormalMap;
+            }
+            if ( WasKeyPressed( Keys.P ) )
+            {
+                var handle = Player.Instance.HandleInput;
+                IsMouseVisible = handle;
+                if ( !handle )
+                {
+                    CenterMouse();
+                }
+                Player.Instance.HandleInput = !handle;
             }
 
 
@@ -185,7 +195,7 @@ namespace Kyoob
             GUI.DrawText( 10, 10, "{0} FPS", _frameCounter.FPS );
 #if DEBUG
             GUI.DrawText( 10, 24, "Position: {0}", Player.Instance.Position );
-            GUI.DrawText( 10, 38, "Sun Dir.: {0}", World.Instance.SunLight.Direction );
+            GUI.DrawText( 10, 38, "World Seed: {0}", TerrainGenerator.Instance.Seed );
 #endif
             GUI.End();
 

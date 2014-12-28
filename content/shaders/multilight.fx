@@ -3,8 +3,12 @@
 float4x4 world;
 float4x4 view;
 float4x4 projection;
-float3 ambientColor = float3( 0.15, 0.15, 0.15 );
-float3 diffuseColor = float3( 1.00, 1.00, 1.00 );
+float3 playerPosition;
+float3 ambientColor;
+float3 diffuseColor;
+float3 fogColor;
+float fogStart;
+float fogEnd;
 
 // sprite texture information
 texture2D spriteTexture;
@@ -38,9 +42,10 @@ struct VSInput
 // vertex shader output
 struct VSOutput
 {
-    float4 Position  : POSITION0;
-    float2 UV        : TEXCOORD0;
-    float4 TPosition : TEXCOORD1;
+    float4 Position      : POSITION0;
+    float2 UV            : TEXCOORD0;
+    float4 TPosition     : TEXCOORD1;
+    float3 ViewDirection : TEXCOORD2;
 };
 
 // vertex shader function
@@ -54,6 +59,7 @@ VSOutput VSFunc( VSInput input )
     output.Position = mul( viewPosition, projection );
     output.TPosition = output.Position;
     output.UV = input.UV;
+    output.ViewDirection = worldPosition - playerPosition;
 
     return output;
 }
@@ -66,9 +72,16 @@ float4 PSFunc( VSOutput input ) : COLOR0
     float3 light = tex2D( lightSampler, coords );
     light += ambientColor;
 
+    // calculate fog amount
+    float dist = length( input.ViewDirection );
+    float fog = clamp( ( dist - fogStart ) / ( fogEnd - fogStart ), 0.0, 1.0 );
+
     // calculate final color
     float3 tex = tex2D( spriteSampler, input.UV );
-    return float4( tex * diffuseColor * light, 1.0 );
+    float3 finalColor = lerp( tex * diffuseColor * light, fogColor, fog );
+
+    // return the final color
+    return float4( finalColor, 1.0 );
 }
 
 technique MainTechnique

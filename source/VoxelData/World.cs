@@ -144,7 +144,7 @@ namespace Kyoob.VoxelData
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         public void Draw( GameTime gameTime )
         {
-            _manager.DrawChunks();
+            _manager.DrawChunks( _player.Camera );
         }
 
         /// <summary>

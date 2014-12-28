@@ -125,8 +125,7 @@ namespace Kyoob.Entities
                 }
 
                 // process input
-                float time = (float)gameTime.ElapsedGameTime.TotalSeconds;
-                ProcessInput( time );
+                ProcessInput( gameTime );
             }
 
             // update camera and apply physics irregardless of input handling
@@ -152,9 +151,10 @@ namespace Kyoob.Entities
         /// <summary>
         /// Processes user input.
         /// </summary>
-        /// <param name="time">The current time step.</param>
-        private void ProcessInput( float time )
+        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        private void ProcessInput( GameTime gameTime )
         {
+            float time = (float)gameTime.ElapsedGameTime.TotalSeconds;
             _currMouse = Mouse.GetState();
             _currKeys = Keyboard.GetState();
             float lookUnits = time * LookVelocity;
@@ -201,7 +201,7 @@ namespace Kyoob.Entities
             }
             if ( _currKeys.IsKeyDown( Keys.Space ) )
             {
-                Jump();
+                Jump( gameTime );
             }
 
             // check mouse for rotating
