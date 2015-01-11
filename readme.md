@@ -12,7 +12,7 @@ something tangible.
   * [See here](http://what-ev.net/2014/02/19/the-xna-enabler-app-xna-in-visual-studio-2012-2013/)
     if you're using VS2012 or VS2013
   * Also .NET Framework 4.0
-* [NVIDIA NSight](http://www.nvidia.com/object/nsight.html) (if you wish you do GPU debugging)
+* [NVIDIA NSight](http://www.nvidia.com/object/nsight.html) (if you wish to do GPU debugging)
   * You'll need to set the NSight Properties on the NSight project to launch
     an external program, specifically `$(SolutionDir)build\$(Configuration)\kyoob.exe`.
 
