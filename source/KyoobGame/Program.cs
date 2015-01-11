@@ -34,6 +34,7 @@ namespace Kyoob
             public CustomTraceListener( Stream stream )
             {
                 _output = new StreamWriter( stream );
+                GC.SuppressFinalize( _output );
             }
 
             /// <summary>
@@ -43,6 +44,7 @@ namespace Kyoob
             public CustomTraceListener( string file )
             {
                 _output = new StreamWriter( File.Create( file ) );
+                GC.SuppressFinalize( _output );
             }
 
             /// <summary>
@@ -88,10 +90,7 @@ namespace Kyoob
             /// <param name="disposing">???</param>
             protected override void Dispose( bool disposing )
             {
-                if ( disposing )
-                {
-                    _output.Dispose();
-                }
+                _output.Dispose();
                 base.Dispose( disposing );
             }
 

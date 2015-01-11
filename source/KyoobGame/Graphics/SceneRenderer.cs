@@ -7,6 +7,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Entities;
 using Kyoob.VoxelData;
 
+// TODO : Take out the pre-lighting renderer for this and rename it to WorldRenderer
+
 namespace Kyoob.Graphics
 {
     /// <summary>

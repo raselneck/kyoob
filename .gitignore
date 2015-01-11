@@ -1,8 +1,8 @@
 build/*
-content/bin/*
-content/obj/*
-source/obj/*
-NSight/build/*
+source/KyoobContent/bin/*
+source/KyoobContent/obj/*
+source/KyoobGame/obj/*
+source/NSight/build/*
 *.cachefile
 *.nvuser
 *.opensdf

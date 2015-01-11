@@ -57,9 +57,24 @@ namespace Kyoob.VoxelData
         /// <param name="type">The current block type.</param>
         public void AddFaceData( Vector3 center, BlockFace face, BlockType type )
         {
-            // set texture coordinate info
-            Vector2 texSize = SpriteSheet.Instance.TexCoordSize;
-            _tcTL = SpriteSheet.Instance.GetTextureCoords( type, face );
+            // set texture coordinate info (avoid using "new")
+            var texSize = SpriteSheet.Instance.TexCoordSize;
+            var typeInfo = BlockTypeInfo.GetInfoForType( type );
+            switch ( face )
+            {
+                case BlockFace.Back:
+                case BlockFace.Front:
+                case BlockFace.Left:
+                case BlockFace.Right:
+                    _tcTL = typeInfo.SideTextureCoordinate;
+                    break;
+                case BlockFace.Bottom:
+                    _tcTL = typeInfo.BottomTextureCoordinate;
+                    break;
+                case BlockFace.Top:
+                    _tcTL = typeInfo.TopTextureCoordinate;
+                    break;
+            }
             _tcTR.X = _tcTL.X + texSize.X;
             _tcTR.Y = _tcTL.Y;
             _tcBL.X = _tcTL.X;

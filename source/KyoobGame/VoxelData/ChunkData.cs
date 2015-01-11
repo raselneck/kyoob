@@ -2,6 +2,9 @@
 using System.Diagnostics;
 using Microsoft.Xna.Framework;
 
+// TODO : Make chunks 16x??x16 where ?? is the maximum terrain height in the Y direction / 16
+//        Basically, make chunks be entire "pillars"
+
 namespace Kyoob.VoxelData
 {
     /// <summary>
@@ -49,6 +52,14 @@ namespace Kyoob.VoxelData
                     throw new ArgumentOutOfRangeException( "Fix this to return the block in the world instance." );
                 }
                 return _blocks[ x, y, z ];
+            }
+            set
+            {
+                if ( x < 0 || x >= Size || y < 0 || y >= Size || z < 0 || z >= Size )
+                {
+                    throw new ArgumentOutOfRangeException( "Fix this to return the block in the world instance." );
+                }
+                _blocks[ x, y, z ] = value;
             }
         }
 

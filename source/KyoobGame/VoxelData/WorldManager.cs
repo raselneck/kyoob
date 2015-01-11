@@ -288,7 +288,7 @@ namespace Kyoob.VoxelData
             // if the chunk doesn't exist, create it and add it
             if ( !contains )
             {
-                var chunk = new Chunk( pos, true );
+                var chunk = new Chunk( pos );
                 lock ( _chunks )
                 {
                     _chunks[ pos ] = chunk;

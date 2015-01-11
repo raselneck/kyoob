@@ -3,6 +3,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Graphics;
 
+// TODO : Use BlockVertex instead of VertexPositionNormalTexture (see http://msdn.microsoft.com/en-us/library/bb976065.aspx)
+// TODO : Take out prelighting system and use block light levels instead with new shader
+
 namespace Kyoob.VoxelData
 {
     /// <summary>

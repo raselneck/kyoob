@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.VoxelData;
 
+// TODO : Rebuild chunk voxel buffers when the texture is changed
+
 namespace Kyoob.Graphics
 {
     /// <summary>
@@ -92,73 +94,11 @@ namespace Kyoob.Graphics
             }
         }
 
-
-        /// <summary>
-        /// Gets the texture coordinates for the given block information.
-        /// </summary>
-        /// <param name="type">The block type.</param>
-        /// <param name="face">The block face.</param>
-        public Vector2 GetTextureCoords( BlockType type, BlockFace face )
-        {
-            // check the block type
-            switch ( type )
-            {
-                case BlockType.Grass:
-                    return GetGrassCoords( face );
-                case BlockType.Bedrock:
-                    return GetCoords( 0, 2 );
-                case BlockType.Dirt:
-                    return GetCoords( 1, 0 );
-                case BlockType.Sand:
-                    return GetCoords( 1, 1 );
-                case BlockType.Stone:
-                    return GetCoords( 0, 1 );
-                case BlockType.Water:
-                    return GetCoords( 2, 0 );
-                default:
-                    return GetCoords( 0, 0 );
-            }
-        }
-
-
         /// <summary>
         /// Creates the sprite sheet.
         /// </summary>
         private SpriteSheet()
         {
-        }
-
-        /// <summary>
-        /// Gets the texture coordinates for the sprite at the given X and Y coordinates.
-        /// </summary>
-        /// <param name="x">The X coordinate.</param>
-        /// <param name="y">The Y coordinate.</param>
-        /// <returns></returns>
-        private Vector2 GetCoords( int x, int y )
-        {
-            return new Vector2( x * _texCoordSize.X, y * _texCoordSize.Y );
-        }
-
-        /// <summary>
-        /// Gets the texture coordinates for a grass block on the given face.
-        /// </summary>
-        /// <param name="face">The block face.</param>
-        /// <returns></returns>
-        private Vector2 GetGrassCoords( BlockFace face )
-        {
-            switch ( face )
-            {
-                case BlockFace.Left:
-                case BlockFace.Right:
-                case BlockFace.Front:
-                case BlockFace.Back:
-                    return GetCoords( 2, 2 );
-                case BlockFace.Top:
-                    return GetCoords( 2, 1 );
-                case BlockFace.Bottom:
-                default:
-                    return GetCoords( 1, 0 );
-            }
         }
     }
 }

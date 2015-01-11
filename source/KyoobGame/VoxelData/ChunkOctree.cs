@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
-// "for" loops on lists and arrays are generally cheaper, so we
-// avoid "foreach" loops like the dickens in here
+// NOTE : "for" loops on lists and arrays are generally cheaper (and faster), so we avoid "foreach" loops like the dickens in here
 
 namespace Kyoob.VoxelData
 {
     /// <summary>
-    /// An octree implementation specifically for blocks.
+    /// An octree implementation specifically for chunks.
     /// </summary>
-    public sealed class Octree
+    public sealed class ChunkOctree
     {
         /// <summary>
         /// The maximum number of elements we can have before we need to subdivide.
@@ -18,7 +17,7 @@ namespace Kyoob.VoxelData
         private const int MaxItemCount = 48;
 
         private List<BoundingBox> _objects;
-        private Octree[] _children;
+        private ChunkOctree[] _children;
         private BoundingBox _bounds;
 
         /// <summary>
@@ -47,10 +46,10 @@ namespace Kyoob.VoxelData
         /// Creates a new octree.
         /// </summary>
         /// <param name="bounds">The octree's bounds.</param>
-        public Octree( BoundingBox bounds )
+        public ChunkOctree( BoundingBox bounds )
         {
             _objects = new List<BoundingBox>( MaxItemCount );
-            _children = new Octree[ 8 ];
+            _children = new ChunkOctree[ 8 ];
             _bounds = bounds;
         }
 
@@ -327,14 +326,14 @@ namespace Kyoob.VoxelData
             Vector3 blf = new Vector3( center.X - qdim.X, center.Y - qdim.Y, center.Z - qdim.Z );
 
             // create children
-            _children[ 0 ] = new Octree( MakeBoundingBox( tlb, hdim ) ); // top left back
-            _children[ 1 ] = new Octree( MakeBoundingBox( tlf, hdim ) ); // top left front
-            _children[ 2 ] = new Octree( MakeBoundingBox( trb, hdim ) ); // top right back
-            _children[ 3 ] = new Octree( MakeBoundingBox( trf, hdim ) ); // top right front
-            _children[ 4 ] = new Octree( MakeBoundingBox( blb, hdim ) ); // bottom left back
-            _children[ 5 ] = new Octree( MakeBoundingBox( blf, hdim ) ); // bottom left front
-            _children[ 6 ] = new Octree( MakeBoundingBox( brb, hdim ) ); // bottom right back
-            _children[ 7 ] = new Octree( MakeBoundingBox( brf, hdim ) ); // bottom right front
+            _children[ 0 ] = new ChunkOctree( MakeBoundingBox( tlb, hdim ) ); // top left back
+            _children[ 1 ] = new ChunkOctree( MakeBoundingBox( tlf, hdim ) ); // top left front
+            _children[ 2 ] = new ChunkOctree( MakeBoundingBox( trb, hdim ) ); // top right back
+            _children[ 3 ] = new ChunkOctree( MakeBoundingBox( trf, hdim ) ); // top right front
+            _children[ 4 ] = new ChunkOctree( MakeBoundingBox( blb, hdim ) ); // bottom left back
+            _children[ 5 ] = new ChunkOctree( MakeBoundingBox( blf, hdim ) ); // bottom left front
+            _children[ 6 ] = new ChunkOctree( MakeBoundingBox( brb, hdim ) ); // bottom right back
+            _children[ 7 ] = new ChunkOctree( MakeBoundingBox( brf, hdim ) ); // bottom right front
 
             // go through our items and try to move them into children
             for ( int i = 0; i < _objects.Count; ++i )

@@ -5,7 +5,7 @@ namespace Kyoob.VoxelData
     /// <summary>
     /// An enumeration of possible block types.
     /// </summary>
-    public enum BlockType
+    public enum BlockType : byte
     {
         /// <summary>
         /// Air block.

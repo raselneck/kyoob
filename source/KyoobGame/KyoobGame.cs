@@ -15,6 +15,8 @@ using Kyoob.Graphics;
 using Kyoob.VoxelData;
 
 // TODO : Input manager class to easily support keyboard+mouse and controllers?
+// TODO : Make the world (or something) a component so we don't need to manually call everything
+// TODO : Move most of the main code over to a separate library to facilitate plugins later
 
 namespace Kyoob
 {
@@ -104,6 +106,7 @@ namespace Kyoob
             // ensure HiDef is supported
             if ( !GraphicsDevice.Adapter.IsProfileSupported( GraphicsProfile.HiDef ) )
             {
+                // TODO : Remove this, because with the new lighting system we can do Reach
                 throw new NotSupportedException( "ERROR: The current system does not support the HiDef graphics profile." );
             }
 
@@ -117,11 +120,6 @@ namespace Kyoob
             World.CreateInstance();
             _renderer = SceneRenderer.Instance;
             _renderer.LoadContent( Content );
-
-#if DEBUG
-            // this is just because I want to
-            GraphicsInfo.Dump( "graphics.txt" );
-#endif
         }
 
         /// <summary>

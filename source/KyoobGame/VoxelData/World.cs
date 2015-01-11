@@ -9,6 +9,7 @@ using Kyoob.Graphics;
 using MyDirectionalLight = Kyoob.Graphics.DirectionalLight;
 
 // TODO : Move day/night cycle + sun info into a Nature class (not Environment because of System.Environment)
+// TODO : Move terrain seed to be a part of the world and have terrain use that seed
 
 namespace Kyoob.VoxelData
 {

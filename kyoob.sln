@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kyoob", "source\Kyoob.csproj", "{B978CE5E-D312-456B-BBA8-0EB474A75513}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyoobGame", "source\KyoobGame\KyoobGame.csproj", "{B978CE5E-D312-456B-BBA8-0EB474A75513}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyoobContent", "content\KyoobContent.contentproj", "{BF9D432A-BAA9-4766-9D2A-70F62967F81D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyoobContent", "source\KyoobContent\KyoobContent.contentproj", "{BF9D432A-BAA9-4766-9D2A-70F62967F81D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NSight", "NSight\NSight.vcxproj", "{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NSight", "source\NSight\NSight.vcxproj", "{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

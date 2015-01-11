@@ -82,7 +82,10 @@ namespace Kyoob.Graphics
         /// </summary>
         public static void Push()
         {
-            _states.Push( new GraphicsState() );
+            lock ( _states )
+            {
+                _states.Push( new GraphicsState( Game.Instance.GraphicsDevice ) );
+            }
         }
 
         /// <summary>
@@ -90,10 +93,13 @@ namespace Kyoob.Graphics
         /// </summary>
         public static void Pop()
         {
-            if ( _states.Count > 0 )
+            lock ( _states )
             {
-                var state = _states.Pop();
-                state.Restore();
+                if ( _states.Count > 0 )
+                {
+                    var state = _states.Pop();
+                    state.Restore();
+                }
             }
         }
 
@@ -109,12 +115,15 @@ namespace Kyoob.Graphics
         /// <summary>
         /// Creates a graphics state representing the current state of the graphics device.
         /// </summary>
-        private GraphicsState()
+        public GraphicsState( GraphicsDevice graphicsDevice )
         {
-            var device = Game.Instance.GraphicsDevice;
-            BlendState = device.BlendState ?? BlendState.Opaque;
-            DepthStencilState = device.DepthStencilState ?? DepthStencilState.Default;
-            SamplerState = device.SamplerStates[ 0 ] ?? SamplerState.PointClamp;
+            if ( graphicsDevice == null )
+            {
+                throw new ArgumentNullException( "graphicsDevice" );
+            }
+            BlendState          = graphicsDevice.BlendState         ?? BlendState.Opaque;
+            DepthStencilState   = graphicsDevice.DepthStencilState  ?? DepthStencilState.Default;
+            SamplerState        = graphicsDevice.SamplerStates[ 0 ] ?? SamplerState.PointClamp;
         }
 
         /// <summary>
