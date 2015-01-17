@@ -1,7 +1,7 @@
 # Kyoob v0.3.0 Alpha
 
 Ever since first playing Minecraft, I've toyed around with the idea of making
-my very own voxel engine. Kyoob is the result of my turning the idea into
+my very own voxel engine. Kyoob is the result of my turning that idea into
 something tangible.
 
 [![screenshot of Kyoob](kyoob.png)](kyoob.png)
@@ -23,8 +23,7 @@ something tangible.
 * Fix gravity problems when vsync is disabled
 * Fix physics for far away places (coordinates in the thousands)
   * "Normalize" the block and player positions for physics calculations
-* Improve block generation, taking hints [from Notch](http://n0tch.tumblr.com/post/4231184692/terrain-generation-part-1)
-  * Actual world generation (caves, trees, etc.)
+* Improve world generation, taking hints [from Notch](http://n0tch.tumblr.com/post/4231184692/terrain-generation-part-1)
 * Loading and unloading of chunks from and to disk
 * Water rendering
 * Block editing
@@ -35,11 +34,11 @@ something tangible.
 
 * Sean James for writing [3D Graphics with XNA Game Studio 4.0](http://www.amazon.com/Graphics-XNA-Game-Studio-4-0/dp/1849690049) (I highly recommend picking it up if you plan on doing
   serious XNA development)
-* Microsoft for being such swell people and providing so many free XNA samples,
-  such as their lens flare and sky sphere demos
+* Microsoft for being such swell people and providing so many free XNA samples
 * [Charles Barros](http://gamecoderbr.blogspot.com/) for his [Voxel Engine series](http://gamecoderbr.blogspot.com/2013/03/voxel-engine-part-1.html)
 * Nick and Jessie for helping me test this
 
 ## License
 
-All of my code in this repository is released under the [MIT license](license.md).
+All of the code in this repository, unless otherwise stated, is released under the
+[MIT license](license.md).

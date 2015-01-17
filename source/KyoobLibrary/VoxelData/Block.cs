@@ -18,7 +18,6 @@ namespace Kyoob.VoxelData
         /// </summary>
         public const float MaximumLighting = 1.00f;
 
-
         private BlockType _type;
         private float _lighting;
         private Chunk _chunk;
