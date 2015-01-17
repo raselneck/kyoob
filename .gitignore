@@ -2,6 +2,8 @@ build/*
 source/KyoobContent/bin/*
 source/KyoobContent/obj/*
 source/KyoobGame/obj/*
+source/KyoobLibrary/bin/*
+source/KyoobLibrary/obj/*
 source/NSight/build/*
 *.cachefile
 *.nvuser

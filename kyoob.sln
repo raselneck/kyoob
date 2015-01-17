@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyoobGame", "source\KyoobGa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyoobContent", "source\KyoobContent\KyoobContent.contentproj", "{BF9D432A-BAA9-4766-9D2A-70F62967F81D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NSight", "source\NSight\NSight.vcxproj", "{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KyoobLibrary", "source\KyoobLibrary\KyoobLibrary.csproj", "{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,18 +37,18 @@ Global
 		{BF9D432A-BAA9-4766-9D2A-70F62967F81D}.Release|Mixed Platforms.ActiveCfg = Release|x86
 		{BF9D432A-BAA9-4766-9D2A-70F62967F81D}.Release|Win32.ActiveCfg = Release|x86
 		{BF9D432A-BAA9-4766-9D2A-70F62967F81D}.Release|x86.ActiveCfg = Release|x86
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Debug|Mixed Platforms.Build.0 = Debug|Win32
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Debug|Win32.ActiveCfg = Debug|Win32
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Debug|Win32.Build.0 = Debug|Win32
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Debug|x86.ActiveCfg = Debug|Win32
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Debug|x86.Build.0 = Debug|Win32
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Release|Mixed Platforms.ActiveCfg = Release|Win32
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Release|Mixed Platforms.Build.0 = Release|Win32
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Release|Win32.ActiveCfg = Release|Win32
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Release|Win32.Build.0 = Release|Win32
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Release|x86.ActiveCfg = Release|Win32
-		{7ED20C6A-AB3F-4B1D-BF84-108F81ED48E5}.Release|x86.Build.0 = Release|Win32
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Debug|Win32.ActiveCfg = Debug|x86
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Debug|Win32.Build.0 = Debug|x86
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Debug|x86.ActiveCfg = Debug|x86
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Debug|x86.Build.0 = Debug|x86
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Release|Mixed Platforms.Build.0 = Release|x86
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Release|Win32.ActiveCfg = Release|x86
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Release|Win32.Build.0 = Release|x86
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Release|x86.ActiveCfg = Release|x86
+		{64BCCCAC-B4C5-40EE-A63B-4B44803704E4}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

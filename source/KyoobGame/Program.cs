@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Windows.Forms;
 
 namespace Kyoob
 {
@@ -14,17 +13,15 @@ namespace Kyoob
         /// <summary>
         /// A custom trace listener.
         /// </summary>
-        private class CustomTraceListener : TraceListener
+        private class CustomTraceListener : TextWriterTraceListener
         {
-            private TextWriter _output;
-
             /// <summary>
             /// Creates a new custom trace listener.
             /// </summary>
             /// <param name="writer">The writer to use.</param>
             public CustomTraceListener( TextWriter writer )
+                : base( writer )
             {
-                _output = writer;
             }
 
             /// <summary>
@@ -32,9 +29,8 @@ namespace Kyoob
             /// </summary>
             /// <param name="stream">The stream to write to.</param>
             public CustomTraceListener( Stream stream )
+                : base( stream )
             {
-                _output = new StreamWriter( stream );
-                GC.SuppressFinalize( _output );
             }
 
             /// <summary>
@@ -42,36 +38,17 @@ namespace Kyoob
             /// </summary>
             /// <param name="file">The file to append to.</param>
             public CustomTraceListener( string file )
+                : base( file )
             {
-                _output = new StreamWriter( File.Create( file ) );
-                GC.SuppressFinalize( _output );
             }
 
             /// <summary>
-            /// Closes the underlying stream.
+            /// Writes to this trace listener.
             /// </summary>
-            public override void Close()
-            {
-                _output.Close();
-                base.Close();
-            }
-
-            /// <summary>
-            /// Flushes the underlying stream.
-            /// </summary>
-            public override void Flush()
-            {
-                _output.Flush();
-                base.Flush();
-            }
-
-            /// <summary>
-            /// Writes to this custom trace listener.
-            /// </summary>
-            /// <param name="message">The message to write.</param>
+            /// <param name="message">The message.</param>
             public override void Write( string message )
             {
-                _output.Write( message );
+                base.Write( message );
             }
 
             /// <summary>
@@ -80,25 +57,14 @@ namespace Kyoob
             /// <param name="message">The message.</param>
             public override void WriteLine( string message )
             {
-                string output = message.PadLeft( message.Length + IndentLevel * IndentSize, ' ' );
-                _output.WriteLine( CreateTimestamp() + output );
-            }
-
-            /// <summary>
-            /// Disposes of the underlying stream.
-            /// </summary>
-            /// <param name="disposing">???</param>
-            protected override void Dispose( bool disposing )
-            {
-                _output.Dispose();
-                base.Dispose( disposing );
+                base.WriteLine( CreateTimestamp() + message );
             }
 
             /// <summary>
             /// Creates a timestamp to use.
             /// </summary>
             /// <returns></returns>
-            protected virtual string CreateTimestamp()
+            private string CreateTimestamp()
             {
                 DateTime now = DateTime.Now.ToLocalTime();
                 return string.Format(
@@ -114,39 +80,21 @@ namespace Kyoob
         [MTAThread]
         static void Main( string[] args )
         {
-            try
+            // setup the debugger
+            if ( File.Exists( "debug.log" ) )
             {
-                // setup the debugger
-#if DEBUG
-                Debug.Listeners.Clear(); // remove default listener
-                Debug.Listeners.Add( new CustomTraceListener( Console.Out ) );
-                Debug.Listeners.Add( new CustomTraceListener( "debug.log" ) );
-#endif
-                Debug.IndentSize = 2;
-                Debug.AutoFlush = true;
-
-                // load the settings
-                Settings.Load();
-
-                // run the game
-                using ( Game game = Game.Instance )
-                {
-                    game.Run();
-                }
+                File.Delete( "debug.log" );
             }
-            catch ( Exception ex )
+            Debug.Listeners.Clear(); // remove default listener
+            Debug.Listeners.Add( new CustomTraceListener( Console.Out ) );
+            Debug.Listeners.Add( new CustomTraceListener( "debug.log" ) );
+            Debug.IndentSize = 2;
+            Debug.AutoFlush = true;
+
+            // run the game
+            using ( Game game = Game.Instance )
             {
-#if DEBUG
-                Debug.WriteLine( ex.Message + "\n\n" + ex.StackTrace );
-                MessageBox.Show( "An error has occurred. Please check the log.", "ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error );
-#else
-                MessageBox.Show( ex.Message + "\n\n" + ex.StackTrace, "ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error );
-#endif
-            }
-            finally
-            {
-                // save the settings even if an error occurred
-                Settings.Save();
+                game.Run();
             }
         }
     }

@@ -5,9 +5,9 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle( "Kyoob" )]
-[assembly: AssemblyProduct( "Kyoob" )]
-[assembly: AssemblyDescription( "XNA Voxel Engine" )]
+[assembly: AssemblyTitle( "KyoobLibrary" )]
+[assembly: AssemblyProduct( "KyoobLibrary" )]
+[assembly: AssemblyDescription( "The main library used by Kyoob." )]
 [assembly: AssemblyCopyright( "Copyright © Richard Selneck 2014-2015" )]
 [assembly: AssemblyCulture( "" )]
 
@@ -18,9 +18,9 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible( false )]
 
 // On Windows, the following GUID is for the ID of the typelib if this
-// project is exposed to COM. On other platforms, it uniquely identifies the
+// project is exposed to COM. On other platforms, it unique identifies the
 // title storage container when deploying this assembly to the device.
-[assembly: Guid( "3449e41a-62c5-465f-8301-8471d3c4bc76" )]
+[assembly: Guid( "1c9e5645-d242-4aaf-95bc-a72f2dfa55cf" )]
 
 // Version information for an assembly consists of the following four values:
 //

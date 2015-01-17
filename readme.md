@@ -1,4 +1,4 @@
-# Kyoob v0.2.1
+# Kyoob v0.3.0 Alpha
 
 Ever since first playing Minecraft, I've toyed around with the idea of making
 my very own voxel engine. Kyoob is the result of my turning the idea into
@@ -12,19 +12,17 @@ something tangible.
   * [See here](http://what-ev.net/2014/02/19/the-xna-enabler-app-xna-in-visual-studio-2012-2013/)
     if you're using VS2012 or VS2013
   * Also .NET Framework 4.0
-* [NVIDIA NSight](http://www.nvidia.com/object/nsight.html) (if you wish to do GPU debugging)
-  * You'll need to set the NSight Properties on the NSight project to launch
-    an external program, specifically `$(SolutionDir)build\$(Configuration)\kyoob.exe`.
+  * As of v0.3.0, HiDef profile is no longer required
+  * This may work with MonoGame, or it may not. I have no clue
 
 ## Todo
 
+* Improve lighting
 * Add GUI items (button, etc.)
 * Prevent walking off map (mainly for slower computers)
 * Fix gravity problems when vsync is disabled
-* Fix lens flare draw order (?)
 * Fix physics for far away places (coordinates in the thousands)
   * "Normalize" the block and player positions for physics calculations
-* Adapt sun so that it doesn't act weird "at night"
 * Improve block generation, taking hints [from Notch](http://n0tch.tumblr.com/post/4231184692/terrain-generation-part-1)
   * Actual world generation (caves, trees, etc.)
 * Loading and unloading of chunks from and to disk
@@ -32,7 +30,6 @@ something tangible.
 * Block editing
 * Motion blur?
 * Re-implement the console/terminal?
-* Move main library code over to separate library to facilitate plugin creation?
 
 ## Special Thanks
 
@@ -40,6 +37,7 @@ something tangible.
   serious XNA development)
 * Microsoft for being such swell people and providing so many free XNA samples,
   such as their lens flare and sky sphere demos
+* [Charles Barros](http://gamecoderbr.blogspot.com/) for his [Voxel Engine series](http://gamecoderbr.blogspot.com/2013/03/voxel-engine-part-1.html)
 * Nick and Jessie for helping me test this
 
 ## License
