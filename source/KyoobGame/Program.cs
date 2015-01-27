@@ -85,7 +85,6 @@ namespace Kyoob
             {
                 File.Delete( "debug.log" );
             }
-            Debug.Listeners.Clear(); // remove default listener
             Debug.Listeners.Add( new CustomTraceListener( Console.Out ) );
             Debug.Listeners.Add( new CustomTraceListener( "debug.log" ) );
             Debug.IndentSize = 2;

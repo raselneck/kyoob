@@ -66,18 +66,6 @@ namespace Kyoob.VoxelData
         }
 
         /// <summary>
-        /// Checks to see if this octree's bounds contains or intersects a point.
-        /// </summary>
-        /// <param name="point">The point.</param>
-        /// <returns></returns>
-        public bool Contains( Vector3 point )
-        {
-            ContainmentType type = _bounds.Contains( point );
-            return type == ContainmentType.Contains
-                || type == ContainmentType.Intersects;
-        }
-
-        /// <summary>
         /// Adds an object's bounds to this octree.
         /// </summary>
         /// <param name="obj">The bounds of the object to add.</param>
@@ -287,19 +275,6 @@ namespace Kyoob.VoxelData
         }
 
         /// <summary>
-        /// Makes a bounding box from a center and dimensions.
-        /// </summary>
-        /// <param name="center">The center of the bounding box.</param>
-        /// <param name="dim">The demensions of the bounding box.</param>
-        private BoundingBox MakeBoundingBox( Vector3 center, Vector3 dim )
-        {
-            return new BoundingBox(
-                center - dim / 2.0f,
-                center + dim / 2.0f
-            );
-        }
-
-        /// <summary>
         /// Divides this octree into its eight children.
         /// </summary>
         private void Divide()
@@ -312,8 +287,7 @@ namespace Kyoob.VoxelData
 
             // get helper variables
             Vector3 center = _bounds.GetCenter();
-            Vector3 hdim = _bounds.GetDimensions() / 2.0f;
-            Vector3 qdim = hdim * 0.5f;
+            Vector3 qdim = _bounds.GetDimensions() * 0.25f;
 
             // get child centers
             Vector3 trb = new Vector3( center.X + qdim.X, center.Y + qdim.Y, center.Z + qdim.Z );
@@ -326,14 +300,14 @@ namespace Kyoob.VoxelData
             Vector3 blf = new Vector3( center.X - qdim.X, center.Y - qdim.Y, center.Z - qdim.Z );
 
             // create children
-            _children[ 0 ] = new ChunkOctree( MakeBoundingBox( tlb, hdim ) ); // top left back
-            _children[ 1 ] = new ChunkOctree( MakeBoundingBox( tlf, hdim ) ); // top left front
-            _children[ 2 ] = new ChunkOctree( MakeBoundingBox( trb, hdim ) ); // top right back
-            _children[ 3 ] = new ChunkOctree( MakeBoundingBox( trf, hdim ) ); // top right front
-            _children[ 4 ] = new ChunkOctree( MakeBoundingBox( blb, hdim ) ); // bottom left back
-            _children[ 5 ] = new ChunkOctree( MakeBoundingBox( blf, hdim ) ); // bottom left front
-            _children[ 6 ] = new ChunkOctree( MakeBoundingBox( brb, hdim ) ); // bottom right back
-            _children[ 7 ] = new ChunkOctree( MakeBoundingBox( brf, hdim ) ); // bottom right front
+            _children[ 0 ] = new ChunkOctree( new BoundingBox( tlb - qdim, tlb + qdim ) ); // top left back
+            _children[ 1 ] = new ChunkOctree( new BoundingBox( tlf - qdim, tlf + qdim ) ); // top left front
+            _children[ 2 ] = new ChunkOctree( new BoundingBox( trb - qdim, trb + qdim ) ); // top right back
+            _children[ 3 ] = new ChunkOctree( new BoundingBox( trf - qdim, trf + qdim ) ); // top right front
+            _children[ 4 ] = new ChunkOctree( new BoundingBox( blb - qdim, blb + qdim ) ); // bottom left back
+            _children[ 5 ] = new ChunkOctree( new BoundingBox( blf - qdim, blf + qdim ) ); // bottom left front
+            _children[ 6 ] = new ChunkOctree( new BoundingBox( brb - qdim, brb + qdim ) ); // bottom right back
+            _children[ 7 ] = new ChunkOctree( new BoundingBox( brf - qdim, brf + qdim ) ); // bottom right front
 
             // go through our items and try to move them into children
             for ( int i = 0; i < _objects.Count; ++i )

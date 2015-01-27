@@ -314,7 +314,7 @@ namespace Kyoob.VoxelData
                             Position.LocalToWorld( _data.Index, x, y, z, out blockCenter );
 
                             // get surrounding block light level
-                            // TODO : We don't need to get some of these if smooth lighting is disabled
+                            // TODO : We don't need to get a lot of these if smooth lighting is disabled
                             var right            = GetLightFromBlock( terrain, x + 1, y,     z     );
                             var rightTop         = GetLightFromBlock( terrain, x + 1, y + 1, z     );
                             var rightBottom      = GetLightFromBlock( terrain, x + 1, y - 1, z     );
@@ -498,7 +498,7 @@ namespace Kyoob.VoxelData
                 return _data[ x, y, z ].Lighting;
             }
 
-            // TODO : We need to query the world later when the terrain is modifyable
+            // TODO : We need to query the world later when the terrain is modifiable
 
             // if we're not within bounds, then we need to estimate the light level
             float lighting = Block.MaximumLighting;

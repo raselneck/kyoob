@@ -3,8 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Kyoob.Graphics;
 
-// TODO : Use BlockVertex instead of VertexPositionNormalTexture (see http://msdn.microsoft.com/en-us/library/bb976065.aspx)
-// TODO : Take out prelighting system and use block light levels instead with new shader
+// TODO : Rename this to ChunkVertexBuffer
 
 namespace Kyoob.VoxelData
 {
@@ -46,17 +45,6 @@ namespace Kyoob.VoxelData
                     hasData = _vertexBuffer != null;
                 }
                 return hasData;
-            }
-        }
-
-        /// <summary>
-        /// Gets the mutex used by this voxel buffer.
-        /// </summary>
-        public object Mutex
-        {
-            get
-            {
-                return _mutex;
             }
         }
 

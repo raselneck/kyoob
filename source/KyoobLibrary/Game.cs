@@ -19,8 +19,6 @@ using Kyoob.VoxelData;
 // TODO : Move most of the main code over to a separate library to facilitate plugins later
 // TODO : Get rid of heavy JSON dependency and write custom INI parser
 
-// IMMEDIATE : Create custom Debug class!!!!
-
 namespace Kyoob
 {
     /// <summary>
